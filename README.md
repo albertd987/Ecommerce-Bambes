@@ -53,5 +53,5 @@ URL: http://localhost:5173
 
 ---
 
-**Proyecto:** Treball final de DAW  
-**Período:** Gener - Maig 2026
+**Project:** Treball final de DAW  
+**Període:** Gener - Maig 2026
