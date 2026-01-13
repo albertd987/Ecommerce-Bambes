@@ -2,18 +2,18 @@
 
 Botiga online especialitzada en bambes de running i atletisme.
 
-##  Stack Tecnológico
+##  Stack Tecnològic
 
 - **Backend:** Laravel 11 + Lunar + Stripe
 - **Frontend:** React 18 + Vite + React Router
 - **Base de dades:** MySQL 8
 
-##  Equipo
+##  Equip
 
 - **Frontend:** Albert Domènech
 - **Backend:** David Diaz
 
-##  Instalación
+##  Instalació
 
 ### Backend
 ```bash
@@ -36,7 +36,7 @@ npm run dev
 
 URL: http://localhost:5173
 
-##  Documentación
+##  Documentació
 
 - [Git Workflow](docs/GUIA_GIT_WORKFLOW.md)
 - [Contracte d'API](docs/api-contract.md)
