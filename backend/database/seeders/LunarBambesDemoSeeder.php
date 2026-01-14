@@ -164,11 +164,11 @@ class LunarBambesDemoSeeder extends Seeder
             foreach ($sizes as $s) {
                 $sizeValues[$s] = $valHasHandle
                     ? ProductOptionValue::firstOrCreate(
-                        ['product_option_id' => $optSize->id, 'name' => $s],
+                        ['product_option_id' => $optSize->id, 'name' => [$locale => $s]],  // ← Array
                         ['handle' => 'talla-' . $s]
                     )
                     : ProductOptionValue::firstOrCreate(
-                        ['product_option_id' => $optSize->id, 'name' => $s]
+                        ['product_option_id' => $optSize->id, 'name' => [$locale => $s]]  // ← Array
                     );
             }
 
@@ -176,11 +176,11 @@ class LunarBambesDemoSeeder extends Seeder
             foreach ($colors as $c) {
                 $colorValues[$c] = $valHasHandle
                     ? ProductOptionValue::firstOrCreate(
-                        ['product_option_id' => $optColor->id, 'name' => $c],
+                        ['product_option_id' => $optColor->id, 'name' => [$locale => $c]],  // ← Array
                         ['handle' => 'color-' . Str::slug($c)]
                     )
                     : ProductOptionValue::firstOrCreate(
-                        ['product_option_id' => $optColor->id, 'name' => $c]
+                        ['product_option_id' => $optColor->id, 'name' => [$locale => $c]]  // ← Array
                     );
             }
 
@@ -238,6 +238,7 @@ class LunarBambesDemoSeeder extends Seeder
                             'tax_class_id' => $taxClass->id, // ✅ OBLIGATORI
                             'sku' => $sku,
                             'purchasable' => true,
+                            'stock' => rand(10, 50),
                         ]);
 
                         // assignar talla/color a la variant
@@ -255,7 +256,7 @@ class LunarBambesDemoSeeder extends Seeder
                         Price::create([
                             'customer_group_id' => $defaultCustomerGroup->id,
                             'currency_id' => $eur->id,
-                            'priceable_type' => get_class($variant),
+                            'priceable_type' => 'product_variant',  // ← Cambiar de get_class($variant)
                             'priceable_id' => $variant->id,
                             'price' => (int) round($price * 100),
                             'compare_price' => null,
