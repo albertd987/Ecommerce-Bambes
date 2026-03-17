@@ -1,0 +1,16 @@
+# Dependències (generades localment, mai committar)
+/node_modules/
+/vendor/
+
+# Variables d'entorn (MAI pujar a git - contenen credencials!)
+.env
+.env.local
+.env.*.local
+*.env
+
+# Eines de desenvolupament locals
+.claude/
+.idea/
+.vscode/
+*.DS_Store
+Thumbs.db
