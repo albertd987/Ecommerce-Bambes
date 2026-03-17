@@ -14,31 +14,13 @@ export default function FavoritesPage() {
   const { isLoggedIn, user } = useAuth()
   const { favorites, loading, toggleFavorite } = useFavorites()
 
-  const money = (value) => {
+  const formatPrice = (value) => {
     if (value === null || value === undefined) return "—"
 
-    if (typeof value === "number") {
-      return `${Number(value).toFixed(2)}€`
-    }
+    const n = Number(value)
+    if (Number.isNaN(n)) return "—"
 
-    if (typeof value === "string") {
-      const n = Number(value)
-      return Number.isNaN(n) ? "—" : `${n.toFixed(2)}€`
-    }
-
-    if (typeof value === "object") {
-      if ("formatted" in value) return value.formatted
-      if ("value" in value) {
-        const n = Number(value.value)
-        return Number.isNaN(n) ? "—" : `${n.toFixed(2)}€`
-      }
-      if ("amount" in value) {
-        const n = Number(value.amount)
-        return Number.isNaN(n) ? "—" : `${n.toFixed(2)}€`
-      }
-    }
-
-    return "—"
+    return `${n.toFixed(2)}€`
   }
 
   if (!isLoggedIn) {
@@ -65,12 +47,12 @@ export default function FavoritesPage() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto px-4 py-10 max-w-5xl">
+      <main className="max-w-[1320px] mx-auto px-6 py-6">
         <div className="flex items-center justify-between mb-6 gap-3">
           <div>
-            <h2 className="text-2xl font-bold">
+            <h1 className="text-2xl font-bold text-foreground">
               {t("favorites.title", "Els meus favorits")}
-            </h2>
+            </h1>
             <p className="text-sm text-muted-foreground mt-1">
               {t("favorites.signedInAs", "Sessió iniciada com")}: {user?.name || user?.email}
             </p>
@@ -84,107 +66,104 @@ export default function FavoritesPage() {
         </div>
 
         {loading ? (
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-muted-foreground">
-                {t("favorites.loading", "Carregant favorits...")}
-              </p>
-            </CardContent>
-          </Card>
+          <div className="border rounded-lg p-6">
+            <p className="text-muted-foreground">
+              {t("favorites.loading", "Carregant favorits...")}
+            </p>
+          </div>
         ) : favorites.length === 0 ? (
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-muted-foreground">
-                {t("favorites.empty", "Encara no tens cap producte preferit.")}
-              </p>
-            </CardContent>
-          </Card>
+          <div className="border rounded-lg p-6">
+            <p className="text-muted-foreground">
+              {t("favorites.empty", "Encara no tens cap producte preferit.")}
+            </p>
+          </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-x-5 gap-y-10 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {favorites.map((product) => {
               const productId = product?.id
               const productName =
-                product?.name ||
-                product?.attribute_data?.name?.value ||
-                t("favorites.unnamedProduct", "Producte")
-
-              const productThumbnail =
-                product?.thumbnail ||
-                product?.image ||
-                null
+                typeof product?.name === "string" && product.name.trim() !== ""
+                  ? product.name
+                  : t("favorites.unnamedProduct", "Producte")
 
               const productBrand =
-                typeof product?.brand === "string"
+                typeof product?.brand === "string" && product.brand.trim() !== ""
                   ? product.brand
-                  : product?.brand?.name || null
+                  : null
 
-              const productPrice = product?.price
+              const productThumbnail =
+                typeof product?.thumbnail === "string" && product.thumbnail.trim() !== ""
+                  ? product.thumbnail
+                  : null
 
               return (
-                <Card key={productId} className="overflow-hidden">
-                  <div className="aspect-square bg-muted/30 overflow-hidden">
-                    {productThumbnail ? (
-                      <img
-                        src={productThumbnail}
-                        alt={String(productName)}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="h-full w-full flex items-center justify-center text-sm text-muted-foreground">
-                        {t("favorites.noImage", "Sense imatge")}
-                      </div>
-                    )}
-                  </div>
+                <div key={productId} className="group">
+                  <div
+                    className="cursor-pointer"
+                    onClick={() => navigate(`/products/${productId}`)}
+                  >
+                    <div className="aspect-square overflow-hidden rounded-lg bg-muted/30">
+                      {productThumbnail ? (
+                        <img
+                          src={productThumbnail}
+                          alt={productName}
+                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                        />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center text-sm text-muted-foreground">
+                          {t("favorites.noImage", "Sense imatge")}
+                        </div>
+                      )}
+                    </div>
 
-                  <CardContent className="p-4 space-y-3">
-                    {productBrand ? (
-                      <p className="text-xs text-muted-foreground">{productBrand}</p>
-                    ) : null}
+                    <div className="mt-3 space-y-1">
+                      {productBrand ? (
+                        <p className="text-xs text-muted-foreground">{productBrand}</p>
+                      ) : null}
 
-                    <div>
-                      <p className="font-semibold leading-snug">{String(productName)}</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {money(productPrice)}
+                      <p className="font-medium leading-snug text-foreground">
+                        {productName}
+                      </p>
+
+                      <p className="text-sm text-muted-foreground">
+                        {formatPrice(product?.price)}
                       </p>
                     </div>
+                  </div>
 
-                    <div className="flex gap-2">
-                      <Button
-                        className="flex-1"
-                        onClick={() => {
-                          if (!productId) return
-                          navigate(`/products/${productId}`)
-                        }}
-                      >
-                        {t("favorites.viewProduct", "Veure producte")}
-                      </Button>
+                  <div className="mt-3 flex gap-2">
+                    <Button
+                      className="flex-1"
+                      onClick={() => navigate(`/products/${productId}`)}
+                    >
+                      {t("favorites.viewProduct", "Veure producte")}
+                    </Button>
 
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={async () => {
-                          try {
-                            await toggleFavorite(productId)
-                            toast.success(
-                              t("favorites.removed", "Producte eliminat de favorits")
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={async () => {
+                        try {
+                          await toggleFavorite(productId)
+                          toast.success(
+                            t("favorites.removed", "Producte eliminat de favorits")
+                          )
+                        } catch (e) {
+                          console.error("Error removing favorite:", e)
+                          toast.error(
+                            t(
+                              "favorites.removeError",
+                              "No s'ha pogut eliminar dels favorits"
                             )
-                          } catch (e) {
-                            console.error("Error removing favorite:", e)
-                            toast.error(
-                              t(
-                                "favorites.removeError",
-                                "No s'ha pogut eliminar dels favorits"
-                              )
-                            )
-                          }
-                        }}
-                        aria-label={t("favorites.remove", "Eliminar de favorits")}
-                      >
-                        <Heart className="h-4 w-4 fill-current" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                          )
+                        }
+                      }}
+                      aria-label={t("favorites.remove", "Eliminar de favorits")}
+                    >
+                      <Heart className="h-4 w-4 fill-current" />
+                    </Button>
+                  </div>
+                </div>
               )
             })}
           </div>

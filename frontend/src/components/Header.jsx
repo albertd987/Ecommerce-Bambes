@@ -1,15 +1,18 @@
-import { ShoppingCart } from "lucide-react"
+import { ShoppingCart, Heart } from "lucide-react"
 import { Link } from "react-router-dom"
 import { useCart } from "@/context/cart-context"
+import { useFavorites } from "@/context/favorites-context"
 import UserMenu from "@/components/UserMenu"
 import { useTranslation } from "react-i18next"
 import { setLanguage } from "@/i18n"
 
 export default function Header() {
   const { cartCount } = useCart()
+  const { favorites } = useFavorites()
   const { t, i18n } = useTranslation()
 
   const lang = i18n.language || "ca"
+  const favoritesCount = favorites?.length ?? 0
 
   const switchTo = (next) => {
     if (next === lang) return
@@ -31,15 +34,8 @@ export default function Header() {
             {t("nav.products")}
           </Link>
 
-          <a href="#" className={navLinkClass}>
-            {t("nav.brands")}
-          </a>
 
-          <a href="#" className={navLinkClass}>
-            {t("nav.offers")}
-          </a>
 
-          {/* ✅ QUI SOM dins del nav per mantenir-ho uniforme */}
           <Link to="/about" className={navLinkClass}>
             {t("nav.about")}
           </Link>
@@ -74,6 +70,20 @@ export default function Header() {
               {t("lang.en", "EN")}
             </button>
           </div>
+
+          {/* FAVORITS */}
+          <Link
+            to="/favorites"
+            className="relative inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-muted transition-colors"
+            aria-label={t("favorites.title", "Els meus favorits")}
+          >
+            <Heart className="h-5 w-5" />
+            {favoritesCount > 0 && (
+              <span className="absolute -top-1 -right-1 h-5 min-w-5 px-1 rounded-full bg-primary text-xs text-primary-foreground flex items-center justify-center">
+                {favoritesCount}
+              </span>
+            )}
+          </Link>
 
           {/* USUARI */}
           <UserMenu />
