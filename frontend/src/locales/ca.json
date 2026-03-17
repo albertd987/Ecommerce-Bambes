@@ -1,0 +1,584 @@
+{
+  "app": {
+    "name": "Bambes"
+  },
+  "nav": {
+    "products": "Productes",
+    "brands": "Marques",
+    "offers": "Ofertes",
+    "about": "Qui som"
+  },
+
+  "home": {
+    "breadcrumb": {
+      "category": "Running",
+      "page": "Sabatilles"
+    },
+    "title": "Sabatilles de Running ({{total}})",
+    "results": {
+      "showing": "Mostrant {{from}}–{{to}} de {{total}}",
+      "empty": "Sense resultats",
+      "loading": "Carregant...",
+      "noProducts": "No s'han trobat productes amb aquests filtres.",
+      "error": "Error: {{message}}"
+    },
+    "actions": {
+      "showFilters": "Mostrar filtres",
+      "hideFilters": "Ocultar filtres",
+      "apply": "Aplicar filtres",
+      "clear": "Netejar filtres",
+      "clearAll": "Netejar-ho tot"
+    },
+    "sort": {
+      "label": "Ordenar per",
+      "newest": "Més nous",
+      "priceAsc": "Preu: baix → alt",
+      "priceDesc": "Preu: alt → baix",
+      "nameAsc": "Nom: A → Z",
+      "nameDesc": "Nom: Z → A"
+    },
+    "perPage": {
+      "label": "Per pàgina"
+    },
+    "quickTypes": {
+      "title": "Tipus",
+      "all": "Tots"
+    },
+    "common": {
+      "clear": "Netejar",
+      "loadingSuffix": "(carregant...)"
+    },
+    "filters": {
+      "search": "Cerca",
+      "searchPlaceholder": "Ex: HOKA, Clifton...",
+      "brand": "Marca",
+      "type": "Tipus",
+      "size": "Talla",
+      "color": "Color",
+      "price": "Preu (€)",
+      "min": "Min",
+      "max": "Max",
+      "allFeminine": "Totes",
+      "allMasculine": "Tots",
+      "loadingBrands": "Carregant marques...",
+      "loadingTypes": "Carregant tipus...",
+      "loadingSizes": "Carregant talles...",
+      "loadingColors": "Carregant colors..."
+    },
+    "chips": {
+      "search": "Cerca: {{value}}",
+      "brand": "Marca: {{value}}",
+      "type": "Tipus: {{value}}",
+      "size": "Talla: {{value}}",
+      "color": "Color: {{value}}",
+      "priceBetween": "Preu: {{min}}–{{max}}€",
+      "priceMin": "Preu: ≥ {{min}}€",
+      "priceMax": "Preu: ≤ {{max}}€"
+    },
+    "pagination": {
+      "first": "Primera",
+      "prev": "Anterior",
+      "next": "Següent",
+      "last": "Última"
+    }
+  },
+
+  
+  "profile": {
+    "title": "El meu perfil",
+    "sections": {
+      "personal": "Dades personals",
+      "security": "Seguretat",
+      "orders": "Comandes"
+    },
+    "fields": {
+      "name": "Nom",
+      "email": "Email"
+    },
+    "placeholders": {
+      "namePending": "— pendent de backend —"
+    },
+    "security": {
+      "description": "Pots canviar la teva contrasenya o gestionar la seguretat del compte.",
+      "changePassword": "Canviar contrasenya"
+    },
+    "orders": {
+      "description": "Consulta les teves comandes realitzades.",
+      "view": "Veure comandes"
+    },
+    "note": "* Aquesta pàgina és una maqueta. Quan connectem el backend, aquestes dades vindran de la base de dades.",
+    "loggedOut": {
+      "message": "No has iniciat sessió. Entra per veure el teu perfil."
+    }
+  },
+  "auth": {
+    "login": "Iniciar sessió"
+  },
+
+   "cart": {
+    "title": "Carret",
+    "items": "{{count}} article(s)",
+    "continueShopping": "Continuar comprant",
+    "empty": {
+      "title": "El carret està buit",
+      "subtitle": "Afegeix algun producte per començar.",
+      "cta": "Veure productes"
+    },
+    "productFallback": "Producte",
+    "lineTotal": "Total",
+    "qty": {
+      "decrease": "Disminuir quantitat",
+      "increase": "Augmentar quantitat"
+    },
+    "remove": "Eliminar",
+    "clear": "Buidar carret",
+    "summary": {
+      "title": "Resum",
+      "subtotal": "Subtotal (IVA inclòs)",
+      "shipping": "Enviament",
+      "total": "Total",
+      "note": "* Els preus ja inclouen IVA. L’enviament és tarifa plana.",
+      "taxIncluded": "IVA inclòs"
+    },
+    "checkout": "Anar a pagar"
+  },
+
+  "checkout": {
+    "title": "Checkout",
+    "emptyCart": "No tens productes al carret.",
+    "backToProducts": "Tornar a productes",
+    "backToCart": "Tornar al carret",
+
+    "contact": {
+      "title": "Dades de contacte",
+      "firstName": "Nom",
+      "lastName": "Cognom",
+      "email": "Email",
+      "phone": "Telèfon"
+    },
+
+    "billing": {
+      "title": "Adreça de facturació",
+      "address1": "Adreça",
+      "address2": "Adreça (línia 2)",
+      "city": "Ciutat",
+      "postcode": "Codi postal",
+      "state": "Província"
+    },
+
+    "shipping": {
+      "title": "Adreça d'enviament",
+      "sameAsBilling": "Mateixa adreça que la de facturació",
+      "address1": "Adreça",
+      "address2": "Adreça (línia 2)",
+      "city": "Ciutat",
+      "postcode": "Codi postal",
+      "state": "Província"
+    },
+
+    "payment": {
+      "title": "Dades de pagament",
+      "processing": "Processant...",
+      "continue": "Continuar al pagament",
+      "intentCreated": "✅ Intent creat. Ja pots completar el pagament."
+    },
+
+    "summary": {
+      "title": "Resum de la comanda",
+      "productFallback": "Producte",
+      "subtotal": "Subtotal (IVA inclòs)",
+      "shipping": "Enviament",
+      "total": "Total",
+      "confirmed": "* Totals confirmats pel servidor.",
+      "estimated": "* Estimació. El total definitiu es confirmarà al pagar."
+    },
+
+    "placeholders": {
+      "firstName": "Joan",
+      "lastName": "Garcia",
+      "email": "joan@exemple.com",
+      "phone": "+34 612 345 678",
+      "address1": "Carrer Major, 1",
+      "address2": "Pis 2n, Porta A",
+      "city": "Barcelona",
+      "postcode": "08001",
+      "state": "Barcelona"
+    },
+
+    "validation": {
+      "firstNameRequired": "El nom és obligatori",
+      "lastNameRequired": "El cognom és obligatori",
+      "emailRequired": "L'email és obligatori",
+      "billingAddressRequired": "L'adreça és obligatòria",
+      "billingCityRequired": "La ciutat és obligatòria",
+      "billingPostcodeRequired": "El codi postal és obligatori",
+      "shippingAddressRequired": "L'adreça d'enviament és obligatòria",
+      "shippingCityRequired": "La ciutat d'enviament és obligatòria",
+      "shippingPostcodeRequired": "El codi postal d'enviament és obligatori"
+    },
+
+    "errors": {
+      "missingStripeKey": "Falta VITE_STRIPE_PUBLISHABLE_KEY. Revisa el teu .env del frontend.",
+      "reviewRequiredFields": "Revisa els camps obligatoris.",
+      "cartEmpty": "El carret està buit.",
+      "missingProductId": "Hi ha productes al carret sense product_id.",
+      "noClientSecret": "El servidor no ha retornat client_secret."
+    }
+  },
+
+   "checkoutSuccess": {
+    "title": "Compra finalitzada",
+
+    "status": {
+      "loading": "Comprovant pagament...",
+      "succeeded": "Pagament completat",
+      "processing": "Pagament en procés…",
+      "failed": "Pagament fallit. Torna-ho a provar.",
+      "unknown": "No s'ha pogut determinar l'estat del pagament.",
+      "error": "Error: {{error}}",
+      "generic": "Estat: {{status}}"
+    },
+
+    "errors": {
+      "stripeNotInit": "Stripe no inicialitzat (revisa la key)."
+    },
+
+    "confirmError": "Error creant la comanda: {{error}}",
+
+    "orderSummary": {
+      "title": "Resum de la comanda",
+      "idLabel": "ID:",
+      "referenceLabel": "Referència:"
+    },
+
+    "products": {
+      "title": "Productes",
+      "emptyNote": "(Si Stripe ha redirigit, pot ser que aquí no tinguem el carret al frontend.)"
+    },
+
+    "totals": {
+      "subtotal": "Subtotal",
+      "discount": "Descompte",
+      "shipping": "Enviament",
+      "vat": "IVA (21%)",
+      "total": "Total"
+    },
+
+    "customer": {
+      "title": "Dades del client",
+      "name": "Nom:",
+      "email": "Email:",
+      "phone": "Telèfon:",
+      "notAvailable": "No disponible"
+    },
+
+    "addresses": {
+      "billing": "Adreça de facturació",
+      "shipping": "Adreça d'enviament"
+    },
+
+    "actions": {
+      "backToShop": "Tornar a la botiga",
+      "viewOrders": "Veure comandes"
+    }
+  },
+
+    "checkoutForm": {
+    "actions": {
+      "processing": "Processant...",
+      "payNow": "Pagar ara"
+    },
+    "errors": {
+      "generic": "Error confirmant el pagament.",
+      "unexpected": "Error inesperat confirmant el pagament."
+    }
+  },
+
+
+  "userMenu": {
+    "signedInAs": "Sessió iniciada com",
+    "myProfile": "El meu perfil",
+    "myOrders": "Les meves comandes",
+    "logout": "Tancar sessió",
+    "login": "Iniciar sessió",
+    "register": "Crear compte",
+    "notLoggedIn": {
+      "title": "No has iniciat sessió",
+      "subtitle": "Entra per comprar i veure comandes"
+    },
+    "aria": {
+      "user": "Usuari"
+    }
+  },
+
+  "login": {
+  "title": "Iniciar sessió",
+  "email": "Correu electrònic",
+  "password": "Contrasenya",
+  "submit": "Entrar",
+  "loading": "Carregant...",
+  "noAccount": "No tens compte?",
+  "register": "Registra't",
+  "placeholders": {
+    "email": "tu@exemple.com",
+    "password": "Contrasenya"
+  }
+},
+
+"register": {
+  "title": "Crear compte",
+  "fullName": "Nom complet",
+  "email": "Correu electrònic",
+  "password": "Contrasenya",
+  "passwordConfirm": "Confirmar contrasenya",
+  "submit": "Registrar-me",
+  "loading": "Carregant...",
+  "haveAccount": "Ja tens compte?",
+  "login": "Inicia sessió",
+  "placeholders": {
+    "name": "El teu nom",
+    "email": "tu@exemple.com",
+    "password": "Mínim 8 caràcters",
+    "passwordConfirm": "Repeteix la contrasenya"
+  }
+},
+
+"verifyEmail": {
+  "title": "Verifica el teu correu",
+  "signedInAs": "Sessió iniciada com",
+  "description": "T’hem enviat un correu amb un enllaç de verificació. Quan el cliquis, aquesta pàgina farà la verificació automàticament.",
+  "success": "Correu verificat correctament.",
+  "resent": "Email reenviat. Revisa la bústia.",
+  "resend": "Reenviar email",
+  "verifying": "Verificant...",
+  "alreadyVerified": "Ja he verificat",
+  "backToProfile": "Tornar al perfil",
+  "errors": {
+    "verifyFailed": "No s'ha pogut verificar el correu."
+  }
+},
+
+"changePassword": {
+  "title": "Canviar contrasenya",
+  "backToProfile": "Tornar al perfil",
+  "description": "Introdueix la contrasenya actual i la nova contrasenya.",
+  "notLoggedIn": "No has iniciat sessió. Entra per canviar la teva contrasenya.",
+  "success": "Contrasenya actualitzada correctament.",
+  "errors": {
+    "fillAll": "Omple tots els camps.",
+    "confirmMismatch": "La confirmació no coincideix.",
+    "minLength": "La nova contrasenya ha de tenir mínim 8 caràcters.",
+    "reviewFields": "Revisa els camps marcats.",
+    "generic": "Error canviant la contrasenya."
+  },
+  "fields": {
+    "current": {
+      "label": "Contrasenya actual",
+      "placeholder": "Introdueix la teva contrasenya actual"
+    },
+    "new": {
+      "label": "Nova contrasenya",
+      "placeholder": "Introdueix la teva nova contrasenya"
+    },
+    "confirm": {
+      "label": "Confirma la nova contrasenya",
+      "placeholder": "Confirma la teva nova contrasenya"
+    }
+  },
+  "actions": {
+    "submit": "Canviar contrasenya",
+    "changing": "Canviant..."
+  }
+},
+"orderDetail": {
+  "title": "Detall de comanda",
+  "actions": {
+    "refresh": "Actualitzar",
+    "refreshing": "Actualitzant...",
+    "backToOrders": "Tornar a comandes"
+  },
+  "notLoggedIn": "Has d’iniciar sessió per veure aquesta comanda.",
+  "loading": "Carregant comanda...",
+  "notFound": "No s’ha trobat la comanda.",
+  "unauthorizedHint": "Si diu “No autoritzat”, és perquè la comanda no és teva o no estàs autenticat correctament.",
+  "signedInAs": "Sessió iniciada com",
+  "fields": {
+    "id": "ID",
+    "status": "Estat",
+    "reference": "Referència",
+    "date": "Data"
+  },
+  "sections": {
+    "products": "Productes",
+    "totals": "Totals",
+    "customer": "Dades del client",
+    "addresses": "Adreces"
+  },
+  "noLines": "No hi ha línies.",
+  "totals": {
+    "subtotal": "Subtotal",
+    "discount": "Descompte",
+    "shipping": "Enviament",
+    "tax": "IVA",
+    "total": "Total"
+  },
+  "customer": {
+    "name": "Nom",
+    "email": "Email",
+    "phone": "Telèfon",
+    "noData": "No hi ha dades de client per a aquesta comanda."
+  },
+  "addresses": {
+    "billing": "Facturació",
+    "shipping": "Enviament"
+  }
+},
+"common": {
+  "errorLabel": "Error"
+},
+"orders": {
+  "title": "Les meves comandes",
+  "actions": {
+  "refresh": "Actualitzar",
+  "refreshing": "Actualitzant...",
+  "backToProfile": "Tornar al perfil",
+  "viewDetail": "Veure detall",
+  "downloadInvoice": "Descarregar factura",
+  "downloadInvoiceError": "No s'ha pogut descarregar la factura."
+},
+  "notLoggedIn": "Has d’iniciar sessió per veure les comandes.",
+  "signedInAs": "Sessió iniciada com",
+  "empty": "Encara no tens cap comanda.",
+  "orderLabel": "Comanda",
+  "fields": {
+    "status": "Estat",
+    "referenceShort": "Ref",
+    "total": "Total",
+    "lines": "Línies"
+  }
+},
+"productDetail": {
+  "loading": "Carregant producte...",
+  "notFound": "Producte no trobat",
+  "noImage": "Sense imatge",
+  "errors": {
+    "load": "Error carregant el producte"
+  },
+  "gallery": {
+    "prev": "Imatge anterior",
+    "next": "Imatge següent",
+    "thumbnailAria": "Seleccionar imatge",
+    "imageAlt": "{{name}} imatge {{index}}"
+  },
+  "color": {
+    "label": "Color",
+    "selectAria": "Seleccionar color {{color}}"
+  },
+  "size": {
+    "title": "Selecciona la teva talla",
+    "guide": "Guia de talles",
+    "sizeAria": "Seleccionar talla EU {{size}}"
+  },
+  "stock": {
+    "available": "Stock disponible",
+    "units": "unitats"
+  },
+  "actions": {
+    "backHome": "Tornar a l'inici",
+    "addToCart": "Afegir a la cistella",
+    "adding": "Afegint...",
+    "outOfStock": "Sense estoc",
+    "addToFavorites": "Afegir a favorits"
+  },
+  "favorites": {
+    "todo": "Favorits (pendent)"
+  },
+  "toasts": {
+    "selectSize": "Selecciona una talla",
+    "variantUnavailable": "Variant no disponible",
+    "outOfStock": "No hi ha estoc disponible",
+    "addedToCart": "Producte afegit a la cistella!",
+    "addToCartError": "Error en afegir al carret"
+  }
+},
+
+"about": {
+    "kicker": "Sobre nosaltres",
+    "title": "Bambes fetes amb cap: ràpides, còmodes i amb estil.",
+    "subtitle": "Som un equip petit de DAW que està construint un e-commerce modern per aprendre i fer-ho bé: filtres ràpids, checkout real i una experiència tipus Nike.",
+
+    "badges": {
+      "b1": "Frontend React",
+      "b2": "Laravel API",
+      "b3": "Stripe Checkout",
+      "b4": "i18n (CA/EN)"
+    },
+
+    "heroCard": {
+      "title": "Projecte DAW · Ecommerce Bambes",
+      "text": "UI cuidada, dades reals i mapa amb Leaflet."
+    },
+
+    "values": {
+      "title": "El que ens mou",
+      "v1": {
+        "title": "Qualitat",
+        "text": "Seleccionem productes amb bons materials i confort real."
+      },
+      "v2": {
+        "title": "Atenció",
+        "text": "Respondem ràpid i volem que comprar sigui fàcil."
+      },
+      "v3": {
+        "title": "Transparència",
+        "text": "Preus clars, informació clara i zero sorpreses."
+      }
+    },
+
+    "team": {
+      "title": "L’equip",
+      "subtitle": "Som dos i ens hem repartit el projecte per fer-lo complet: interfície cuidada, API sòlida i checkout real.",
+      "photoAlt": "Foto de l’equip",
+      "duoTitle": "Albert i David",
+      "duoSubtitle": "Un duo de DAW: producte, codi i detalls fins que quedi fi.",
+
+      "albert": {
+        "name": "Albert",
+        "role": "Frontend / UX",
+        "bio": "S’encarrega de l’experiència d’usuari: filtres Nike-like, components, disseny i que tot sigui ràpid i clar."
+      },
+
+      "david": {
+        "name": "David",
+        "role": "Backend / API",
+        "bio": "Porta la lògica i la integració: endpoints, autenticació, dades i pagaments reals amb Stripe perquè el checkout funcioni de veritat."
+      },
+
+      "photoHintSingle": "Hem generat la foto amb IA a partir de les nostres cares reals, per protegir la nostra privadesa però mantenir una imatge propera i humana."
+    },
+
+    "map": {
+      "title": "On som",
+      "popupTitle": "Institut Milà i Fontanals",
+      "popupText": "Igualada · Projecte DAW Ecommerce"
+    },
+
+    "contact": {
+      "title": "Contacte",
+      "text": "Escriu-nos per dubtes, incidències o millores del projecte.",
+      "emailLabel": "Email",
+      "phoneLabel": "Telèfon"
+    },
+
+    "hours": {
+      "title": "Horari",
+      "text": "Horari d’atenció al client.",
+      "weekdays": "Dll–Dv",
+      "weekend": "Ds–Dg",
+      "closed": "Tancat"
+    }
+  }
+
+ 
+
+}

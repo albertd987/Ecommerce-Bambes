@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"/c/Users/domen/Desktop/Segon DAW/PROJECTE 2/Ecommerce-Bambes/frontend\" && npm install leaflet react-leaflet)"
+    ]
+  }
+}

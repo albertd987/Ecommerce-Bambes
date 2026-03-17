@@ -1,0 +1,588 @@
+{
+  "app": {
+    "name": "Sneakers"
+  },
+  "nav": {
+    "products": "Products",
+    "brands": "Brands",
+    "offers": "Deals",
+    "about": "About us"
+  },
+
+  "home": {
+    "breadcrumb": {
+      "category": "Running",
+      "page": "Shoes"
+    },
+    "title": "Running Shoes ({{total}})",
+    "results": {
+      "showing": "Showing {{from}}–{{to}} of {{total}}",
+      "empty": "No results",
+      "loading": "Loading...",
+      "noProducts": "No products found with these filters.",
+      "error": "Error: {{message}}"
+    },
+    "actions": {
+      "showFilters": "Show filters",
+      "hideFilters": "Hide filters",
+      "apply": "Apply filters",
+      "clear": "Clear filters",
+      "clearAll": "Clear all"
+    },
+    "sort": {
+      "label": "Sort by",
+      "newest": "Newest",
+      "priceAsc": "Price: low → high",
+      "priceDesc": "Price: high → low",
+      "nameAsc": "Name: A → Z",
+      "nameDesc": "Name: Z → A"
+    },
+    "perPage": {
+      "label": "Per page"
+    },
+    "quickTypes": {
+      "title": "Type",
+      "all": "All"
+    },
+    "common": {
+      "clear": "Clear",
+      "loadingSuffix": "(loading...)"
+    },
+    "filters": {
+      "search": "Search",
+      "searchPlaceholder": "e.g. HOKA, Clifton...",
+      "brand": "Brand",
+      "type": "Type",
+      "size": "Size",
+      "color": "Color",
+      "price": "Price (€)",
+      "min": "Min",
+      "max": "Max",
+      "allFeminine": "All",
+      "allMasculine": "All",
+      "loadingBrands": "Loading brands...",
+      "loadingTypes": "Loading types...",
+      "loadingSizes": "Loading sizes...",
+      "loadingColors": "Loading colors..."
+    },
+    "chips": {
+      "search": "Search: {{value}}",
+      "brand": "Brand: {{value}}",
+      "type": "Type: {{value}}",
+      "size": "Size: {{value}}",
+      "color": "Color: {{value}}",
+      "priceBetween": "Price: €{{min}}–€{{max}}",
+      "priceMin": "Price: ≥ €{{min}}",
+      "priceMax": "Price: ≤ €{{max}}"
+    },
+    "pagination": {
+      "first": "First",
+      "prev": "Previous",
+      "next": "Next",
+      "last": "Last"
+    }
+  },
+
+  
+  "profile": {
+    "title": "My profile",
+    "sections": {
+      "personal": "Personal details",
+      "security": "Security",
+      "orders": "Orders"
+    },
+    "fields": {
+      "name": "Name",
+      "email": "Email"
+    },
+    "placeholders": {
+      "namePending": "— pending backend —"
+    },
+    "security": {
+      "description": "You can change your password or manage your account security.",
+      "changePassword": "Change password"
+    },
+    "orders": {
+      "description": "View your placed orders.",
+      "view": "View orders"
+    },
+    "note": "* This page is a mockup. Once we connect the backend, this data will come from the database.",
+    "loggedOut": {
+      "message": "You are not logged in. Sign in to view your profile."
+    }
+  },
+  "auth": {
+    "login": "Sign in"
+  },
+
+   "cart": {
+    "title": "Cart",
+    "items": "{{count}} item(s)",
+    "continueShopping": "Continue shopping",
+    "empty": {
+      "title": "Your cart is empty",
+      "subtitle": "Add a product to get started.",
+      "cta": "Browse products"
+    },
+    "productFallback": "Product",
+    "lineTotal": "Total",
+    "qty": {
+      "decrease": "Decrease quantity",
+      "increase": "Increase quantity"
+    },
+    "remove": "Remove",
+    "clear": "Clear cart",
+    "summary": {
+      "title": "Summary",
+      "subtotal": "Subtotal (VAT included)",
+      "shipping": "Shipping",
+      "total": "Total",
+      "note": "* Prices include VAT. Shipping is a flat rate.",
+      "taxIncluded": "VAT included"
+    },
+    "checkout": "Go to checkout"
+  },
+
+  "checkout": {
+    "title": "Checkout",
+    "emptyCart": "Your cart is empty.",
+    "backToProducts": "Back to products",
+    "backToCart": "Back to cart",
+
+    "contact": {
+      "title": "Contact details",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email",
+      "phone": "Phone"
+    },
+
+    "billing": {
+      "title": "Billing address",
+      "address1": "Address",
+      "address2": "Address (line 2)",
+      "city": "City",
+      "postcode": "Postcode",
+      "state": "State / Province"
+    },
+
+    "shipping": {
+      "title": "Shipping address",
+      "sameAsBilling": "Same as billing address",
+      "address1": "Address",
+      "address2": "Address (line 2)",
+      "city": "City",
+      "postcode": "Postcode",
+      "state": "State / Province"
+    },
+
+    "payment": {
+      "title": "Payment details",
+      "processing": "Processing...",
+      "continue": "Continue to payment",
+      "intentCreated": "✅ Payment intent created. You can now complete the payment."
+    },
+
+    "summary": {
+      "title": "Order summary",
+      "productFallback": "Product",
+      "subtotal": "Subtotal (VAT included)",
+      "shipping": "Shipping",
+      "total": "Total",
+      "confirmed": "* Totals confirmed by the server.",
+      "estimated": "* Estimate. The final total will be confirmed at payment."
+    },
+
+    "placeholders": {
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "john@example.com",
+      "phone": "+34 612 345 678",
+      "address1": "Main Street, 1",
+      "address2": "2nd floor, Door A",
+      "city": "Barcelona",
+      "postcode": "08001",
+      "state": "Barcelona"
+    },
+
+    "validation": {
+      "firstNameRequired": "First name is required",
+      "lastNameRequired": "Last name is required",
+      "emailRequired": "Email is required",
+      "billingAddressRequired": "Billing address is required",
+      "billingCityRequired": "Billing city is required",
+      "billingPostcodeRequired": "Billing postcode is required",
+      "shippingAddressRequired": "Shipping address is required",
+      "shippingCityRequired": "Shipping city is required",
+      "shippingPostcodeRequired": "Shipping postcode is required"
+    },
+
+    "errors": {
+      "missingStripeKey": "Missing VITE_STRIPE_PUBLISHABLE_KEY. Check your frontend .env.",
+      "reviewRequiredFields": "Please review the required fields.",
+      "cartEmpty": "Your cart is empty.",
+      "missingProductId": "Some cart items are missing product_id.",
+      "noClientSecret": "The server did not return client_secret."
+    }
+  },
+
+   "checkoutSuccess": {
+    "title": "Order completed",
+
+    "status": {
+      "loading": "Checking payment...",
+      "succeeded": "Payment completed",
+      "processing": "Payment processing…",
+      "failed": "Payment failed. Please try again.",
+      "unknown": "Could not determine the payment status.",
+      "error": "Error: {{error}}",
+      "generic": "Status: {{status}}"
+    },
+
+    "errors": {
+      "stripeNotInit": "Stripe not initialized (check your key)."
+    },
+
+    "confirmError": "Error creating the order: {{error}}",
+
+    "orderSummary": {
+      "title": "Order summary",
+      "idLabel": "ID:",
+      "referenceLabel": "Reference:"
+    },
+
+    "products": {
+      "title": "Products",
+      "emptyNote": "(If Stripe redirected you, the frontend might not have the cart here.)"
+    },
+
+    "totals": {
+      "subtotal": "Subtotal",
+      "discount": "Discount",
+      "shipping": "Shipping",
+      "vat": "VAT (21%)",
+      "total": "Total"
+    },
+
+    "customer": {
+      "title": "Customer details",
+      "name": "Name:",
+      "email": "Email:",
+      "phone": "Phone:",
+      "notAvailable": "Not available"
+    },
+
+    "addresses": {
+      "billing": "Billing address",
+      "shipping": "Shipping address"
+    },
+
+    "actions": {
+      "backToShop": "Back to shop",
+      "viewOrders": "View orders"
+    }
+  },
+
+    "checkoutForm": {
+    "actions": {
+      "processing": "Processing...",
+      "payNow": "Pay now"
+    },
+    "errors": {
+      "generic": "Error confirming the payment.",
+      "unexpected": "Unexpected error while confirming the payment."
+    }
+  },
+
+   "userMenu": {
+    "signedInAs": "Signed in as",
+    "myProfile": "My profile",
+    "myOrders": "My orders",
+    "logout": "Sign out",
+    "login": "Sign in",
+    "register": "Create account",
+    "notLoggedIn": {
+      "title": "You’re not signed in",
+      "subtitle": "Sign in to shop and view orders"
+    },
+    "aria": {
+      "user": "User"
+    }
+   },
+
+   "login": {
+  "title": "Sign in",
+  "email": "Email",
+  "password": "Password",
+  "submit": "Sign in",
+  "loading": "Loading...",
+  "noAccount": "Don't have an account?",
+  "register": "Register",
+  "placeholders": {
+    "email": "you@example.com",
+    "password": "Password"
+  }
+},
+
+"register": {
+  "title": "Create account",
+  "fullName": "Full name",
+  "email": "Email",
+  "password": "Password",
+  "passwordConfirm": "Confirm password",
+  "submit": "Sign up",
+  "loading": "Loading...",
+  "haveAccount": "Already have an account?",
+  "login": "Sign in",
+  "placeholders": {
+    "name": "Your name",
+    "email": "you@example.com",
+    "password": "Minimum 8 characters",
+    "passwordConfirm": "Repeat your password"
+  }
+},
+
+"verifyEmail": {
+  "title": "Verify your email",
+  "signedInAs": "Signed in as",
+  "description": "We've sent you an email with a verification link. Once you click it, this page will automatically complete the verification.",
+  "success": "Email verified successfully.",
+  "resent": "Email resent. Please check your inbox.",
+  "resend": "Resend email",
+  "verifying": "Verifying...",
+  "alreadyVerified": "I've verified",
+  "backToProfile": "Back to profile",
+  "errors": {
+    "verifyFailed": "Could not verify the email."
+  }
+},
+
+"changePassword": {
+  "title": "Change password",
+  "backToProfile": "Back to profile",
+  "description": "Enter your current password and your new password.",
+  "notLoggedIn": "You are not logged in. Sign in to change your password.",
+  "success": "Password updated successfully.",
+  "errors": {
+    "fillAll": "Fill in all fields.",
+    "confirmMismatch": "Confirmation does not match.",
+    "minLength": "The new password must be at least 8 characters long.",
+    "reviewFields": "Please review the highlighted fields.",
+    "generic": "Error changing the password."
+  },
+  "fields": {
+    "current": {
+      "label": "Current password",
+      "placeholder": "Enter your current password"
+    },
+    "new": {
+      "label": "New password",
+      "placeholder": "Enter your new password"
+    },
+    "confirm": {
+      "label": "Confirm new password",
+      "placeholder": "Confirm your new password"
+    }
+  },
+  "actions": {
+    "submit": "Change password",
+    "changing": "Updating..."
+  }
+},
+
+"orderDetail": {
+  "title": "Order details",
+  "actions": {
+    "refresh": "Refresh",
+    "refreshing": "Refreshing...",
+    "backToOrders": "Back to orders"
+  },
+  "notLoggedIn": "You must be logged in to view this order.",
+  "loading": "Loading order...",
+  "notFound": "Order not found.",
+  "unauthorizedHint": "If it says “Unauthorized”, the order may not be yours or you are not authenticated correctly.",
+  "signedInAs": "Signed in as",
+  "fields": {
+    "id": "ID",
+    "status": "Status",
+    "reference": "Reference",
+    "date": "Date"
+  },
+  "sections": {
+    "products": "Products",
+    "totals": "Totals",
+    "customer": "Customer details",
+    "addresses": "Addresses"
+  },
+  "noLines": "No line items.",
+  "totals": {
+    "subtotal": "Subtotal",
+    "discount": "Discount",
+    "shipping": "Shipping",
+    "tax": "VAT",
+    "total": "Total"
+  },
+  "customer": {
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "noData": "No customer data available for this order."
+  },
+  "addresses": {
+    "billing": "Billing",
+    "shipping": "Shipping"
+  }
+},
+"common": {
+  "errorLabel": "Error"
+},
+
+"orders": {
+  "title": "My orders",
+  "actions": {
+  "refresh": "Refresh",
+  "refreshing": "Refreshing...",
+  "backToProfile": "Back to profile",
+  "viewDetail": "View details",
+  "downloadInvoice": "Download invoice",
+  "downloadInvoiceError": "Could not download the invoice."
+},
+  "notLoggedIn": "You must be logged in to view your orders.",
+  "signedInAs": "Signed in as",
+  "empty": "You don’t have any orders yet.",
+  "orderLabel": "Order",
+  "fields": {
+    "status": "Status",
+    "referenceShort": "Ref",
+    "total": "Total",
+    "lines": "Items"
+  }
+},
+
+"productDetail": {
+  "loading": "Loading product...",
+  "notFound": "Product not found",
+  "noImage": "No image",
+  "errors": {
+    "load": "Error loading product"
+  },
+  "gallery": {
+    "prev": "Previous image",
+    "next": "Next image",
+    "thumbnailAria": "Select image",
+    "imageAlt": "{{name}} image {{index}}"
+  },
+  "color": {
+    "label": "Color",
+    "selectAria": "Select color {{color}}"
+  },
+  "size": {
+    "title": "Select your size",
+    "guide": "Size guide",
+    "sizeAria": "Select size EU {{size}}"
+  },
+  "stock": {
+    "available": "Available stock",
+    "units": "units"
+  },
+  "actions": {
+    "backHome": "Back to home",
+    "addToCart": "Add to cart",
+    "adding": "Adding...",
+    "outOfStock": "Out of stock",
+    "addToFavorites": "Add to favorites"
+  },
+  "favorites": {
+    "todo": "Favorites (todo)"
+  },
+  "toasts": {
+    "selectSize": "Select a size",
+    "variantUnavailable": "Variant not available",
+    "outOfStock": "No stock available",
+    "addedToCart": "Added to cart!",
+    "addToCartError": "Error adding to cart"
+  }
+},
+
+
+  "about": {
+    "kicker": "About us",
+    "title": "Sneakers made with care: fast, comfortable and stylish.",
+    "subtitle": "We are a small DAW team building a modern e-commerce to learn and do things properly: fast filters, real checkout and a Nike-like experience.",
+
+    "badges": {
+      "b1": "React Frontend",
+      "b2": "Laravel API",
+      "b3": "Stripe Checkout",
+      "b4": "i18n (CA/EN)"
+    },
+
+    "heroCard": {
+      "title": "DAW Project · Sneakers Ecommerce",
+      "text": "Carefully crafted UI, real data and a Leaflet map."
+    },
+
+    "values": {
+      "title": "What drives us",
+      "v1": {
+        "title": "Quality",
+        "text": "We select products with good materials and real comfort."
+      },
+      "v2": {
+        "title": "Support",
+        "text": "We respond quickly and aim to make shopping simple."
+      },
+      "v3": {
+        "title": "Transparency",
+        "text": "Clear prices, clear information and no surprises."
+      }
+    },
+
+    "team": {
+      "title": "The team",
+      "subtitle": "We are two developers who split the project to make it complete: polished interface, solid API and real checkout.",
+      "photoAlt": "Team photo",
+      "duoTitle": "Albert & David",
+      "duoSubtitle": "A DAW duo focused on product, code and attention to detail.",
+
+      "albert": {
+        "name": "Albert",
+        "role": "Frontend / UX",
+        "bio": "Responsible for the user experience: Nike-style filters, components, design and making everything fast and clear."
+      },
+
+      "david": {
+        "name": "David",
+        "role": "Backend / API",
+        "bio": "Handles the logic and integrations: endpoints, authentication, data and real payments with Stripe so the checkout actually works."
+      },
+
+      "photoHintSingle": "The team photo was generated with AI from our real faces to protect our privacy while keeping a human look."
+    },
+
+    "map": {
+        "title": "Where we are",
+        "subtitle": "You can find us in Igualada, in the heart of Catalonia. This is where we’re developing this DAW project, inspired by the views and calm atmosphere that help us write clean code and build an exceptional user experience.",
+        "popupTitle": "Institut Milà i Fontanals",
+        "popupText": "Igualada · DAW Ecommerce Project"
+    },
+
+    "contact": {
+      "title": "Contact",
+      "text": "Contact us for questions, issues or project improvements.",
+      "emailLabel": "Email",
+      "phoneLabel": "Phone"
+    },
+
+    "hours": {
+      "title": "Opening hours",
+      "text": "Customer support schedule.",
+      "weekdays": "Mon–Fri",
+      "weekend": "Sat–Sun",
+      "closed": "Closed"
+    }
+  }
+
+
+
+}
