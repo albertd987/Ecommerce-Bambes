@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react"
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"
 import { getFavorites, toggleFavorite as apiToggleFavorite } from "@/services/api"
 import { useAuth } from "@/context/auth-context"
 
@@ -11,12 +11,12 @@ const FavoritesContext = createContext({
 })
 
 export function FavoritesProvider({ children }) {
-  const { isLoggedIn } = useAuth()
+  const { isLoggedIn, loading: authLoading } = useAuth()
 
   const [favorites, setFavorites] = useState([])
   const [loading, setLoading] = useState(false)
 
-  const loadFavorites = async () => {
+  const loadFavorites = useCallback(async () => {
     if (!isLoggedIn) {
       setFavorites([])
       return
@@ -39,33 +39,43 @@ export function FavoritesProvider({ children }) {
     } finally {
       setLoading(false)
     }
-  }
-
-  useEffect(() => {
-    loadFavorites()
   }, [isLoggedIn])
 
-  const isFavorite = (productId) => {
-    return favorites.some((f) => f?.id === productId)
-  }
+  useEffect(() => {
+    if (authLoading) return
+    loadFavorites()
+  }, [isLoggedIn, authLoading, loadFavorites])
 
-  const toggleFavorite = async (productId) => {
-    try {
-      const res = await apiToggleFavorite(productId)
-      const favorited = !!res.data?.favorited
+  const isFavorite = useCallback(
+    (productId) => favorites.some((f) => f?.id === productId),
+    [favorites]
+  )
 
-      if (favorited) {
-        await loadFavorites()
-        return true
+  const toggleFavorite = useCallback(
+    async (productId) => {
+      try {
+        const res = await apiToggleFavorite(productId)
+        const favorited = !!res.data?.favorited
+
+        if (favorited) {
+          const newFavorite = res.data?.favorite
+          if (newFavorite) {
+            setFavorites((prev) => [...prev, newFavorite])
+          } else {
+            await loadFavorites()
+          }
+          return true
+        }
+
+        setFavorites((prev) => prev.filter((f) => f?.id !== productId))
+        return false
+      } catch (error) {
+        console.error("Error fent toggle favorite:", error)
+        throw error
       }
-
-      setFavorites((prev) => prev.filter((f) => f?.id !== productId))
-      return false
-    } catch (error) {
-      console.error("Error fent toggle favorite:", error)
-      throw error
-    }
-  }
+    },
+    [loadFavorites]
+  )
 
   const value = useMemo(
     () => ({
@@ -75,7 +85,7 @@ export function FavoritesProvider({ children }) {
       toggleFavorite,
       reloadFavorites: loadFavorites,
     }),
-    [favorites, loading]
+    [favorites, loading, isFavorite, toggleFavorite, loadFavorites]
   )
 
   return (
