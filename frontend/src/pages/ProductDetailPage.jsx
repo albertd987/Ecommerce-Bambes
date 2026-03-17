@@ -88,8 +88,6 @@ export default function ProductDetailPage() {
         const response = await api.get(`/products/${id}`)
         const productData = response.data?.data ?? response.data
 
-        console.log("Product loaded:", productData)
-
         setProduct(productData)
 
         if (productData?.variants?.length > 0) {
