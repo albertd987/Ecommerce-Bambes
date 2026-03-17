@@ -19,6 +19,7 @@ export default function ProfilePage() {
 
         {isLoggedIn ? (
           <div className="space-y-6">
+
             {/* DADES PERSONALS */}
             <div className="border rounded-lg p-4">
               <h3 className="font-semibold mb-3">
@@ -81,6 +82,23 @@ export default function ProfilePage() {
               </Link>
             </div>
 
+            {/* FAVORITS */}
+            <div className="border rounded-lg p-4">
+              <h3 className="font-semibold mb-3">
+                {t("profile.sections.favorites", "Favorits")}
+              </h3>
+
+              <p className="text-sm text-muted-foreground mb-3">
+                {t("profile.favorites.description", "Consulta els productes que has guardat com a favorits.")}
+              </p>
+
+              <Link to="/favorites">
+                <Button variant="outline">
+                  {t("profile.favorites.view", "Veure favorits")}
+                </Button>
+              </Link>
+            </div>
+
             {/* INFO */}
             <p className="text-xs text-muted-foreground">
               {t(
@@ -88,6 +106,7 @@ export default function ProfilePage() {
                 "* Aquesta pàgina és una maqueta. Quan connectem el backend, aquestes dades vindran de la base de dades."
               )}
             </p>
+
           </div>
         ) : (
           <div className="border rounded-lg p-4 max-w-md">

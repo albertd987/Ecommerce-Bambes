@@ -1,5 +1,5 @@
 // src/pages/ProductDetailPage.jsx
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import Header from "@/components/Header"
 import { Button } from "@/components/ui/button"
@@ -10,12 +10,64 @@ import { organizeVariants, findVariant } from "@/utils/variantParser"
 import { ChevronLeft, ChevronRight, Heart } from "lucide-react"
 import { toast } from "sonner"
 import { useTranslation } from "react-i18next"
+import { useFavorites } from "@/context/favorites-context"
+import { useAuth } from "@/context/auth-context"
+
+function getSafeText(value, fallback = "") {
+  if (value == null) return fallback
+  if (typeof value === "string") return value
+  if (typeof value === "number") return String(value)
+
+  if (typeof value === "object") {
+    if (typeof value.name === "string") return value.name
+    if (typeof value.value === "string") return value.value
+    if (typeof value.label === "string") return value.label
+    if (typeof value.text === "string") return value.text
+    if (typeof value.title === "string") return value.title
+  }
+
+  return fallback
+}
+
+function getSafePrice(value) {
+  if (value == null) return 0
+  if (typeof value === "number") return value
+  if (typeof value === "string") {
+    const n = Number(value)
+    return Number.isNaN(n) ? 0 : n
+  }
+
+  if (typeof value === "object") {
+    if (typeof value.decimal === "number") return value.decimal
+    if (typeof value.value === "number") return value.value
+    if (typeof value.amount === "number") return value.amount
+    if (typeof value.price === "number") return value.price
+  }
+
+  return 0
+}
+
+function getSafeImage(value) {
+  if (!value) return null
+  if (typeof value === "string") return value
+
+  if (typeof value === "object") {
+    if (typeof value.url === "string") return value.url
+    if (typeof value.src === "string") return value.src
+    if (typeof value.path === "string") return value.path
+    if (typeof value.original_url === "string") return value.original_url
+  }
+
+  return null
+}
 
 export default function ProductDetailPage() {
   const { t } = useTranslation()
   const { id } = useParams()
   const navigate = useNavigate()
   const { addItem } = useCart()
+  const { isLoggedIn } = useAuth()
+  const { isFavorite, toggleFavorite } = useFavorites()
 
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -24,6 +76,7 @@ export default function ProductDetailPage() {
   const [selectedSize, setSelectedSize] = useState(null)
   const [selectedColor, setSelectedColor] = useState(null)
   const [addingToCart, setAddingToCart] = useState(false)
+  const [togglingFavorite, setTogglingFavorite] = useState(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
 
   const [variantsData, setVariantsData] = useState(null)
@@ -39,7 +92,7 @@ export default function ProductDetailPage() {
 
         setProduct(productData)
 
-        if (productData.variants?.length > 0) {
+        if (productData?.variants?.length > 0) {
           const organized = organizeVariants(productData.variants)
           setVariantsData(organized)
 
@@ -59,6 +112,37 @@ export default function ProductDetailPage() {
 
     fetchProduct()
   }, [id, t])
+
+  const productName = useMemo(
+    () => getSafeText(product?.name, "Producte"),
+    [product]
+  )
+
+  const productDescription = useMemo(
+    () => getSafeText(product?.description, ""),
+    [product]
+  )
+
+  const brandName = useMemo(
+    () => getSafeText(product?.brand, ""),
+    [product]
+  )
+
+  const productPrice = useMemo(
+    () => getSafePrice(product?.price),
+    [product]
+  )
+
+  const allImages = useMemo(() => {
+    if (!product) return []
+
+    const thumb = getSafeImage(product.thumbnail)
+    const rest = Array.isArray(product.images)
+      ? product.images.map(getSafeImage).filter(Boolean)
+      : []
+
+    return [thumb, ...rest.filter((img) => img !== thumb)].filter(Boolean)
+  }, [product])
 
   const handleAddToCart = async () => {
     if (!selectedSize || !selectedColor) {
@@ -96,13 +180,38 @@ export default function ProductDetailPage() {
     }
   }
 
-  // Construir array de totes les imatges disponibles
-  const allImages = product
-    ? [
-        ...(product.thumbnail ? [product.thumbnail] : []),
-        ...(product.images?.filter((img) => img !== product.thumbnail) || []),
-      ]
-    : []
+  const handleToggleFavorite = async () => {
+    if (!product?.id) return
+
+    if (!isLoggedIn) {
+      toast.warning(
+        t(
+          "productDetail.toasts.loginRequiredForFavorites",
+          "Has d'iniciar sessió per afegir favorits"
+        )
+      )
+      navigate("/login")
+      return
+    }
+
+    try {
+      setTogglingFavorite(true)
+      const next = await toggleFavorite(product.id)
+
+      if (next) {
+        toast.success(t("productDetail.toasts.addedToFavorites", "Afegit a favorits"))
+      } else {
+        toast.success(t("productDetail.toasts.removedFromFavorites", "Eliminat de favorits"))
+      }
+    } catch (err) {
+      console.error("Error toggling favorite:", err)
+      toast.error(
+        t("productDetail.toasts.favoriteError", "Error gestionant els favorits")
+      )
+    } finally {
+      setTogglingFavorite(false)
+    }
+  }
 
   const handlePrevImage = () => {
     setSelectedImageIndex((prev) => (prev === 0 ? allImages.length - 1 : prev - 1))
@@ -151,6 +260,7 @@ export default function ProductDetailPage() {
       : null
 
   const isOutOfStock = currentVariant && currentVariant.stock <= 0
+  const favorite = product ? isFavorite(product.id) : false
 
   return (
     <div className="min-h-screen bg-background">
@@ -158,9 +268,7 @@ export default function ProductDetailPage() {
 
       <main className="max-w-[1200px] mx-auto px-4 py-6 lg:py-10">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_400px] xl:grid-cols-[minmax(0,1fr)_440px]">
-          {/* ======= GALERIA ESTIL NIKE ======= */}
           <div className="flex gap-3">
-            {/* Miniatures verticals (esquerra) */}
             {allImages.length > 1 && (
               <div className="hidden md:flex flex-col gap-2 w-[76px] shrink-0">
                 {allImages.map((img, idx) => (
@@ -173,11 +281,12 @@ export default function ProductDetailPage() {
                         : "border-transparent hover:border-muted-foreground/40"
                     }`}
                     aria-label={t("productDetail.gallery.thumbnailAria", "Seleccionar imatge")}
+                    type="button"
                   >
                     <img
                       src={img}
                       alt={t("productDetail.gallery.imageAlt", "{{name}} imatge {{index}}", {
-                        name: product.name,
+                        name: productName,
                         index: idx + 1,
                       })}
                       className="h-full w-full object-cover"
@@ -187,13 +296,12 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            {/* Imatge principal + fletxes */}
             <div className="relative flex-1">
               <div className="aspect-square rounded-lg overflow-hidden bg-muted/40 flex items-center justify-center">
                 {allImages.length > 0 ? (
                   <img
                     src={allImages[selectedImageIndex]}
-                    alt={product.name}
+                    alt={productName}
                     className="h-full w-full object-cover"
                   />
                 ) : (
@@ -205,13 +313,13 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* Fletxes de navegació */}
               {allImages.length > 1 && (
                 <div className="flex items-center justify-center gap-3 mt-3">
                   <button
                     onClick={handlePrevImage}
                     className="w-9 h-9 rounded-full bg-muted/60 hover:bg-muted flex items-center justify-center transition-colors"
                     aria-label={t("productDetail.gallery.prev", "Imatge anterior")}
+                    type="button"
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </button>
@@ -219,13 +327,13 @@ export default function ProductDetailPage() {
                     onClick={handleNextImage}
                     className="w-9 h-9 rounded-full bg-muted/60 hover:bg-muted flex items-center justify-center transition-colors"
                     aria-label={t("productDetail.gallery.next", "Imatge següent")}
+                    type="button"
                   >
                     <ChevronRight className="h-5 w-5" />
                   </button>
                 </div>
               )}
 
-              {/* Miniatures horitzontals (mòbil) */}
               {allImages.length > 1 && (
                 <div className="flex md:hidden gap-2 mt-3 overflow-x-auto pb-1">
                   {allImages.map((img, idx) => (
@@ -236,11 +344,12 @@ export default function ProductDetailPage() {
                         selectedImageIndex === idx ? "border-foreground" : "border-transparent"
                       }`}
                       aria-label={t("productDetail.gallery.thumbnailAria", "Seleccionar imatge")}
+                      type="button"
                     >
                       <img
                         src={img}
                         alt={t("productDetail.gallery.imageAlt", "{{name}} imatge {{index}}", {
-                          name: product.name,
+                          name: productName,
                           index: idx + 1,
                         })}
                         className="h-full w-full object-cover"
@@ -252,29 +361,23 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          {/* ======= INFO PRODUCTE ESTIL NIKE ======= */}
           <div className="lg:pt-0">
-            {/* Marca */}
-            {product.brand && (
-              <p className="text-sm font-medium text-orange-600 mb-1">{product.brand}</p>
+            {brandName && (
+              <p className="text-sm font-medium text-orange-600 mb-1">{brandName}</p>
             )}
 
-            {/* Nom del producte */}
-            <h1 className="text-2xl font-bold leading-tight">{product.name}</h1>
+            <h1 className="text-2xl font-bold leading-tight">{productName}</h1>
 
-            {/* Descripció curta */}
-            {product.description && (
+            {productDescription && (
               <p className="text-muted-foreground mt-1 text-sm leading-snug">
-                {product.description}
+                {productDescription}
               </p>
             )}
 
-            {/* Preu */}
             <p className="text-xl font-medium mt-4">
-              {Number(product.price).toFixed(2)} &euro;
+              {Number(productPrice).toFixed(2)} &euro;
             </p>
 
-            {/* Selector de Color */}
             {variantsData && variantsData.colors.length > 1 && (
               <div className="mt-6">
                 <p className="text-sm font-medium mb-3">
@@ -291,9 +394,12 @@ export default function ProductDetailPage() {
                           ? "border-foreground font-medium"
                           : "border-border hover:border-muted-foreground"
                       }`}
-                      aria-label={t("productDetail.color.selectAria", "Seleccionar color {{color}}", {
-                        color,
-                      })}
+                      aria-label={t(
+                        "productDetail.color.selectAria",
+                        "Seleccionar color {{color}}",
+                        { color }
+                      )}
+                      type="button"
                     >
                       {color}
                     </button>
@@ -302,7 +408,6 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            {/* Selector de Talla - estil Nike */}
             {variantsData && variantsData.sizes.length > 0 && (
               <div className="mt-6">
                 <div className="flex items-center justify-between mb-3">
@@ -312,7 +417,11 @@ export default function ProductDetailPage() {
                   <button
                     type="button"
                     className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
-                    onClick={() => toast.message(t("productDetail.sizeGuide.todo", "Guia de talles (pendent)"))}
+                    onClick={() =>
+                      toast.message(
+                        t("productDetail.sizeGuide.todo", "Guia de talles (pendent)")
+                      )
+                    }
                   >
                     {t("productDetail.size.guide", "Guia de talles")}
                   </button>
@@ -337,9 +446,12 @@ export default function ProductDetailPage() {
                               ? "border-border hover:border-foreground cursor-pointer"
                               : "border-border/50 text-muted-foreground/40 cursor-not-allowed line-through"
                           }`}
-                        aria-label={t("productDetail.size.sizeAria", "Seleccionar talla EU {{size}}", {
-                          size,
-                        })}
+                        aria-label={t(
+                          "productDetail.size.sizeAria",
+                          "Seleccionar talla EU {{size}}",
+                          { size }
+                        )}
+                        type="button"
                       >
                         EU {size}
                       </button>
@@ -356,12 +468,12 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            {/* Botons d'acció - estil Nike */}
             <div className="mt-8 space-y-3">
               <button
                 onClick={handleAddToCart}
                 disabled={!selectedSize || isOutOfStock || addingToCart}
                 className="w-full h-14 rounded-full bg-foreground text-background font-medium text-base transition-opacity hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed"
+                type="button"
               >
                 {addingToCart
                   ? t("productDetail.actions.adding", "Afegint...")
@@ -372,15 +484,19 @@ export default function ProductDetailPage() {
 
               <button
                 type="button"
-                className="w-full h-14 rounded-full border-2 border-border font-medium text-base flex items-center justify-center gap-2 hover:border-foreground transition-colors"
-                onClick={() => toast.message(t("productDetail.favorites.todo", "Favorits (pendent)"))}
+                className="w-full h-14 rounded-full border-2 border-border font-medium text-base flex items-center justify-center gap-2 hover:border-foreground transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                onClick={handleToggleFavorite}
+                disabled={togglingFavorite}
               >
-                <Heart className="h-5 w-5" />
-                {t("productDetail.actions.addToFavorites", "Afegir a favorits")}
+                <Heart className={`h-5 w-5 ${favorite ? "fill-current" : ""}`} />
+                {togglingFavorite
+                  ? t("productDetail.actions.updatingFavorite", "Actualitzant favorits...")
+                  : favorite
+                  ? t("productDetail.actions.removeFromFavorites", "Eliminar de favorits")
+                  : t("productDetail.actions.addToFavorites", "Afegir a favorits")}
               </button>
             </div>
 
-            {/* SKU */}
             {currentVariant && (
               <p className="text-xs text-muted-foreground mt-6 pt-4 border-t">
                 SKU: {currentVariant.sku}

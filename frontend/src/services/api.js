@@ -105,5 +105,10 @@ export const downloadInvoice = async (orderId) => {
   }
 }
 
+export const getFavorites = () => api.get("/favorites")
+
+export const toggleFavorite = (productId) =>
+  api.post(`/favorites/${productId}`)
+
 
 export default api
