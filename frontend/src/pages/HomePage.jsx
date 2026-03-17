@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { useSearchParams } from "react-router-dom"
 import api from "../services/api"
 import ProductCard from "../components/ProductCard"
 import Header from "../components/Header"
@@ -205,7 +206,6 @@ function FilterSidebar({
   draftFilters,
   setDraftFilters,
   appliedFilters,
-  setAppliedFilters,
   onApply,
   onClearAll,
   filterOptions,
@@ -234,10 +234,6 @@ function FilterSidebar({
     })
   }
 
-  const setSingleDraft = (key, value) => {
-    setDraftFilters((p) => ({ ...p, [key]: value }))
-  }
-
   const clearArrayDraft = (key) => {
     setDraftFilters((p) => ({ ...p, [key]: [] }))
   }
@@ -249,14 +245,12 @@ function FilterSidebar({
     return `${arr[0]} +${n - 1}`
   }
 
-  // Comptadors (applied)
   const counts = useMemo(() => {
     return {
-      q: appliedFilters.q?.trim() ? 1 : 0,
-      brands: (appliedFilters.brands?.length ?? 0),
-      types: (appliedFilters.types?.length ?? 0),
-      sizes: (appliedFilters.sizes?.length ?? 0),
-      colors: (appliedFilters.colors?.length ?? 0),
+      brands: appliedFilters.brands?.length ?? 0,
+      types: appliedFilters.types?.length ?? 0,
+      sizes: appliedFilters.sizes?.length ?? 0,
+      colors: appliedFilters.colors?.length ?? 0,
       price:
         (String(appliedFilters.min_price).trim() !== "" ? 1 : 0) +
         (String(appliedFilters.max_price).trim() !== "" ? 1 : 0),
@@ -277,100 +271,10 @@ function FilterSidebar({
   const sizesSummary = useMemo(() => mkMultiSummary(appliedFilters.sizes), [appliedFilters.sizes])
   const colorsSummary = useMemo(() => mkMultiSummary(appliedFilters.colors), [appliedFilters.colors])
 
-  const activeTypes = appliedFilters.types ?? []
-
   return (
     <div className="shrink-0 self-stretch transition-all duration-300 w-[280px] opacity-100 mr-10">
       <aside className="w-[280px] sticky top-20 flex flex-col border border-border rounded-lg bg-background">
         <div className="px-4">
-          {/* Tipus reals a dalt (click ràpid) */}
-          <div className="py-4">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs text-muted-foreground">
-                {t("home.quickTypes.title")}
-                {filtersLoading ? ` ${t("home.common.loadingSuffix")}` : ""}
-              </p>
-
-              {activeTypes.length ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAppliedFilters((p) => ({ ...p, types: [], page: 1 }))
-                    setDraftFilters((p) => ({ ...p, types: [] }))
-                  }}
-                  className="text-xs text-muted-foreground hover:text-foreground underline"
-                >
-                  {t("home.common.clear")}
-                </button>
-              ) : null}
-            </div>
-
-            <div className="space-y-1.5">
-              <button
-                type="button"
-                onClick={() => {
-                  setAppliedFilters((p) => ({ ...p, types: [], page: 1 }))
-                  setDraftFilters((p) => ({ ...p, types: [] }))
-                }}
-                className={`block text-[15px] font-medium transition-colors ${
-                  !activeTypes.length
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {t("home.quickTypes.all")}
-              </button>
-
-              {types.map((tType) => {
-                const isActive = activeTypes.includes(tType)
-                return (
-                  <button
-                    key={tType}
-                    type="button"
-                    onClick={() => {
-                      setAppliedFilters((p) => {
-                        const arr = p.types ?? []
-                        const next = arr.includes(tType)
-                          ? arr.filter((x) => x !== tType)
-                          : [...arr, tType]
-                        return { ...p, types: next, page: 1 }
-                      })
-                      setDraftFilters((p) => {
-                        const arr = p.types ?? []
-                        const next = arr.includes(tType)
-                          ? arr.filter((x) => x !== tType)
-                          : [...arr, tType]
-                        return { ...p, types: next }
-                      })
-                    }}
-                    className={`block text-[15px] font-medium transition-colors ${
-                      isActive
-                        ? "text-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {tType}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* ✅ Tots tancats per defecte */}
-          <CollapsibleSection
-            title={t("home.filters.search")}
-            count={counts.q}
-            summary={appliedFilters.q?.trim() ? appliedFilters.q.trim() : ""}
-            defaultOpen={false}
-          >
-            <input
-              value={draftFilters.q}
-              onChange={(e) => setSingleDraft("q", e.target.value)}
-              placeholder={t("home.filters.searchPlaceholder")}
-              className="w-full rounded-md border px-3 py-2 bg-background text-sm"
-            />
-          </CollapsibleSection>
-
           <CollapsibleSection
             title={t("home.filters.brand")}
             count={counts.brands}
@@ -488,14 +392,18 @@ function FilterSidebar({
             <div className="grid grid-cols-2 gap-2">
               <input
                 value={draftFilters.min_price}
-                onChange={(e) => setSingleDraft("min_price", e.target.value)}
+                onChange={(e) =>
+                  setDraftFilters((p) => ({ ...p, min_price: e.target.value }))
+                }
                 placeholder={t("home.filters.min")}
                 className="w-full rounded-md border px-3 py-2 bg-background text-sm"
                 inputMode="decimal"
               />
               <input
                 value={draftFilters.max_price}
-                onChange={(e) => setSingleDraft("max_price", e.target.value)}
+                onChange={(e) =>
+                  setDraftFilters((p) => ({ ...p, max_price: e.target.value }))
+                }
                 placeholder={t("home.filters.max")}
                 className="w-full rounded-md border px-3 py-2 bg-background text-sm"
                 inputMode="decimal"
@@ -504,7 +412,6 @@ function FilterSidebar({
           </CollapsibleSection>
         </div>
 
-        {/* Botons sempre a sota */}
         <div className="mt-auto border-t border-border bg-background p-4">
           <button
             onClick={onApply}
@@ -529,6 +436,9 @@ function FilterSidebar({
 
 export default function HomePage() {
   const { t } = useTranslation()
+  const [searchParams] = useSearchParams()
+
+  const initialQ = searchParams.get("q") || ""
 
   const [products, setProducts] = useState([])
   const [meta, setMeta] = useState({ current_page: 1, last_page: 1, total: 0, per_page: 12 })
@@ -545,7 +455,7 @@ export default function HomePage() {
   const [filtersLoading, setFiltersLoading] = useState(false)
 
   const [draftFilters, setDraftFilters] = useState({
-    q: "",
+    q: initialQ,
     brands: [],
     types: [],
     sizes: [],
@@ -555,7 +465,7 @@ export default function HomePage() {
   })
 
   const [appliedFilters, setAppliedFilters] = useState({
-    q: "",
+    q: initialQ,
     brands: [],
     types: [],
     sizes: [],
@@ -566,6 +476,21 @@ export default function HomePage() {
     page: 1,
     per_page: 12,
   })
+
+  useEffect(() => {
+    const q = searchParams.get("q") || ""
+
+    setDraftFilters((prev) => ({
+      ...prev,
+      q,
+    }))
+
+    setAppliedFilters((prev) => ({
+      ...prev,
+      q,
+      page: 1,
+    }))
+  }, [searchParams])
 
   useEffect(() => {
     let cancelled = false
@@ -585,7 +510,9 @@ export default function HomePage() {
     }
 
     loadFilters()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const params = useMemo(() => {
@@ -636,7 +563,9 @@ export default function HomePage() {
     }
 
     load()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [params, appliedFilters.per_page])
 
   const applyFilters = () => {
@@ -766,7 +695,6 @@ export default function HomePage() {
       min_price: appliedFilters.min_price,
       max_price: appliedFilters.max_price,
     }))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     appliedFilters.q,
     appliedFilters.brands,
@@ -809,7 +737,11 @@ export default function HomePage() {
                 : t("home.results.empty")}
               {loading ? ` · ${t("home.results.loading")}` : ""}
             </p>
-            {error && <p className="text-sm text-destructive mt-1">{t("home.results.error", { message: error })}</p>}
+            {error && (
+              <p className="text-sm text-destructive mt-1">
+                {t("home.results.error", { message: error })}
+              </p>
+            )}
           </div>
 
           <div className="flex items-center gap-6">
@@ -870,7 +802,6 @@ export default function HomePage() {
             draftFilters={draftFilters}
             setDraftFilters={setDraftFilters}
             appliedFilters={appliedFilters}
-            setAppliedFilters={setAppliedFilters}
             onApply={applyFilters}
             onClearAll={clearAll}
             filterOptions={filterOptions}
@@ -879,7 +810,6 @@ export default function HomePage() {
           />
 
           <div className="flex-1 min-w-0">
-            {/* Chips bar */}
             {chips.length > 0 ? (
               <div className="mb-6 flex items-center justify-between gap-4">
                 <div className="flex flex-wrap gap-2">
