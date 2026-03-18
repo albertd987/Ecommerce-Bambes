@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useSearchParams } from "react-router-dom"
-import api from "../services/api"
-import ProductCard from "../components/ProductCard"
-import Header from "../components/Header"
+import api from "@/services/api"
+import ProductCard from "@/components/ProductCard"
+import Header from "@/components/Header"
 import { ChevronDown, SlidersHorizontal, X } from "lucide-react"
 
 /** Pill de comptador (Nike-like) */

@@ -25,5 +25,5 @@ vi.mock('react-i18next', () => ({
 
 describe('CartPage', () => {
   it.todo('rapid multiple clicks on "+" does not fire simultaneous requests')
-  it.todo('quantity reaching 0 removes item or asks confirmation')
+  it.todo('decrement button is disabled when quantity is 1')
 })

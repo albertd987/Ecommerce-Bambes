@@ -7,7 +7,7 @@ vi.mock('@stripe/react-stripe-js', () => ({
 }))
 
 vi.mock('@/components/ui/button', () => ({
-  Button: ({ children, ...props }) => <button {...props}>{children}</button>,
+  Button: ({ children }) => children,
 }))
 
 vi.mock('react-i18next', () => ({
