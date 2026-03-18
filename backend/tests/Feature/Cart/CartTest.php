@@ -4,9 +4,6 @@ namespace Tests\Feature\Cart;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Lunar\Models\ProductVariant;
-use Lunar\Models\TaxZone;
-use Lunar\Models\TaxRate;
-use Lunar\Models\TaxRateAmount;
 use Tests\TestCase;
 use Tests\Traits\LunarTestSetup;
 
@@ -18,28 +15,6 @@ class CartTest extends TestCase
     {
         parent::setUp();
         $this->setUpLunar();
-        $this->setUpTaxZone();
-    }
-
-    private function setUpTaxZone(): void
-    {
-        $taxZone = TaxZone::factory()->create([
-            'name'    => 'Default Zone',
-            'active'  => true,
-            'default' => true,
-        ]);
-
-        $taxRate = TaxRate::factory()->create([
-            'tax_zone_id' => $taxZone->id,
-            'name'        => 'IVA 21%',
-            'priority'    => 1,
-        ]);
-
-        TaxRateAmount::factory()->create([
-            'tax_rate_id'  => $taxRate->id,
-            'tax_class_id' => $this->taxClass->id,
-            'percentage'   => 21,
-        ]);
     }
 
     private function createVariant(int $priceCents = 5000, int $stock = 10): ProductVariant
@@ -122,6 +97,12 @@ class CartTest extends TestCase
         ]);
 
         $response->assertStatus(200);
+
+        $updatedCart = $this->getJson('/api/cart?cart_token=' . $cartToken);
+        $updatedCart->assertStatus(200);
+        $updatedQty = collect($updatedCart->json('data.lines'))
+            ->firstWhere('id', $lineId)['quantity'];
+        $this->assertEquals(3, $updatedQty);
     }
 
     public function test_update_line_quantity_zero_returns_422(): void
@@ -161,6 +142,11 @@ class CartTest extends TestCase
         $response = $this->deleteJson("/api/cart/lines/{$lineId}?cart_token={$cartToken}");
 
         $response->assertStatus(200);
+
+        $afterCart = $this->getJson('/api/cart?cart_token=' . $cartToken);
+        $afterCart->assertStatus(200);
+        $lines = $afterCart->json('data.lines') ?? [];
+        $this->assertEmpty($lines);
     }
 
     public function test_remove_nonexistent_line(): void
@@ -173,7 +159,8 @@ class CartTest extends TestCase
         ]);
         $cartToken = $addResponse->json('data.cart_token');
 
-        // Try to remove a nonexistent line — controller catches exception, returns 500
+        // ID 99999 assumed not to exist (auto-increment starts at 1)
+        // The controller's generic catch block returns 500 for a missing line (not 404 — known limitation)
         $response = $this->deleteJson("/api/cart/lines/99999?cart_token={$cartToken}");
 
         $response->assertStatus(500);
@@ -194,6 +181,10 @@ class CartTest extends TestCase
         ]);
 
         $response->assertStatus(200);
+
+        $afterClear = $this->getJson('/api/cart?cart_token=' . $cartToken);
+        $afterClear->assertStatus(200)
+                   ->assertJsonPath('data', null);
     }
 
     public function test_get_empty_cart(): void

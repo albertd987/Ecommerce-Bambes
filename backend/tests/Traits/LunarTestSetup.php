@@ -8,6 +8,9 @@ use Lunar\Models\Currency;
 use Lunar\Models\Language;
 use Lunar\Models\ProductType;
 use Lunar\Models\TaxClass;
+use Lunar\Models\TaxZone;
+use Lunar\Models\TaxRate;
+use Lunar\Models\TaxRateAmount;
 
 trait LunarTestSetup
 {
@@ -47,6 +50,29 @@ trait LunarTestSetup
 
         $this->productType = ProductType::factory()->create([
             'name' => 'Sabatilles',
+        ]);
+
+        $this->setUpTaxZone();
+    }
+
+    private function setUpTaxZone(): void
+    {
+        $taxZone = TaxZone::factory()->create([
+            'name'    => 'Default Zone',
+            'active'  => true,
+            'default' => true,
+        ]);
+
+        $taxRate = TaxRate::factory()->create([
+            'tax_zone_id' => $taxZone->id,
+            'name'        => 'IVA 21%',
+            'priority'    => 1,
+        ]);
+
+        TaxRateAmount::factory()->create([
+            'tax_rate_id'  => $taxRate->id,
+            'tax_class_id' => $this->taxClass->id,
+            'percentage'   => 21,
         ]);
     }
 
