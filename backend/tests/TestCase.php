@@ -22,6 +22,9 @@ abstract class TestCase extends BaseTestCase
             try {
                 $alreadyMigrated = DB::connection()
                     ->table('migrations')
+                    // IMPORTANT: Keep this in sync with the actual migration filename in database/migrations/.
+                    // If this migration is renamed or removed, this check silently falls through to the
+                    // standard RefreshDatabase behavior (migrate:fresh), which is a safe fallback.
                     ->where('migration', '2026_03_16_152044_create_favorites_table')
                     ->exists();
 
