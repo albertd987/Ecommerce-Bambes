@@ -72,8 +72,8 @@ class ProductTest extends TestCase
 
     public function test_draft_product_not_in_listing(): void
     {
-        $this->createProductWithVariantAndPrice(5000, 10, ['status' => 'draft']);
-        $this->createProductWithVariantAndPrice(5000, 10, ['status' => 'published']);
+        $this->createProductWithVariantAndPrice(5000, 10, ['status' => 'draft']);   // 50€, stock=10
+        $this->createProductWithVariantAndPrice(5000, 10, ['status' => 'published']); // 50€, stock=10
 
         $response = $this->getJson('/api/products');
 
@@ -95,7 +95,7 @@ class ProductTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_filters_endpoint_returns_valid_structure(): void
+    public function test_filters_endpoint_returns_200(): void
     {
         $response = $this->getJson('/api/products/filters');
 
