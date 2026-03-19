@@ -1,11 +1,24 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react"
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react"
 import api from '../services/api'
+import { useAuth } from './auth-context'
 
 const CartContext = createContext(null)
 
 export function CartProvider({ children }) {
   const [cart, setCart] = useState(null) // Dades del servidor
   const [loading, setLoading] = useState(false)
+
+  // Detectar logout i netejar el carret
+  const { isLoggedIn, loading: authLoading } = useAuth()
+  const prevLoggedIn = useRef(null)
+  useEffect(() => {
+    if (authLoading) return
+    if (prevLoggedIn.current === true && isLoggedIn === false) {
+      localStorage.removeItem('cart_token')
+      setCart(null)
+    }
+    prevLoggedIn.current = isLoggedIn
+  }, [isLoggedIn, authLoading])
 
   // Obtenir carret del servidor
   const fetchCart = async () => {
