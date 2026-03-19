@@ -8,6 +8,9 @@
 .env.*.local
 *.env
 
+# Git worktrees
+.worktrees/
+
 # Eines de desenvolupament locals
 .claude/
 .idea/
