@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Lunar\Facades\CartSession;
 
 /**
  * Controlador d'autenticacio de l'API REST.
@@ -128,6 +129,10 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
+        CartSession::forget();
+
+        Auth::guard('web')->logout();
+        Auth::forgetGuards();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

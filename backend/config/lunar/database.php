@@ -39,7 +39,7 @@ return [
     | Set to 'true' to disable.
     |
     */
-    'disable_migrations' => false,
+    'disable_migrations' => true,
 
     /*
     |--------------------------------------------------------------------------

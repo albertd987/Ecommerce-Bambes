@@ -119,12 +119,16 @@ class LunarBambesDemoSeeder extends Seeder
             if ($cgHasHandle) {
                 $defaultCustomerGroup = CustomerGroup::firstOrCreate(
                     ['handle' => 'default'],
-                    ['name' => 'Default']
+                    ['name' => 'Default', 'default' => true]
                 );
             } else {
                 $defaultCustomerGroup = CustomerGroup::firstOrCreate(
-                    ['name' => 'Default']
+                    ['name' => 'Default'],
+                    ['default' => true]
                 );
+            }
+            if (!$defaultCustomerGroup->default) {
+                $defaultCustomerGroup->update(['default' => true]);
             }
 
             /**

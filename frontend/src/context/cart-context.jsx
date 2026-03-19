@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react"
-import api from "../services/api"
+import api from '../services/api'
+import { useAuth } from './auth-context'
 
 const CartContext = createContext(null)
 
@@ -90,6 +91,10 @@ export function CartProvider({ children }) {
   const [cart, setCart] = useState(null)
   const [loading, setLoading] = useState(false)
 
+  const { isLoggedIn, loading: authLoading } = useAuth()
+
+  const { isLoggedIn, loading: authLoading } = useAuth()
+
   const fetchCart = async () => {
     try {
       const cartToken = localStorage.getItem("cart_token")
@@ -107,10 +112,12 @@ export function CartProvider({ children }) {
     }
   }
 
+  // Carregar carret quan auth resol. Si no loguejat, netejar token i estat.
   useEffect(() => {
     fetchCart()
   }, [])
 
+  // Mantenir compatibilitat: items com a array de línies
   const items = useMemo(() => {
     if (!cart?.lines) return []
 

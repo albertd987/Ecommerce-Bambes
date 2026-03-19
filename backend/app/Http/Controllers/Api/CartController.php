@@ -180,6 +180,11 @@ class CartController extends Controller
                 CartSession::use($cart);
             }
 
+            // Associar el carret amb l'usuari autenticat (per restaurar-lo en re-login)
+            if (auth()->check() && !$cart->user_id) {
+                $cart->update(['user_id' => auth()->id()]);
+            }
+
             // Afegir línia al carret
             CartSession::addLines([
                 [
@@ -302,6 +307,8 @@ class CartController extends Controller
                 ]);
             }
 
+            // Esborra les línies del carret (l'usuari buidat explícitament)
+            $cart->lines()->delete();
             CartSession::forget();
 
             return response()->json([
