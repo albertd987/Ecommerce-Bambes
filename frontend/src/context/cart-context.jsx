@@ -12,29 +12,18 @@ export function CartProvider({ children }) {
 
   // Obtenir carret del servidor
   const fetchCart = async () => {
-    console.log('Fetching cart...');
     try {
-      // Obtenir token si existeix
       const cartToken = localStorage.getItem('cart_token')
-      
+
       const response = await api.get("/cart", {
         params: cartToken ? { cart_token: cartToken } : {}
       })
 
       const cartData = response.data?.data ?? response.data
-
-      console.log("Cart fetched RAW:", response.data)
-      console.log("Cart parsed:", cartData)
-      console.log("sub_total:", cartData?.sub_total)
-      console.log("tax_total:", cartData?.tax_total)
-      console.log("total:", cartData?.total)
-      console.log("lines:", cartData?.lines?.length)
-
       setCart(cartData)
 
     } catch (error) {
       console.error('Error en obtenir carret:', error)
-      console.error('Response:', error.response?.data);
       setCart(null)
     }
   }
@@ -52,31 +41,20 @@ export function CartProvider({ children }) {
 
   // Mantenir compatibilitat: items com a array de línies
   const items = useMemo(() => {
-    console.log('Recalculating items from cart:', cart);
+    if (!cart?.lines) return []
 
-    if (!cart?.lines) {
-      console.log('No cart or no lines');
-      return []
-    }
-
-    const mappedItems = cart.lines.map(line => {
-      console.log('Mapping line:', line);
-      return {
-        key: `line:${line.id}`,
-        lineId: line.id,
-        product: {
-          id: line.product.id,
-          name: line.product.name,
-          price: line.unit_price,
-          image: line.product.thumbnail || 'https://via.placeholder.com/200x200/e5e7eb/6b7280?text=No+Image',
-          brand: line.variant?.sku?.split('-')[0] || 'Unknown',
-        },
-        qty: line.quantity,
-      }
-    });
-
-    console.log('Mapped items:', mappedItems);
-    return mappedItems;
+    return cart.lines.map(line => ({
+      key: `line:${line.id}`,
+      lineId: line.id,
+      product: {
+        id: line.product.id,
+        name: line.product.name,
+        price: line.unit_price,
+        image: line.product.thumbnail || 'https://via.placeholder.com/200x200/e5e7eb/6b7280?text=No+Image',
+        brand: line.variant?.sku?.split('-')[0] || 'Unknown',
+      },
+      qty: line.quantity,
+    }))
   }, [cart])
 
   // Comptador d'items
@@ -96,41 +74,26 @@ export function CartProvider({ children }) {
 
   // Afegir producte al carret
   const addItem = async (productRaw, qty = 1) => {
-    console.log('Adding item:', productRaw, qty);
     setLoading(true)
     try {
       const variantId = productRaw.variant_id || productRaw.id
-
-      // Obtenir token del carret si existeix
       const cartToken = localStorage.getItem('cart_token')
-
-      console.log('Sending to cart/add:', { 
-        variant_id: variantId, 
-        quantity: qty,
-        cart_token: cartToken
-      });
 
       const response = await api.post('/cart/add', {
         variant_id: variantId,
         quantity: Math.max(1, Number(qty) || 1),
-        cart_token: cartToken // Enviar token si existeix
+        cart_token: cartToken,
       })
-
-      console.log('Add response:', response.data);
 
       // Desar el token que retorna el backend
       if (response.data?.data?.cart_token) {
         localStorage.setItem('cart_token', response.data.data.cart_token)
-        console.log('Cart token saved:', response.data.data.cart_token)
       }
 
-      await fetchCart() // Refrescar desde servidor
-
-      console.log('Item added successfully');
+      await fetchCart()
       return { success: true }
     } catch (error) {
       console.error('Error en afegir:', error)
-      console.error('Response:', error.response?.data);
       return { success: false, error: error.response?.data }
     } finally {
       setLoading(false)
@@ -139,30 +102,21 @@ export function CartProvider({ children }) {
 
   // Eliminar item del carret
   const removeItem = async (key) => {
-    console.log('Removing item:', key);
     setLoading(true)
     try {
       const item = items.find(i => i.key === key)
-      if (!item) {
-        console.error('Item not found:', key);
-        return { success: false }
-      }
+      if (!item) return { success: false }
 
       const cartToken = localStorage.getItem('cart_token')
-
-      console.log('Deleting line:', item.lineId);
 
       await api.delete(`/cart/lines/${item.lineId}`, {
         params: cartToken ? { cart_token: cartToken } : {}
       })
 
-      console.log('Line deleted, refreshing cart');
       await fetchCart()
-
       return { success: true }
     } catch (error) {
       console.error('Error en eliminar:', error)
-      console.error('Response:', error.response?.data);
       return { success: false }
     } finally {
       setLoading(false)
@@ -171,32 +125,23 @@ export function CartProvider({ children }) {
 
   // Actualitzar quantitat
   const setQty = async (key, qty) => {
-    console.log('Updating quantity:', key, qty);
     setLoading(true)
     try {
       const item = items.find(i => i.key === key)
-      if (!item) {
-        console.error('Item not found:', key);
-        return { success: false }
-      }
+      if (!item) return { success: false }
 
       const nextQty = Math.max(1, Number(qty) || 1)
       const cartToken = localStorage.getItem('cart_token')
 
-      console.log('Updating line:', item.lineId, 'to qty:', nextQty);
-
       await api.put(`/cart/lines/${item.lineId}`, {
         quantity: nextQty,
-        cart_token: cartToken
+        cart_token: cartToken,
       })
 
-      console.log('Quantity updated, refreshing cart');
       await fetchCart()
-
       return { success: true }
     } catch (error) {
       console.error('Error en actualitzar:', error)
-      console.error('Response:', error.response?.data);
       return { success: false }
     } finally {
       setLoading(false)

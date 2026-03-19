@@ -27,8 +27,11 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      const response = await apiLogin({ email, password })
+      const cartToken = localStorage.getItem('cart_token')
+      const response = await apiLogin({ email, password, cart_token: cartToken || undefined })
       setUser(response.data)
+      // El carret guest ja ha estat associat a l'usuari; el token ja no cal
+      if (cartToken) localStorage.removeItem('cart_token')
       return { success: true }
     } catch (error) {
       console.error('Error al fer login:', error)
@@ -41,13 +44,17 @@ export function AuthProvider({ children }) {
 
   const register = async (name, email, password, passwordConfirmation) => {
     try {
+      const cartToken = localStorage.getItem('cart_token')
       const response = await apiRegister({
         name,
         email,
         password,
         password_confirmation: passwordConfirmation,
+        cart_token: cartToken || undefined,
       })
       setUser(response.data)
+      // El carret guest ja ha estat associat al nou usuari; el token ja no cal
+      if (cartToken) localStorage.removeItem('cart_token')
       return { success: true }
     } catch (error) {
       console.error('Error al registrar:', error)

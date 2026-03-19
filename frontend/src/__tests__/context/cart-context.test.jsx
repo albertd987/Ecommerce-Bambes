@@ -1,4 +1,4 @@
-import { describe, it, vi, expect, beforeEach } from 'vitest'
+import { describe, it, vi, expect, beforeEach, afterEach } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { CartProvider, useCart } from '@/context/cart-context'
 
@@ -24,6 +24,11 @@ describe('CartContext', () => {
     mockIsLoggedIn = false
     mockLoading = false
     localStorage.clear()
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.clearAllMocks()
   })
 
   it('clears cart_token from localStorage when user logs out', async () => {
@@ -52,6 +57,24 @@ describe('CartContext', () => {
 
     await waitFor(() => {
       expect(localStorage.getItem('cart_token')).toBeNull()
+    })
+  })
+
+  it('calls fetchCart when isLoggedIn changes to true', async () => {
+    const api = (await import('@/services/api')).default
+    mockIsLoggedIn = false
+
+    const { rerender } = renderHook(() => useCart(), { wrapper: CartProvider })
+
+    // Initially not logged in: api.get should NOT have been called
+    expect(api.get).not.toHaveBeenCalled()
+
+    // Simulate login
+    act(() => { mockIsLoggedIn = true })
+    rerender()
+
+    await waitFor(() => {
+      expect(api.get).toHaveBeenCalledWith('/cart', expect.any(Object))
     })
   })
 
