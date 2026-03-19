@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Lunar\Actions\Carts\AssociateUser;
 use Lunar\Facades\CartSession;
 
 /**
@@ -105,6 +106,25 @@ class AuthController extends Controller
         $request->session()->regenerate();
 
         $user = Auth::user();
+
+        // Associar carret de convidat si s'ha enviat cart_token
+        $cartToken = $request->input('cart_token');
+        if ($cartToken) {
+            $guestCart = \Lunar\Models\Cart::where('meta->token', $cartToken)
+                ->whereNull('user_id')
+                ->active()
+                ->first();
+
+            if ($guestCart) {
+                app(AssociateUser::class)->execute(
+                    $guestCart,
+                    $user,
+                    config('lunar.cart.auth_policy', 'merge')
+                );
+                $guestCart->refresh();
+                CartSession::use($guestCart);
+            }
+        }
 
         return response()->json([
             'message' => 'Login correcte',

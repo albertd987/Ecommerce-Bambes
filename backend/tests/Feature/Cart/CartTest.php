@@ -253,4 +253,87 @@ class CartTest extends TestCase
         $this->assertNotNull($cart->json('data'),
             'Cart should be restored after re-login');
     }
+
+    public function test_guest_cart_is_associated_on_login(): void
+    {
+        $user = \App\Models\User::factory()->create([
+            'password' => bcrypt('password123'),
+        ]);
+        $variant = $this->createVariant();
+
+        // Create a guest cart with cart_token (simulates a guest adding items)
+        $guestCart = \Lunar\Models\Cart::factory()->create([
+            'meta' => ['token' => 'guest-token-abc123'],
+        ]);
+        $guestCart->lines()->create([
+            'purchasable_type' => \Lunar\Models\ProductVariant::class,
+            'purchasable_id'   => $variant->id,
+            'quantity'         => 2,
+            'meta'             => null,
+        ]);
+
+        $this->assertNull($guestCart->user_id, 'Guest cart should have no user_id before login');
+
+        // Login with cart_token in payload
+        $this->postJson('/api/login', [
+            'email'      => $user->email,
+            'password'   => 'password123',
+            'cart_token' => 'guest-token-abc123',
+        ])->assertStatus(200);
+
+        // Guest cart should now be associated with the user
+        $guestCart->refresh();
+        $this->assertEquals($user->id, $guestCart->user_id,
+            'Guest cart should be associated with user after login');
+
+        // GET /api/cart should return the cart with the original lines
+        $this->actingAs($user);
+        $cart = $this->getJson('/api/cart');
+        $cart->assertStatus(200);
+        $this->assertNotEmpty($cart->json('data.lines'),
+            'Cart should contain the guest lines after login');
+    }
+
+    public function test_guest_cart_merges_with_existing_user_cart_on_login(): void
+    {
+        $user = \App\Models\User::factory()->create([
+            'password' => bcrypt('password123'),
+        ]);
+        $variant1 = $this->createVariant(3000, 10);
+        $variant2 = $this->createVariant(5000, 10);
+
+        // Create existing user cart with one line
+        $userCart = \Lunar\Models\Cart::factory()->create(['user_id' => $user->id]);
+        $userCart->lines()->create([
+            'purchasable_type' => \Lunar\Models\ProductVariant::class,
+            'purchasable_id'   => $variant1->id,
+            'quantity'         => 1,
+            'meta'             => null,
+        ]);
+
+        // Create guest cart with a different line
+        $guestCart = \Lunar\Models\Cart::factory()->create([
+            'meta' => ['token' => 'guest-token-merge-test'],
+        ]);
+        $guestCart->lines()->create([
+            'purchasable_type' => \Lunar\Models\ProductVariant::class,
+            'purchasable_id'   => $variant2->id,
+            'quantity'         => 3,
+            'meta'             => null,
+        ]);
+
+        // Login with cart_token
+        $this->postJson('/api/login', [
+            'email'      => $user->email,
+            'password'   => 'password123',
+            'cart_token' => 'guest-token-merge-test',
+        ])->assertStatus(200);
+
+        // After merge, user cart should have lines from both carts
+        $this->actingAs($user);
+        $cart = $this->getJson('/api/cart');
+        $lines = $cart->json('data.lines');
+        $this->assertCount(2, $lines,
+            'Merged cart should have lines from both guest and user carts');
+    }
 }

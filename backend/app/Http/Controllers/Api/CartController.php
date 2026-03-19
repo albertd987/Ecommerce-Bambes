@@ -25,10 +25,16 @@ class CartController extends Controller
     private const TAX_RATE = 0.21;
 
     /**
-     * Resol el carret actiu per token UUID o per sessio de Laravel.
+     * Resol el carret actiu per token UUID, sessió de Laravel, o user_id.
+     *
+     * Estratègia en 3 passos:
+     * 1. cart_token (localStorage del frontend) → per carrets de convidats
+     * 2. CartSession::current() → sessió de Lunar (si el listener l'ha restaurat)
+     * 3. user_id (BD directe) → fallback robust per quan la sessió es regenera
      */
     private function getCartByTokenOrSession(Request $request)
     {
+        // 1. Token explícit del frontend
         $cartToken = $request->input('cart_token') ?? $request->query('cart_token');
 
         if ($cartToken) {
@@ -39,7 +45,29 @@ class CartController extends Controller
             }
         }
 
-        return CartSession::current();
+        // 2. Sessió de Lunar (lunar_cart key a la sessió)
+        $cart = CartSession::current();
+        if ($cart) {
+            return $cart;
+        }
+
+        // 3. Fallback: buscar per user_id directament a la BD
+        //    - SoftDeletes ja filtra deleted_at automàticament
+        //    - latest() per agafar el carret més recent si n'hi ha més d'un
+        if (auth()->check()) {
+            $cart = Cart::whereUserId(auth()->id())
+                ->active()
+                ->latest()
+                ->first();
+
+            if ($cart) {
+                // Restaurar a la sessió de Lunar per les següents requests
+                CartSession::use($cart);
+                return $cart;
+            }
+        }
+
+        return null;
     }
 
     /**

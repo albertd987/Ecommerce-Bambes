@@ -68,6 +68,51 @@ getCartByTokenOrSession(request):
 | `frontend/src/context/cart-context.jsx` | React context del carret | L42-51: effect que gestiona auth→cart |
 | `frontend/src/__tests__/context/cart-context.test.jsx` | Tests del context | Tot el fitxer |
 | `backend/tests/Feature/Cart/CartTest.php` | Tests backend del carret | L198-256: tests de persistència |
+| `frontend/src/context/auth-context.jsx` | Context d'autenticació React | funció `login()` i `register()` |
+| `frontend/src/services/api.js` | Servei HTTP del frontend | L19-28: `login()` i `register()` |
+
+### El flux guest→user que falta (cobert per Tasks 7-9)
+
+El pla (Tasks 1-5) cobreix la restauració del carret quan l'usuari **ja tenia** `user_id` al carret (havia iniciat sessió i afegit productes). Però **NO cobreix** el cas del convidat que afegeix productes i llavors inicia sessió — el carret guest no té `user_id` i el listener de Lunar intenta associar-lo, però `session()->regenerate()` destrueix la sessió just després.
+
+**Flux problemàtic (actual):**
+
+```
+Convidat afegeix productes → carret amb cart_token (UUID al meta), sense user_id
+Frontend guarda cart_token al localStorage
+
+Convidat fa login:
+  Auth::attempt()
+    └→ CartSessionAuthListener::login() crida CartSession::associate($cart, $user, 'merge')
+       └→ AssociateUser::execute() → posa user_id al carret [en memòria de sessió]
+
+  session()->regenerate() → DESTRUEIX les dades de sessió escrites pel listener ✗
+
+Resultat: carret guest SENSE user_id → getCartByTokenOrSession() no el troba
+  (Task 1 fallback user_id busca per user_id, però el carret encara NO té user_id)
+```
+
+**Flux desitjat (amb Tasks 7-9):**
+
+```
+Convidat afegeix productes → carret amb cart_token (UUID al meta), sense user_id
+Frontend guarda cart_token al localStorage
+
+Convidat fa login (frontend envia cart_token al payload):
+  Auth::attempt() → AuthController fa session()->regenerate()
+
+  DESPRÉS de regenerate(), AuthController:
+    1. Llegeix cart_token del payload
+    2. Cerca: Cart::where('meta->token', $token)->whereNull('user_id')->first()
+    3. Troba el carret guest → AssociateUser::execute($guestCart, $user, 'merge')
+       └→ Si usuari té carret existent: MergeCart::execute() fusiona les línies
+       └→ Retorna el carret final (el de l'usuari, amb les línies del guest)
+    4. CartSession::use($resultCart) → clau lunar_cart escrita A la nova sessió ✓
+
+Frontend:
+  Elimina cart_token del localStorage (ja no necessari, el carret és de l'usuari)
+  La següent crida a GET /api/cart retorna el carret restaurat per sessió
+```
 
 ---
 
@@ -539,6 +584,430 @@ git commit -m "chore: eliminar console.logs de debugging del cart-context"
 
 ---
 
+## Task 7: Backend — Associar carret de convidat en fer login
+
+**Files:**
+- Modify: `backend/app/Http/Controllers/Api/AuthController.php`
+- Test: `backend/tests/Feature/Cart/CartTest.php`
+
+### Què canvia
+
+`AuthController::login()` accepta un `cart_token` opcional al payload. Després de `Auth::attempt()` + `session()->regenerate()`, si es rep `cart_token`, busca el carret guest i l'associa amb l'usuari usant `AssociateUser`.
+
+- [ ] **Step 1: Escriure els tests que fallen**
+
+Afegir al final de `backend/tests/Feature/Cart/CartTest.php` (ABANS del `}` de tancament de la classe):
+
+```php
+public function test_guest_cart_is_associated_on_login(): void
+{
+    $user = \App\Models\User::factory()->create([
+        'password' => bcrypt('password123'),
+    ]);
+    $variant = $this->createVariant();
+
+    // Create a guest cart with cart_token (simulates a guest adding items)
+    $guestCart = \Lunar\Models\Cart::factory()->create([
+        'meta' => ['token' => 'guest-token-abc123'],
+    ]);
+    $guestCart->lines()->create([
+        'purchasable_type' => \Lunar\Models\ProductVariant::class,
+        'purchasable_id'   => $variant->id,
+        'quantity'         => 2,
+        'meta'             => null,
+    ]);
+
+    $this->assertNull($guestCart->user_id, 'Guest cart should have no user_id before login');
+
+    // Login with cart_token in payload
+    $this->postJson('/api/login', [
+        'email'      => $user->email,
+        'password'   => 'password123',
+        'cart_token' => 'guest-token-abc123',
+    ])->assertStatus(200);
+
+    // Guest cart should now be associated with the user
+    $guestCart->refresh();
+    $this->assertEquals($user->id, $guestCart->user_id,
+        'Guest cart should be associated with user after login');
+
+    // GET /api/cart should return the cart with the original lines
+    $this->actingAs($user);
+    $cart = $this->getJson('/api/cart');
+    $cart->assertStatus(200);
+    $this->assertNotEmpty($cart->json('data.lines'),
+        'Cart should contain the guest lines after login');
+}
+
+public function test_guest_cart_merges_with_existing_user_cart_on_login(): void
+{
+    $user = \App\Models\User::factory()->create([
+        'password' => bcrypt('password123'),
+    ]);
+    $variant1 = $this->createVariant(3000, 10);
+    $variant2 = $this->createVariant(5000, 10);
+
+    // Create existing user cart with one line
+    $userCart = \Lunar\Models\Cart::factory()->create(['user_id' => $user->id]);
+    $userCart->lines()->create([
+        'purchasable_type' => \Lunar\Models\ProductVariant::class,
+        'purchasable_id'   => $variant1->id,
+        'quantity'         => 1,
+        'meta'             => null,
+    ]);
+
+    // Create guest cart with a different line
+    $guestCart = \Lunar\Models\Cart::factory()->create([
+        'meta' => ['token' => 'guest-token-merge-test'],
+    ]);
+    $guestCart->lines()->create([
+        'purchasable_type' => \Lunar\Models\ProductVariant::class,
+        'purchasable_id'   => $variant2->id,
+        'quantity'         => 3,
+        'meta'             => null,
+    ]);
+
+    // Login with cart_token
+    $this->postJson('/api/login', [
+        'email'      => $user->email,
+        'password'   => 'password123',
+        'cart_token' => 'guest-token-merge-test',
+    ])->assertStatus(200);
+
+    // After merge, user cart should have lines from both carts
+    $this->actingAs($user);
+    $cart = $this->getJson('/api/cart');
+    $lines = $cart->json('data.lines');
+    $this->assertCount(2, $lines,
+        'Merged cart should have lines from both guest and user carts');
+}
+```
+
+- [ ] **Step 2: Executar per verificar que fallen**
+
+```bash
+cd /var/www/projecte2/backend
+php artisan test --filter="test_guest_cart_is_associated_on_login|test_guest_cart_merges_with_existing_user_cart_on_login"
+```
+
+Esperat: **2 FAILED** (l'associació no es fa, el carret guest no té `user_id`).
+
+- [ ] **Step 3: Implementar a AuthController::login()**
+
+Obrir `backend/app/Http/Controllers/Api/AuthController.php`. Afegir IMPORTS al bloc d'use statements (a l'inici del fitxer):
+
+```php
+use Lunar\Actions\Carts\AssociateUser;
+use Lunar\Models\Cart;
+use Lunar\Facades\CartSession;
+```
+
+Modificar el mètode `login()`. Trobar la secció DESPRÉS de `$request->session()->regenerate()` i afegir-hi el bloc d'associació del carret guest:
+
+```php
+public function login(Request $request)
+{
+    $credentials = $request->validate([
+        'email'    => 'required|email',
+        'password' => 'required',
+    ]);
+
+    if (! Auth::attempt($credentials)) {
+        return response()->json(['message' => 'Credencials incorrectes'], 401);
+    }
+
+    $request->session()->regenerate();
+
+    // Associar carret de convidat si s'ha enviat cart_token
+    $cartToken = $request->input('cart_token');
+    if ($cartToken) {
+        $guestCart = Cart::where('meta->token', $cartToken)
+            ->whereNull('user_id')
+            ->active()
+            ->first();
+
+        if ($guestCart) {
+            $user = Auth::user();
+            $resultCart = app(AssociateUser::class)->execute(
+                $guestCart,
+                $user,
+                config('lunar.cart.auth_policy', 'merge')
+            );
+            CartSession::use($resultCart);
+        }
+    }
+
+    return response()->json(['message' => 'Login correcte']);
+}
+```
+
+**IMPORTANT:** Adaptar el codi al mètode `login()` real del fitxer — no substituir línies de validació o lògica existent. Afegir el bloc de l'if `$cartToken` just DESPRÉS de `$request->session()->regenerate()` i ABANS del `return`.
+
+- [ ] **Step 4: Executar els tests per verificar que passen**
+
+```bash
+cd /var/www/projecte2/backend
+php artisan test --filter="test_guest_cart_is_associated_on_login|test_guest_cart_merges_with_existing_user_cart_on_login"
+```
+
+Esperat: **2 passed**
+
+- [ ] **Step 5: Executar tota la suite**
+
+```bash
+cd /var/www/projecte2/backend
+php artisan test
+```
+
+Esperat: tot verd. Si algun test de carret falla, NO continuar — investigar.
+
+- [ ] **Step 6: Commit**
+
+```bash
+cd /var/www/projecte2
+git add backend/app/Http/Controllers/Api/AuthController.php backend/tests/Feature/Cart/CartTest.php
+git commit -m "feat: associar carret de convidat amb usuari en fer login
+
+Si el frontend envia cart_token al payload del login, el backend
+cerca el carret guest i el associa amb l'usuari via AssociateUser::execute()
+DESPRÉS de session()->regenerate() per evitar la race condition del listener."
+```
+
+---
+
+## Task 8: Backend — Associar carret de convidat en fer register
+
+**Files:**
+- Modify: `backend/app/Http/Controllers/Api/AuthController.php`
+- Test: `backend/tests/Feature/Cart/CartTest.php`
+
+### Què canvia
+
+El mateix patró que Task 7, però per `AuthController::register()`. Un nou usuari que s'acaba de registrar hauria de veure el carret que havia omplert com a convidat.
+
+- [ ] **Step 1: Escriure el test que falla**
+
+Afegir a `backend/tests/Feature/Cart/CartTest.php`:
+
+```php
+public function test_guest_cart_is_associated_on_register(): void
+{
+    $variant = $this->createVariant();
+
+    // Create a guest cart
+    $guestCart = \Lunar\Models\Cart::factory()->create([
+        'meta' => ['token' => 'guest-token-register'],
+    ]);
+    $guestCart->lines()->create([
+        'purchasable_type' => \Lunar\Models\ProductVariant::class,
+        'purchasable_id'   => $variant->id,
+        'quantity'         => 1,
+        'meta'             => null,
+    ]);
+
+    // Register with cart_token in payload
+    $response = $this->postJson('/api/register', [
+        'name'                  => 'Test User',
+        'email'                 => 'newuser@test.com',
+        'password'              => 'password123',
+        'password_confirmation' => 'password123',
+        'cart_token'            => 'guest-token-register',
+    ]);
+    $response->assertStatus(201);
+
+    // Guest cart should now be associated with the new user
+    $guestCart->refresh();
+    $this->assertNotNull($guestCart->user_id,
+        'Guest cart should be associated with new user after register');
+
+    // GET /api/cart should return the cart with the original lines
+    $newUser = \App\Models\User::where('email', 'newuser@test.com')->first();
+    $this->actingAs($newUser);
+    $cart = $this->getJson('/api/cart');
+    $this->assertNotEmpty($cart->json('data.lines'),
+        'Cart should contain guest lines after register');
+}
+```
+
+- [ ] **Step 2: Executar per verificar que falla**
+
+```bash
+cd /var/www/projecte2/backend
+php artisan test --filter=test_guest_cart_is_associated_on_register
+```
+
+Esperat: **FAIL**
+
+- [ ] **Step 3: Implementar a AuthController::register()**
+
+Obrir `backend/app/Http/Controllers/Api/AuthController.php`. Modificar el mètode `register()` per afegir el bloc d'associació de carret guest JUST ABANS del `return`, usant el mateix patró que `login()`:
+
+```php
+// Associar carret de convidat si s'ha enviat cart_token
+$cartToken = $request->input('cart_token');
+if ($cartToken) {
+    $guestCart = Cart::where('meta->token', $cartToken)
+        ->whereNull('user_id')
+        ->active()
+        ->first();
+
+    if ($guestCart) {
+        $resultCart = app(AssociateUser::class)->execute(
+            $guestCart,
+            $user,
+            config('lunar.cart.auth_policy', 'merge')
+        );
+        CartSession::use($resultCart);
+    }
+}
+```
+
+On `$user` és la variable que ja existeix al `register()` amb l'usuari recen creat. Adaptar al codi real del mètode.
+
+**NOTA:** Les dependències `use` ja estaran afegides des de Task 7. No duplicar.
+
+- [ ] **Step 4: Executar els tests per verificar que passen**
+
+```bash
+cd /var/www/projecte2/backend
+php artisan test --filter=test_guest_cart_is_associated_on_register
+```
+
+Esperat: **PASS**
+
+- [ ] **Step 5: Executar tota la suite**
+
+```bash
+cd /var/www/projecte2/backend
+php artisan test
+```
+
+Esperat: tot verd.
+
+- [ ] **Step 6: Commit**
+
+```bash
+cd /var/www/projecte2
+git add backend/app/Http/Controllers/Api/AuthController.php backend/tests/Feature/Cart/CartTest.php
+git commit -m "feat: associar carret de convidat amb usuari en fer register
+
+Mateix patró que login: si frontend envia cart_token al payload
+del register, s'associa el carret guest amb el nou usuari."
+```
+
+---
+
+## Task 9: Frontend — Enviar `cart_token` en login i register
+
+**Files:**
+- Modify: `frontend/src/services/api.js`
+- Modify: `frontend/src/context/auth-context.jsx`
+- Test: `frontend/src/__tests__/context/cart-context.test.jsx` (o crear `auth-context.test.jsx`)
+
+### Què canvia
+
+- `api.js`: Les funcions `login()` i `register()` accepten un `cartToken` opcional i l'inclouen al payload.
+- `auth-context.jsx`: Les funcions `login()` i `register()` llegeixen `cart_token` del `localStorage` i el passen a `api.login()` / `api.register()`. Un cop completat l'auth amb èxit, eliminen `cart_token` del `localStorage` (ja no és necessari: el carret ara pertany a l'usuari i es recupera per `user_id`).
+
+- [ ] **Step 1: Llegir els fitxers actuals**
+
+Llegir `frontend/src/services/api.js` i `frontend/src/context/auth-context.jsx` sencers per entendre l'estructura actual.
+
+- [ ] **Step 2: Modificar `api.js`**
+
+Trobar les funcions `login()` i `register()` a `frontend/src/services/api.js`. Afegir `cartToken` com a paràmetre opcional i incloure'l al payload si existeix:
+
+```js
+// Abans:
+login: (email, password) =>
+  api.post('/login', { email, password }),
+
+register: (name, email, password) =>
+  api.post('/register', { name, email, password, password_confirmation: password }),
+
+// Després:
+login: (email, password, cartToken = null) =>
+  api.post('/login', {
+    email,
+    password,
+    ...(cartToken ? { cart_token: cartToken } : {}),
+  }),
+
+register: (name, email, password, cartToken = null) =>
+  api.post('/register', {
+    name,
+    email,
+    password,
+    password_confirmation: password,
+    ...(cartToken ? { cart_token: cartToken } : {}),
+  }),
+```
+
+Adaptar l'estructura exacta al codi real del fitxer.
+
+- [ ] **Step 3: Modificar `auth-context.jsx`**
+
+Trobar les funcions `login()` i `register()` a `frontend/src/context/auth-context.jsx`. Afegir:
+1. Lectura de `cart_token` del `localStorage` ABANS de cridar l'API
+2. Passar `cartToken` a la crida de l'API
+3. Eliminar `cart_token` del `localStorage` DESPRÉS d'un login/register exitós
+
+```jsx
+const login = async (email, password) => {
+  const cartToken = localStorage.getItem('cart_token')  // Llegir ABANS de cridar l'API
+  const response = await api.login(email, password, cartToken)
+  // ... gestió de l'estat d'auth (el que ja hi havia)
+  localStorage.removeItem('cart_token')  // Ja no cal: el carret és de l'usuari
+  return response
+}
+
+const register = async (name, email, password) => {
+  const cartToken = localStorage.getItem('cart_token')  // Llegir ABANS de cridar l'API
+  const response = await api.register(name, email, password, cartToken)
+  // ... gestió de l'estat d'auth (el que ja hi havia)
+  localStorage.removeItem('cart_token')  // Ja no cal: el carret és de l'usuari
+  return response
+}
+```
+
+Adaptar al codi real del fitxer. No canviar cap altra lògica.
+
+**IMPORTANT:** Llegir `cart_token` ABANS de la crida async (no després), perquè `cart-context.jsx` pot eliminar-lo en resposta a un canvi d'estat intermedi.
+
+- [ ] **Step 4: Executar els tests frontend**
+
+```bash
+cd /var/www/projecte2/frontend
+npm test
+```
+
+Esperat: tot verd (els tests existents no haurien de trencar-se perquè el `cartToken` és opcional i `localStorage` és buit als tests).
+
+- [ ] **Step 5: Test manual al navegador**
+
+1. Obrir navegador en mode incògnit (sense cookies ni localStorage)
+2. Afegir 2 productes al carret (mode convidat)
+3. Verificar que `cart_token` existeix al `localStorage` (DevTools → Application → Local Storage)
+4. Fer login
+5. Verificar que el carret mostra els 2 productes
+6. Verificar que `cart_token` ja NO existeix al `localStorage`
+7. Fer logout → carret buit
+8. Fer login de nou → carret restaurat (ara per `user_id`, no per token)
+
+- [ ] **Step 6: Commit**
+
+```bash
+cd /var/www/projecte2
+git add frontend/src/services/api.js frontend/src/context/auth-context.jsx
+git commit -m "feat: enviar cart_token en login/register per associar carret de convidat
+
+El frontend llegeix cart_token del localStorage i l'envia al backend
+durant login i register. Un cop completat l'auth, cart_token s'elimina
+del localStorage perquè el carret ja pertany a l'usuari."
+```
+
+---
+
 ## Task 6: Verificació final completa + push
 
 - [ ] **Step 1: Executar tota la suite backend**
@@ -559,19 +1028,28 @@ npm test
 
 Esperat: tot verd (9+ passed, 12+ todo).
 
-- [ ] **Step 3: Test manual al navegador**
+- [ ] **Step 3: Test manual al navegador — flux complet**
 
+**Escenari A: Usuari registrat (re-login restoration)**
 1. Obre `http://51.195.202.7:3000` (o la URL del frontend)
 2. Fes login amb un usuari existent
 3. Afegeix 2 productes al carret
 4. Verifica que el carret mostra 2 items
-5. Fes logout
-6. Verifica que el carret està buit (0 items)
-7. Fes login de nou amb el MATEIX usuari
-8. Verifica que el carret mostra els 2 items originals ← **AQUÍ ÉS ON FALLAVA ABANS**
-9. Fes logout
-10. Fes login amb un ALTRE usuari
-11. Verifica que el carret està buit (no veu els items de l'altre)
+5. Fes logout → carret buit
+6. Fes login de nou → carret restaura amb els 2 items ← **AQUÍ ÉS ON FALLAVA ABANS**
+
+**Escenari B: Flux complet guest→login (Tasks 7-9)**
+1. Obre una finestra incògnit (sense cookies ni localStorage)
+2. **Sense** fer login, afegeix 2 productes al carret
+3. Verifica que `cart_token` existeix al localStorage (DevTools → Application → Local Storage)
+4. Fes login → el carret hauria de mantenir els 2 productes
+5. Verifica que `cart_token` **ja NO** existeix al localStorage
+6. Fes logout → carret buit
+7. Fes login de nou → carret restaura amb els 2 items (ara per `user_id`)
+
+**Escenari C: Isolació cross-user**
+1. Fes login com a Usuari A, afegeix 1 producte, fes logout
+2. Fes login com a Usuari B → carret buit (no veu el carret d'Usuari A)
 
 - [ ] **Step 4: Push a develop i main**
 
@@ -588,18 +1066,33 @@ git checkout main && git merge develop && git push origin main && git checkout d
 | Fitxer | Task | Canvi |
 |--------|------|-------|
 | `backend/app/Http/Controllers/Api/CartController.php` | 1 | Afegir fallback `user_id` a `getCartByTokenOrSession()` |
-| `backend/app/Http/Controllers/Api/AuthController.php` | 2 | Eliminar `CartSession::forget()` redundant |
-| `backend/tests/Feature/Cart/CartTest.php` | 1, 3 | Actualitzar + afegir tests de persistència |
+| `backend/app/Http/Controllers/Api/AuthController.php` | 2, 7, 8 | Eliminar `CartSession::forget()` redundant; afegir associació guest cart en login i register |
+| `backend/tests/Feature/Cart/CartTest.php` | 1, 3, 7, 8 | Actualitzar + afegir tests de persistència i associació |
 | `frontend/src/__tests__/context/cart-context.test.jsx` | 4 | Test que fetchCart es crida en login |
 | `frontend/src/context/cart-context.jsx` | 5 | Netejar console.logs |
+| `frontend/src/services/api.js` | 9 | Afegir `cartToken` opcional a `login()` i `register()` |
+| `frontend/src/context/auth-context.jsx` | 9 | Llegir i enviar `cart_token` en login/register; netejar localStorage |
 
 ## Dependències entre tasks
 
 ```
-Task 1 (fallback user_id) ← BLOQUEJANT, tot depèn d'això
-  └→ Task 2 (netejar logout) — independent, pot anar després de Task 1
+Task 1 (fallback user_id) ← CRÍTIC per re-login restoration
+  └→ Task 2 (netejar logout) — independent, pot anar en paral·lel
   └→ Task 3 (tests integració) — depèn de Task 1
   └→ Task 4 (test frontend) — independent de Task 1-3
   └→ Task 5 (netejar logs) — independent
-Task 6 (verificació final) ← depèn de TOTS els anteriors
+
+Task 7 (guest cart en login) ← CRÍTIC per flux guest→user
+  └→ Task 8 (guest cart en register) — independent de Task 7
+  └→ Task 9 (frontend cart_token) — depèn de Tasks 7 i 8 (backend ha d'acceptar el camp primer)
+
+Task 6 (verificació final) ← depèn de TOTS els anteriors (Tasks 1-5, 7-9)
 ```
+
+**Ordre recomanat d'implementació:**
+1. Task 1 (fallback user_id) — desbloqueja Tasks 3 i el test manual de re-login
+2. Task 7 (login association) + Task 2 (netejar logout) — en paral·lel
+3. Task 8 (register association)
+4. Task 9 (frontend cart_token) — un cop backend accepta el camp
+5. Tasks 3, 4, 5 — tests i cleanup
+6. Task 6 (verificació final)

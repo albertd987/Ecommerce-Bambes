@@ -33,7 +33,7 @@ use Illuminate\Support\Facades\URL;
  *
  * @package App\Models
  */
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable implements MustVerifyEmail, \Lunar\Base\LunarUser
 {
     use HasFactory, Notifiable, LunarUser;
 
@@ -74,7 +74,7 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
-    public function carts()
+    public function carts(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Cart::class, 'user_id');
     }
