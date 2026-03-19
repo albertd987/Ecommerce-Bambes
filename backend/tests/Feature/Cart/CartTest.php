@@ -195,35 +195,62 @@ class CartTest extends TestCase
                  ->assertJsonPath('data', null);
     }
 
-    // ── Logout clears cart ──
+    // ── Cart session persistence ──
 
-    public function test_cart_is_empty_after_logout(): void
+    public function test_cart_hidden_after_logout_but_kept_in_db(): void
     {
         $user = \App\Models\User::factory()->create([
             'password' => bcrypt('password123'),
         ]);
         $variant = $this->createVariant();
 
-        // Login via real session
+        // Login + add to cart
         $this->postJson('/api/login', [
             'email'    => $user->email,
             'password' => 'password123',
         ])->assertStatus(200);
 
-        // Add to cart
         $this->postJson('/api/cart/add', [
             'variant_id' => $variant->id,
             'quantity'   => 1,
         ])->assertStatus(200);
 
-        // Verify a cart exists (not soft-deleted)
         $this->assertEquals(1, \Lunar\Models\Cart::count());
 
-        // Logout (should soft-delete the cart via CartSession::forget())
+        // Logout
         $this->postJson('/api/logout')->assertStatus(200);
 
-        // Cart should be soft-deleted (count excludes soft-deleted)
-        $this->assertEquals(0, \Lunar\Models\Cart::count(),
-            'Cart should be soft-deleted after logout');
+        // Cart still exists in DB (not soft-deleted)
+        $this->assertEquals(1, \Lunar\Models\Cart::count(),
+            'Cart should be kept in DB after logout');
+    }
+
+    public function test_cart_restored_after_relogin(): void
+    {
+        $user = \App\Models\User::factory()->create([
+            'password' => bcrypt('password123'),
+        ]);
+        $variant = $this->createVariant();
+
+        // Login + add to cart
+        $this->postJson('/api/login', [
+            'email'    => $user->email,
+            'password' => 'password123',
+        ])->assertStatus(200);
+
+        $this->postJson('/api/cart/add', [
+            'variant_id' => $variant->id,
+            'quantity'   => 1,
+        ])->assertStatus(200);
+
+        // Logout
+        $this->postJson('/api/logout')->assertStatus(200);
+
+        // Re-login → Lunar should restore cart via user_id
+        $this->actingAs($user);
+        $cart = $this->getJson('/api/cart');
+        $cart->assertStatus(200);
+        $this->assertNotNull($cart->json('data'),
+            'Cart should be restored after re-login');
     }
 }
