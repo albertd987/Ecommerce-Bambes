@@ -67,12 +67,11 @@ export function AuthProvider({ children }) {
   }
 
   const logout = async () => {
+    setUser(null) // Logout immediat al client — no esperem la resposta del servidor
     try {
       await apiLogout()
-      setUser(null)
     } catch (error) {
       console.error('Error al fer logout:', error)
-      setUser(null)
     }
   }
 
