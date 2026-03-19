@@ -41,6 +41,20 @@ describe('CartContext', () => {
     })
   })
 
+  it('clears cart_token when page loads with no session but stale token in localStorage', async () => {
+    // Simulates: user's session cookie expired / cleared manually,
+    // but cart_token from a previous login is still in localStorage.
+    mockIsLoggedIn = false
+    mockLoading = false
+    localStorage.setItem('cart_token', 'stale-uuid-token')
+
+    renderHook(() => useCart(), { wrapper: CartProvider })
+
+    await waitFor(() => {
+      expect(localStorage.getItem('cart_token')).toBeNull()
+    })
+  })
+
   it.todo('cartCount increments when adding a product and stores cart_token in localStorage')
   it.todo('cartCount decrements when removing a product')
   it.todo('clearCart resets cartCount to zero and removes cart_token from localStorage')
