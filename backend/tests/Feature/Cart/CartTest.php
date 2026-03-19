@@ -194,4 +194,36 @@ class CartTest extends TestCase
         $response->assertStatus(200)
                  ->assertJsonPath('data', null);
     }
+
+    // ── Logout clears cart ──
+
+    public function test_cart_is_empty_after_logout(): void
+    {
+        $user = \App\Models\User::factory()->create([
+            'password' => bcrypt('password123'),
+        ]);
+        $variant = $this->createVariant();
+
+        // Login via real session
+        $this->postJson('/api/login', [
+            'email'    => $user->email,
+            'password' => 'password123',
+        ])->assertStatus(200);
+
+        // Add to cart
+        $this->postJson('/api/cart/add', [
+            'variant_id' => $variant->id,
+            'quantity'   => 1,
+        ])->assertStatus(200);
+
+        // Verify a cart exists (not soft-deleted)
+        $this->assertEquals(1, \Lunar\Models\Cart::count());
+
+        // Logout (should soft-delete the cart via CartSession::forget())
+        $this->postJson('/api/logout')->assertStatus(200);
+
+        // Cart should be soft-deleted (count excludes soft-deleted)
+        $this->assertEquals(0, \Lunar\Models\Cart::count(),
+            'Cart should be soft-deleted after logout');
+    }
 }
