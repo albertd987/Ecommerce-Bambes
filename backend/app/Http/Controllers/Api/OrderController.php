@@ -9,6 +9,7 @@ use Lunar\Models\Order;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
 
+
 /**
  * Controlador de comandes (orders) de l'API REST.
  *

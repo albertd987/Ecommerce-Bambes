@@ -91,7 +91,6 @@ export function CartProvider({ children }) {
   const [cart, setCart] = useState(null)
   const [loading, setLoading] = useState(false)
 
-  const { isLoggedIn, loading: authLoading } = useAuth()
 
   const { isLoggedIn, loading: authLoading } = useAuth()
 

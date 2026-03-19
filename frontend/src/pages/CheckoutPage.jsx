@@ -150,6 +150,7 @@ export default function CheckoutPage() {
     billing,
     shipping_same_as_billing: shippingSameAsBilling,
     shipping: shippingSameAsBilling ? billing : shipping,
+     lang: i18n.language?.toLowerCase().startsWith("en") ? "en" : "ca",
   })
 
   const validateForm = () => {

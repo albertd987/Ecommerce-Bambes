@@ -9,7 +9,9 @@ use Lunar\Models\ProductVariant;
 use Lunar\Models\Order;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
-
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Mail\OrderConfirmationMail;
+use Illuminate\Support\Facades\Mail;
 
 class CheckoutController extends Controller
 {
@@ -81,13 +83,9 @@ class CheckoutController extends Controller
             ], 422);
         }
 
-        // ✅ Preus ja inclouen IVA: NO l'afegim al total
         $shippingTotal = self::SHIPPING_FLAT_RATE;
         $gross = $subtotal + $shippingTotal;
-
-        // IVA inclòs (informatiu)
         $taxTotal = (int) round($gross - ($gross / (1 + self::TAX_RATE)));
-
         $total = (int) $gross;
 
         $stockCheck = $this->validateStock($lines);
@@ -115,7 +113,7 @@ class CheckoutController extends Controller
                 'totals' => [
                     'sub_total' => (int) $subtotal,
                     'shipping_total' => (int) $shippingTotal,
-                    'tax_total' => (int) $taxTotal, // informatiu (IVA inclòs)
+                    'tax_total' => (int) $taxTotal,
                     'total' => (int) $total,
                     'tax_included' => true,
                 ],
@@ -130,183 +128,209 @@ class CheckoutController extends Controller
     }
 
     public function confirm(Request $request)
-    {
-        $user = $request->user();
+{
+    $user = $request->user();
 
-        if (!$user || !$user->hasVerifiedEmail()) {
-            return response()->json([
-                'message' => 'Has de verificar el teu email abans de comprar.',
-                'code' => 'email_not_verified',
-            ], 403);
-        }
+    if (!$user || !$user->hasVerifiedEmail()) {
+        return response()->json([
+            'message' => 'Has de verificar el teu email abans de comprar.',
+            'code' => 'email_not_verified',
+        ], 403);
+    }
 
-        $data = $request->validate(array_merge([
-            'payment_intent_id' => ['required', 'string'],
-            'lines' => ['required', 'array', 'min:1'],
-            'lines.*.qty' => ['required', 'integer', 'min:1'],
-            'lines.*.variant_id' => ['nullable', 'integer'],
-            'lines.*.product_id' => ['nullable', 'integer'],
-        ], $this->customerValidationRules()));
+    $data = $request->validate(array_merge([
+        'payment_intent_id' => ['required', 'string'],
+        'lines' => ['required', 'array', 'min:1'],
+        'lines.*.qty' => ['required', 'integer', 'min:1'],
+        'lines.*.variant_id' => ['nullable', 'integer'],
+        'lines.*.product_id' => ['nullable', 'integer'],
+        'lang' => ['nullable', 'string'],
+    ], $this->customerValidationRules()));
 
-        $lines = $this->resolveVariantLines($data['lines']);
+    $lines = $this->resolveVariantLines($data['lines']);
 
-        $subtotal = $this->calculateAmountFromDb($lines);
-        $shippingTotal = self::SHIPPING_FLAT_RATE;
+    $subtotal = $this->calculateAmountFromDb($lines);
+    $shippingTotal = self::SHIPPING_FLAT_RATE;
+    $gross = $subtotal + $shippingTotal;
+    $taxTotal = (int) round($gross - ($gross / (1 + self::TAX_RATE)));
+    $total = (int) $gross;
 
-        // ✅ Preus ja inclouen IVA: NO l'afegim
-        $gross = $subtotal + $shippingTotal;
+    \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
 
-        // IVA inclòs (informatiu)
-        $taxTotal = (int) round($gross - ($gross / (1 + self::TAX_RATE)));
+    $pi = \Stripe\PaymentIntent::retrieve($data['payment_intent_id']);
 
-        $total = (int) $gross;
+    if (!$pi || $pi->status !== 'succeeded') {
+        return response()->json([
+            'message' => 'El pagament no està completat',
+            'status' => $pi->status ?? 'unknown',
+        ], 422);
+    }
 
-        \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
+    if ((int) $pi->amount_received !== (int) $total) {
+        return response()->json([
+            'message' => 'Import no coincideix amb el servidor',
+            'expected' => (int) $total,
+            'received' => (int) $pi->amount_received,
+        ], 422);
+    }
 
-        $pi = \Stripe\PaymentIntent::retrieve($data['payment_intent_id']);
+    $existing = Order::query()->where('reference', $pi->id)->first();
+    if ($existing) {
+        return response()->json([
+            'data' => $this->formatOrderFromDb($existing->id),
+            'message' => 'Order ja existia',
+        ]);
+    }
 
-        if (!$pi || $pi->status !== 'succeeded') {
-            return response()->json([
-                'message' => 'El pagament no està completat',
-                'status' => $pi->status ?? 'unknown',
-            ], 422);
-        }
+    $currencyCode = DB::table('lunar_currencies')->where('id', 1)->value('code') ?? 'EUR';
 
-        if ((int) $pi->amount_received !== (int) $total) {
-            return response()->json([
-                'message' => 'Import no coincideix amb el servidor',
-                'expected' => (int) $total,
-                'received' => (int) $pi->amount_received,
-            ], 422);
-        }
+    $customer = $data['customer'];
+    $billing = $data['billing'];
+    $shippingSameAsBilling = (bool) $data['shipping_same_as_billing'];
+    $shipping = $shippingSameAsBilling ? $billing : $data['shipping'];
+    $now = now();
 
-        $existing = Order::query()->where('reference', $pi->id)->first();
-        if ($existing) {
-            return response()->json([
-                'data' => $this->formatOrderFromDb($existing->id),
-                'message' => 'Order ja existia',
+    DB::beginTransaction();
+
+    try {
+        $orderId = DB::table('lunar_orders')->insertGetId([
+            'user_id' => $user->id,
+            'channel_id' => 1,
+            'status' => 'paid',
+            'reference' => $pi->id,
+
+            'sub_total' => (int) $subtotal,
+            'discount_total' => 0,
+            'shipping_total' => (int) $shippingTotal,
+            'tax_total' => (int) $taxTotal,
+            'total' => (int) $total,
+
+            'currency_code' => $currencyCode,
+            'compare_currency_code' => $currencyCode,
+            'exchange_rate' => 1,
+
+            'tax_breakdown' => json_encode([]),
+            'shipping_breakdown' => json_encode([]),
+            'discount_breakdown' => json_encode([]),
+
+            'placed_at' => $now,
+            'meta' => json_encode(['stripe_payment_intent_id' => $pi->id]),
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        DB::table('lunar_order_addresses')->insert([
+            'order_id' => $orderId,
+            'type' => 'billing',
+            'first_name' => $customer['first_name'],
+            'last_name' => $customer['last_name'],
+            'contact_email' => $customer['email'],
+            'contact_phone' => $customer['phone'] ?? null,
+            'line_one' => $billing['line_one'],
+            'line_two' => $billing['line_two'] ?? null,
+            'city' => $billing['city'],
+            'state' => $billing['state'] ?? null,
+            'postcode' => $billing['postcode'],
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        DB::table('lunar_order_addresses')->insert([
+            'order_id' => $orderId,
+            'type' => 'shipping',
+            'first_name' => $customer['first_name'],
+            'last_name' => $customer['last_name'],
+            'contact_email' => $customer['email'],
+            'contact_phone' => $customer['phone'] ?? null,
+            'line_one' => $shipping['line_one'],
+            'line_two' => $shipping['line_two'] ?? null,
+            'city' => $shipping['city'],
+            'state' => $shipping['state'] ?? null,
+            'postcode' => $shipping['postcode'],
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        foreach ($lines as $l) {
+            $variantId = (int) $l['variant_id'];
+            $qty = (int) $l['qty'];
+
+            $unitPrice = $this->getUnitPriceFromDb($variantId);
+
+            $variant = ProductVariant::with('product')->find($variantId);
+            $desc = $variant?->product?->translateAttribute('name')
+                ?? $variant?->product?->name
+                ?? 'Producte';
+
+            DB::table('lunar_order_lines')->insert([
+                'order_id' => $orderId,
+                'type' => 'physical',
+                'identifier' => 'line_' . Str::uuid(),
+                'purchasable_type' => 'product_variant',
+                'purchasable_id' => $variantId,
+                'quantity' => $qty,
+                'unit_quantity' => 1,
+                'unit_price' => $unitPrice,
+                'sub_total' => $unitPrice * $qty,
+                'discount_total' => 0,
+                'tax_total' => 0,
+                'tax_breakdown' => json_encode([]),
+                'total' => $unitPrice * $qty,
+                'description' => $desc,
+                'created_at' => $now,
+                'updated_at' => $now,
             ]);
+
+            $variant->decrement('stock', $qty);
         }
 
-        $currencyCode = DB::table('lunar_currencies')->where('id', 1)->value('code') ?? 'EUR';
-
-        $customer = $data['customer'];
-        $billing = $data['billing'];
-        $shippingSameAsBilling = (bool) $data['shipping_same_as_billing'];
-        $shipping = $shippingSameAsBilling ? $billing : $data['shipping'];
-        $now = now();
-
-        DB::beginTransaction();
+        DB::commit();
 
         try {
-            $orderId = DB::table('lunar_orders')->insertGetId([
-                'user_id' => $user->id,
-                'channel_id' => 1,
-                'status' => 'paid',
-                'reference' => $pi->id,
+            $formattedOrder = $this->formatOrderFromDb($orderId);
 
-                'sub_total' => (int) $subtotal,
-                'discount_total' => 0,
-                'shipping_total' => (int) $shippingTotal,
-                'tax_total' => (int) $taxTotal, // informatiu (IVA inclòs)
-                'total' => (int) $total,         // ✅ subtotal + enviament
+            $lang = $request->input('lang', 'ca');
+            $lang = str_starts_with(strtolower((string) $lang), 'en') ? 'en' : 'ca';
 
-                'currency_code' => $currencyCode,
-                'compare_currency_code' => $currencyCode,
-                'exchange_rate' => 1,
-
-                'tax_breakdown' => json_encode([]),
-                'shipping_breakdown' => json_encode([]),
-                'discount_breakdown' => json_encode([]),
-
-                'placed_at' => $now,
-                'meta' => json_encode(['stripe_payment_intent_id' => $pi->id]),
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
-
-            DB::table('lunar_order_addresses')->insert([
+            Log::info('Order confirmation language', [
                 'order_id' => $orderId,
-                'type' => 'billing',
-                'first_name' => $customer['first_name'],
-                'last_name' => $customer['last_name'],
-                'contact_email' => $customer['email'],
-                'contact_phone' => $customer['phone'] ?? null,
-                'line_one' => $billing['line_one'],
-                'line_two' => $billing['line_two'] ?? null,
-                'city' => $billing['city'],
-                'state' => $billing['state'] ?? null,
-                'postcode' => $billing['postcode'],
-                'created_at' => $now,
-                'updated_at' => $now,
+                'lang' => $lang,
+                'customer_email' => $customer['email'] ?? null,
             ]);
 
-            DB::table('lunar_order_addresses')->insert([
-                'order_id' => $orderId,
-                'type' => 'shipping',
-                'first_name' => $customer['first_name'],
-                'last_name' => $customer['last_name'],
-                'contact_email' => $customer['email'],
-                'contact_phone' => $customer['phone'] ?? null,
-                'line_one' => $shipping['line_one'],
-                'line_two' => $shipping['line_two'] ?? null,
-                'city' => $shipping['city'],
-                'state' => $shipping['state'] ?? null,
-                'postcode' => $shipping['postcode'],
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
+            $pdfPath = $this->generateInvoicePdfPath($formattedOrder, $lang);
 
-            foreach ($lines as $l) {
-                $variantId = (int) $l['variant_id'];
-                $qty = (int) $l['qty'];
-
-                $unitPrice = $this->getUnitPriceFromDb($variantId);
-
-                $variant = ProductVariant::with('product')->find($variantId);
-                $desc = $variant?->product?->translateAttribute('name')
-                    ?? $variant?->product?->name
-                    ?? 'Producte';
-
-                DB::table('lunar_order_lines')->insert([
-                    'order_id' => $orderId,
-                    'type' => 'physical',
-                    'identifier' => 'line_' . Str::uuid(),
-                    'purchasable_type' => 'product_variant',
-                    'purchasable_id' => $variantId,
-                    'quantity' => $qty,
-                    'unit_quantity' => 1,
-                    'unit_price' => $unitPrice,
-                    'sub_total' => $unitPrice * $qty,
-                    'discount_total' => 0,
-                    'tax_total' => 0,
-                    'tax_breakdown' => json_encode([]),
-                    'total' => $unitPrice * $qty,
-                    'description' => $desc,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]);
-
-                $variant->decrement('stock', $qty);
+            if (!empty($customer['email'])) {
+                Mail::to($customer['email'])->send(
+                    new OrderConfirmationMail($formattedOrder, $pdfPath, $lang)
+                );
             }
 
-            DB::commit();
-
-            return response()->json([
-                'data' => $this->formatOrderFromDb($orderId),
-            ], 201);
-
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            Log::error('Checkout confirm error: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
+            if ($pdfPath && file_exists($pdfPath)) {
+                @unlink($pdfPath);
+            }
+        } catch (\Throwable $mailException) {
+            Log::error('Order confirmation email error: ' . $mailException->getMessage(), [
+                'order_id' => $orderId,
+                'trace' => $mailException->getTraceAsString(),
             ]);
-            return response()->json([
-                'message' => 'Error creant la comanda',
-                'error' => $e->getMessage(),
-            ], 500);
         }
+
+        return response()->json([
+            'data' => $this->formatOrderFromDb($orderId),
+        ], 201);
+
+    } catch (\Throwable $e) {
+        DB::rollBack();
+        Log::error('Checkout confirm error: ' . $e->getMessage(), [
+            'trace' => $e->getTraceAsString(),
+        ]);
+        return response()->json([
+            'message' => 'Error creant la comanda',
+            'error' => $e->getMessage(),
+        ], 500);
     }
+}
 
     private function resolveVariantLines(array $lines): array
     {
@@ -480,7 +504,7 @@ class CheckoutController extends Controller
                 'sub_total' => (int) ($order->sub_total ?? 0),
                 'discount_total' => (int) ($order->discount_total ?? 0),
                 'shipping_total' => (int) ($order->shipping_total ?? 0),
-                'tax_total' => (int) ($order->tax_total ?? 0), // informatiu
+                'tax_total' => (int) ($order->tax_total ?? 0),
                 'total' => (int) ($order->total ?? 0),
             ],
 
@@ -495,9 +519,32 @@ class CheckoutController extends Controller
                     'tax_total' => (int) ($line->tax_total ?? 0),
                     'total' => (int) ($line->total ?? 0),
                 ];
-            }),
+            })->values()->all(),
 
             'created_at' => $order->created_at,
         ];
+    }
+
+    private function generateInvoicePdfPath(array $formattedOrder, string $lang = 'ca'): string
+    {
+        $pdf = Pdf::loadView('pdf.invoice', [
+            'order' => $formattedOrder,
+            'lang' => $lang,
+        ]);
+
+        $tempDir = storage_path('app/temp');
+
+        if (!file_exists($tempDir)) {
+            mkdir($tempDir, 0777, true);
+        }
+
+        $filename = $lang === 'en'
+            ? 'invoice-order-' . $formattedOrder['id'] . '.pdf'
+            : 'factura-comanda-' . $formattedOrder['id'] . '.pdf';
+
+        $pdfPath = $tempDir . DIRECTORY_SEPARATOR . $filename;
+        $pdf->save($pdfPath);
+
+        return $pdfPath;
     }
 }
