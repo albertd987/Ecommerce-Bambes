@@ -336,4 +336,34 @@ class CartTest extends TestCase
         $this->assertCount(2, $lines,
             'Merged cart should have lines from both guest and user carts');
     }
+
+    public function test_guest_cart_is_associated_on_register(): void
+    {
+        $variant = $this->createVariant(2500, 10);
+
+        // Create guest cart with cart_token
+        $guestCart = \Lunar\Models\Cart::factory()->create([
+            'meta' => ['token' => 'register-guest-token'],
+        ]);
+        $guestCart->lines()->create([
+            'purchasable_type' => \Lunar\Models\ProductVariant::class,
+            'purchasable_id'   => $variant->id,
+            'quantity'         => 2,
+            'meta'             => null,
+        ]);
+
+        // Register with cart_token
+        $this->postJson('/api/register', [
+            'name'                  => 'New User',
+            'email'                 => 'newuser@example.com',
+            'password'              => 'password123',
+            'password_confirmation' => 'password123',
+            'cart_token'            => 'register-guest-token',
+        ])->assertStatus(201);
+
+        // Guest cart should now have user_id
+        $guestCart->refresh();
+        $this->assertNotNull($guestCart->user_id,
+            'Guest cart should be associated to the new user after register');
+    }
 }

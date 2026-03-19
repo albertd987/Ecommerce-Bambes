@@ -61,8 +61,27 @@ class AuthController extends Controller
     //  Envia email verificació
     $user->sendEmailVerificationNotification();
 
-    // Login automàtic després del registre 
+    // Login automàtic després del registre
     Auth::login($user);
+
+    // Associar carret de convidat si s'ha enviat cart_token
+    $cartToken = $request->input('cart_token');
+    if ($cartToken) {
+        $guestCart = \Lunar\Models\Cart::where('meta->token', $cartToken)
+            ->whereNull('user_id')
+            ->active()
+            ->first();
+
+        if ($guestCart) {
+            app(AssociateUser::class)->execute(
+                $guestCart,
+                $user,
+                config('lunar.cart.auth_policy', 'merge')
+            );
+            $guestCart->refresh();
+            CartSession::use($guestCart);
+        }
+    }
 
     return response()->json([
         'message' => 'Usuari registrat correctament. Revisa el correu per verificar el compte.',
