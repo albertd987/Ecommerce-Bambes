@@ -1,16 +1,16 @@
 import { describe, it, vi } from 'vitest'
 
-vi.mock('../services/api', () => ({
+vi.mock('@/services/api', () => ({
   default: {
     get: vi.fn(),
   },
 }))
 
-vi.mock('../components/ProductCard', () => ({
+vi.mock('@/components/ProductCard', () => ({
   default: () => null,
 }))
 
-vi.mock('../components/Header', () => ({
+vi.mock('@/components/Header', () => ({
   default: () => null,
 }))
 
