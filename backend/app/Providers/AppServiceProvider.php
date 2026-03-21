@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Filament\Lunar\Extensions\ProductResourceExtension;
+use App\Filament\Lunar\Extensions\ProductResourceStockExtension;
 use App\Models\Product;
 use App\Observers\MediaObserver;
 use Filament\Support\Facades\FilamentView;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Auth\Notifications\VerifyEmail;
+use Lunar\Admin\Filament\Resources\ProductResource as LunarProductResource;
 use Lunar\Admin\Filament\Resources\ProductResource\Pages\ListProducts as LunarListProducts;
 use Lunar\Admin\Support\Facades\LunarPanel;
 use Lunar\Facades\ModelManifest;
@@ -37,6 +39,7 @@ class AppServiceProvider extends ServiceProvider
         // Registrar extensió del ProductResource per simplificar el popup de creació
         LunarPanel::extensions([
             LunarListProducts::class => ProductResourceExtension::class,
+            LunarProductResource::class => ProductResourceStockExtension::class,
         ]);
 
         \Spatie\MediaLibrary\MediaCollections\Models\Media::observe(MediaObserver::class);
