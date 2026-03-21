@@ -7,35 +7,27 @@ use App\Services\StockService;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Forms\Contracts\HasForms;
+use Filament\Forms\Form;
 use Filament\Notifications\Notification;
-use Filament\Resources\Pages\Page;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
-use Illuminate\Support\HtmlString;
 use Lunar\Admin\Filament\Resources\ProductResource;
+use Lunar\Admin\Support\Pages\BaseEditRecord;
 use Lunar\Models\ProductVariant;
 
-class ManageProductStock extends Page implements HasForms, HasTable
+class ManageProductStock extends BaseEditRecord implements HasTable
 {
-    use InteractsWithForms;
     use InteractsWithTable;
 
     protected static string $resource = ProductResource::class;
 
     protected static string $view = 'filament.pages.manage-product-stock';
 
-    public $record;
-
-    public function mount(int|string $record): void
-    {
-        $this->record = static::$resource::resolveRecordRouteBinding($record);
-    }
+    public array $adjustData = [];
 
     public function getTitle(): string|Htmlable
     {
@@ -58,11 +50,29 @@ class ManageProductStock extends Page implements HasForms, HasTable
     }
 
     /**
+     * No form for the main page — we use the custom adjustment modal instead.
+     */
+    public function getDefaultForm(Form $form): Form
+    {
+        return $form->schema([]);
+    }
+
+    protected function getFormActions(): array
+    {
+        return [];
+    }
+
+    public function getRelationManagers(): array
+    {
+        return [];
+    }
+
+    /**
      * Get variants with their current stock and status for the top section.
      */
     public function getVariantsProperty(): \Illuminate\Support\Collection
     {
-        return $this->record->variants()->get()->map(function (ProductVariant $variant) {
+        return $this->getRecord()->variants()->get()->map(function (ProductVariant $variant) {
             $status = StockService::getStatus($variant);
             return (object) [
                 'id' => $variant->id,
@@ -79,7 +89,6 @@ class ManageProductStock extends Page implements HasForms, HasTable
                     'low_stock' => 'warning',
                     'out_of_stock' => 'danger',
                 },
-                'variant' => $variant,
             ];
         });
     }
@@ -89,7 +98,7 @@ class ManageProductStock extends Page implements HasForms, HasTable
      */
     public function adjustStock(int $variantId): void
     {
-        $variant = $this->record->variants()->findOrFail($variantId);
+        $variant = $this->getRecord()->variants()->findOrFail($variantId);
 
         $this->dispatch('open-modal', id: 'adjust-stock');
 
@@ -104,7 +113,7 @@ class ManageProductStock extends Page implements HasForms, HasTable
     }
 
     /**
-     * Define the adjustment form.
+     * Define available forms.
      */
     protected function getForms(): array
     {
@@ -114,9 +123,9 @@ class ManageProductStock extends Page implements HasForms, HasTable
         ];
     }
 
-    public function adjustForm(\Filament\Forms\Form $form): \Filament\Forms\Form
+    public function adjustForm(\Filament\Forms\Form $adjustForm): \Filament\Forms\Form
     {
-        return $form
+        return $adjustForm
             ->schema([
                 TextInput::make('variant_id')
                     ->hidden(),
@@ -152,8 +161,6 @@ class ManageProductStock extends Page implements HasForms, HasTable
             ->statePath('adjustData');
     }
 
-    public array $adjustData = [];
-
     /**
      * Submit the stock adjustment.
      */
@@ -161,7 +168,7 @@ class ManageProductStock extends Page implements HasForms, HasTable
     {
         $data = $this->adjustForm->getState();
 
-        $variant = $this->record->variants()->findOrFail($data['variant_id']);
+        $variant = $this->getRecord()->variants()->findOrFail($data['variant_id']);
 
         $service = app(StockService::class);
 
@@ -192,7 +199,7 @@ class ManageProductStock extends Page implements HasForms, HasTable
      */
     public function table(Table $table): Table
     {
-        $variantIds = $this->record->variants()->pluck('id');
+        $variantIds = $this->getRecord()->variants()->pluck('id');
 
         return $table
             ->query(
@@ -244,7 +251,7 @@ class ManageProductStock extends Page implements HasForms, HasTable
             ->filters([
                 SelectFilter::make('product_variant_id')
                     ->label('Variant')
-                    ->options(fn () => $this->record->variants()->pluck('sku', 'id')->toArray()),
+                    ->options(fn () => $this->getRecord()->variants()->pluck('sku', 'id')->toArray()),
                 SelectFilter::make('type')
                     ->label('Tipus')
                     ->options([
@@ -257,26 +264,5 @@ class ManageProductStock extends Page implements HasForms, HasTable
                     ]),
             ])
             ->paginated([10, 25, 50]);
-    }
-
-    /**
-     * Get the record for sub-navigation context.
-     */
-    public function getRecord()
-    {
-        return $this->record;
-    }
-
-    public function getRecordTitle(): string|Htmlable
-    {
-        return $this->record->translateAttribute('name');
-    }
-
-    /**
-     * Required for sub-navigation to work.
-     */
-    public static function getResource(): string
-    {
-        return static::$resource;
     }
 }

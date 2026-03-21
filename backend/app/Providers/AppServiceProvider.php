@@ -29,6 +29,12 @@ class AppServiceProvider extends ServiceProvider
     {
         LunarPanel::register();
 
+        // Registrar extensions al panell Lunar (cal fer-ho a register, abans del boot)
+        LunarPanel::extensions([
+            LunarListProducts::class => ProductResourceExtension::class,
+            LunarProductResource::class => ProductResourceStockExtension::class,
+        ]);
+
         // Registrar App\Models\Product al manifest de Lunar perquè
         // Product::create() retorni la nostra classe (amb fillable slug/thumbnail_id)
         ModelManifest::replace(ProductContract::class, Product::class);
@@ -36,11 +42,6 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Registrar extensió del ProductResource per simplificar el popup de creació
-        LunarPanel::extensions([
-            LunarListProducts::class => ProductResourceExtension::class,
-            LunarProductResource::class => ProductResourceStockExtension::class,
-        ]);
 
         \Spatie\MediaLibrary\MediaCollections\Models\Media::observe(MediaObserver::class);
 
