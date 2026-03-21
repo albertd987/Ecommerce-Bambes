@@ -15,6 +15,8 @@ use Lunar\Admin\Filament\Resources\ProductResource\Pages\ListProducts as LunarLi
 use Lunar\Admin\Support\Facades\LunarPanel;
 use Lunar\Facades\ModelManifest;
 use Lunar\Models\Contracts\Product as ProductContract;
+use Lunar\Models\ProductVariant;
+use App\Models\StockMovement;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -55,6 +57,11 @@ class AppServiceProvider extends ServiceProvider
             );
 
             return $frontendUrl . '/verify-email?verify_url=' . urlencode($verifyUrl);
+        });
+
+        // Registrar relació stockMovements a ProductVariant de Lunar
+        ProductVariant::resolveRelationUsing('stockMovements', function ($model) {
+            return $model->hasMany(StockMovement::class, 'product_variant_id');
         });
     }
 }
