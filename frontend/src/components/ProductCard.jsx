@@ -3,12 +3,17 @@ import { Link } from 'react-router-dom'
 export default function ProductCard({ product }) {
   return (
     <Link to={`/products/${product.id}`} className="group block">
-      <div className="aspect-square overflow-hidden bg-[#f5f5f5] rounded-lg mb-2">
+      <div className="relative aspect-square overflow-hidden bg-[#f5f5f5] rounded-lg mb-2">
         <img
           src={product.thumbnail || 'https://via.placeholder.com/400x400/e5e7eb/6b7280?text=No+Image'}
           alt={product.name}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
+        {product.stock_status === 'out_of_stock' && (
+          <span className="absolute top-2 left-2 bg-red-600 text-white text-xs font-medium px-2 py-0.5 rounded">
+            Esgotat
+          </span>
+        )}
       </div>
 
       <div className="space-y-0.5">

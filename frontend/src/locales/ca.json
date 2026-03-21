@@ -488,8 +488,9 @@
       "sizeAria": "Seleccionar talla EU {{size}}"
     },
     "stock": {
-      "available": "Stock disponible",
-      "units": "unitats"
+      "in_stock": "En stock",
+      "low_stock": "Últimes unitats",
+      "out_of_stock": "Esgotat"
     },
     "actions": {
       "backHome": "Tornar a l'inici",

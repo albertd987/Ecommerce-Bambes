@@ -161,7 +161,7 @@ export default function ProductDetailPage() {
       return
     }
 
-    if (variant.stock <= 0) {
+    if (variant.stock_status === 'out_of_stock') {
       toast.error(t("productDetail.toasts.outOfStock", "No hi ha estoc disponible"))
       return
     }
@@ -271,7 +271,7 @@ export default function ProductDetailPage() {
       ? findVariant(variantsData?.variantMap, selectedSize, selectedColor)
       : null
 
-  const isOutOfStock = currentVariant && currentVariant.stock <= 0
+  const isOutOfStock = currentVariant && currentVariant.stock_status === 'out_of_stock'
   const favorite = product ? isFavorite(product.id) : false
 
   return (
@@ -444,7 +444,7 @@ export default function ProductDetailPage() {
                 <div className="grid grid-cols-3 gap-[7px]">
                   {variantsData.sizes.map((size) => {
                     const variant = findVariant(variantsData.variantMap, size, selectedColor)
-                    const hasStock = variant && variant.stock > 0
+                    const hasStock = variant && variant.stock_status !== 'out_of_stock'
                     const isSelected = selectedSize === size
 
                     return (
@@ -474,9 +474,12 @@ export default function ProductDetailPage() {
                 </div>
 
                 {selectedSize && currentVariant && (
-                  <p className="text-sm text-muted-foreground mt-2">
-                    {t("productDetail.stock.available", "Stock disponible")}: {currentVariant.stock}{" "}
-                    {t("productDetail.stock.units", "unitats")}
+                  <p className={`text-sm font-medium mt-2 ${
+                    currentVariant.stock_status === 'in_stock' ? 'text-green-600' :
+                    currentVariant.stock_status === 'low_stock' ? 'text-orange-500' :
+                    'text-red-600'
+                  }`}>
+                    {t(`productDetail.stock.${currentVariant.stock_status}`)}
                   </p>
                 )}
               </div>

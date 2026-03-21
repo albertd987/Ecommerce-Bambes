@@ -488,8 +488,9 @@
       "sizeAria": "Select size EU {{size}}"
     },
     "stock": {
-      "available": "Available stock",
-      "units": "units"
+      "in_stock": "In stock",
+      "low_stock": "Last units",
+      "out_of_stock": "Out of stock"
     },
     "actions": {
       "backHome": "Back to home",
