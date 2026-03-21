@@ -10,6 +10,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Lunar\Models\Product;
 use Lunar\Models\Brand;
 use Lunar\Models\Collection;
+use App\Services\StockService;
 
 class ProductController extends Controller
 {
@@ -139,6 +140,12 @@ class ProductController extends Controller
                     'color' => $colorValue,
                     'types' => $types,
 
+                    'stock_status' => $product->variants->isEmpty()
+                        ? 'out_of_stock'
+                        : ($product->variants->every(fn($v) => StockService::getStatus($v) === 'out_of_stock')
+                            ? 'out_of_stock'
+                            : 'in_stock'),
+
                     'created_at' => $product->created_at,
                 ];
             });
@@ -265,7 +272,7 @@ class ProductController extends Controller
                     return [
                         'id' => $variant->id,
                         'sku' => $variant->sku,
-                        'stock' => $variant->stock,
+                        'stock_status' => StockService::getStatus($variant),
                     ];
                 }),
             ]
