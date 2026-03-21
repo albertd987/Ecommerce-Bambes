@@ -74,7 +74,7 @@ StockService::move(variant, quantity, type, reference?, notes?, user?)
 |--------|----------|------|-----|
 | `sell(variant, qty, orderId)` | -qty | `sale` | Checkout confirmat |
 | `cancel(variant, qty, orderId)` | +qty | `cancellation` | Pagament fallat / cancel·lació |
-| `return(variant, qty, orderId)` | +qty | `return` | Devolució client |
+| `returnStock(variant, qty, orderId)` | +qty | `return` | Devolució client |
 | `adjust(variant, qty, notes, user)` | ±qty | `adjustment` | Admin manual |
 | `receive(variant, qty, notes, user)` | +qty | `reception` | Recepció mercaderia |
 | `setInitial(variant, qty, user?)` | +qty | `initial` | Creació producte (una sola vegada per variant, llança excepció si ja té moviments) |
