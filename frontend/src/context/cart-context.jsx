@@ -4,6 +4,89 @@ import { useAuth } from './auth-context'
 
 const CartContext = createContext(null)
 
+function getSafeText(value) {
+  if (value == null) return null
+  if (typeof value === "string") return value
+  if (typeof value === "number") return String(value)
+
+  if (typeof value === "object") {
+    if (typeof value.value === "string") return value.value
+    if (typeof value.name === "string") return value.name
+    if (typeof value.label === "string") return value.label
+    if (typeof value.text === "string") return value.text
+  }
+
+  return null
+}
+
+function getNestedValue(obj, path) {
+  return path.split(".").reduce((acc, key) => acc?.[key], obj)
+}
+
+function extractVariantOption(line, keys = []) {
+  const variant = line?.variant
+  const product = line?.product
+
+  const sources = [
+    variant,
+    variant?.values,
+    variant?.options,
+    variant?.attribute_data,
+    variant?.attributes,
+    line?.meta,
+    line?.description,
+    product?.attribute_data,
+  ]
+
+  for (const source of sources) {
+    if (!source || typeof source !== "object") continue
+
+    for (const key of keys) {
+      const direct = getSafeText(source[key])
+      if (direct) return direct
+
+      const nested = getSafeText(getNestedValue(source, key))
+      if (nested) return nested
+    }
+  }
+
+  if (Array.isArray(variant?.values)) {
+    for (const item of variant.values) {
+      const name = String(item?.name || item?.label || "").toLowerCase()
+      const value = getSafeText(item?.value) || getSafeText(item)
+
+      if (!value) continue
+
+      if (keys.includes("color") && (name.includes("color") || name.includes("colour"))) {
+        return value
+      }
+
+      if (keys.includes("size") && (name.includes("size") || name.includes("talla"))) {
+        return value
+      }
+    }
+  }
+
+  if (Array.isArray(variant?.options)) {
+    for (const item of variant.options) {
+      const name = String(item?.name || item?.label || "").toLowerCase()
+      const value = getSafeText(item?.value) || getSafeText(item)
+
+      if (!value) continue
+
+      if (keys.includes("color") && (name.includes("color") || name.includes("colour"))) {
+        return value
+      }
+
+      if (keys.includes("size") && (name.includes("size") || name.includes("talla"))) {
+        return value
+      }
+    }
+  }
+
+  return null
+}
+
 export function CartProvider({ children }) {
   const [cart, setCart] = useState(null) // Dades del servidor
   const [loading, setLoading] = useState(false)
@@ -43,18 +126,52 @@ export function CartProvider({ children }) {
   const items = useMemo(() => {
     if (!cart?.lines) return []
 
-    return cart.lines.map(line => ({
-      key: `line:${line.id}`,
-      lineId: line.id,
-      product: {
-        id: line.product.id,
-        name: line.product.name,
-        price: line.unit_price,
-        image: line.product.thumbnail || 'https://via.placeholder.com/200x200/e5e7eb/6b7280?text=No+Image',
-        brand: line.variant?.sku?.split('-')[0] || 'Unknown',
-      },
-      qty: line.quantity,
-    }))
+    return cart.lines.map((line) => {
+      const rawSku = line.variant?.sku || null
+      const skuParts = rawSku ? rawSku.split("-") : []
+
+      const sizeFromSku = skuParts.length >= 2 ? skuParts[skuParts.length - 2] : null
+      const colorFromSku = skuParts.length >= 1 ? skuParts[skuParts.length - 1] : null
+
+      const size =
+        extractVariantOption(line, [
+          "size",
+          "talla",
+          "attribute_data.size",
+          "attributes.size",
+          "values.size",
+        ]) ||
+        sizeFromSku ||
+        null
+
+      const color =
+        extractVariantOption(line, [
+          "color",
+          "colour",
+          "attribute_data.color",
+          "attributes.color",
+          "values.color",
+        ]) ||
+        colorFromSku ||
+        null
+
+      return {
+        key: `line:${line.id}`,
+        lineId: line.id,
+        raw: line,
+        product: {
+          id: line.product?.id,
+          name: line.product?.name,
+          price: line.unit_price,
+          image: line.product?.thumbnail || 'https://via.placeholder.com/200x200/e5e7eb/6b7280?text=No+Image',
+          brand: line.product?.brand || line.variant?.sku?.split('-')[0] || 'Unknown',
+          size,
+          color,
+          sku: line.variant?.sku || null,
+        },
+        qty: line.quantity,
+      }
+    })
   }, [cart])
 
   // Comptador d'items
@@ -91,7 +208,14 @@ export function CartProvider({ children }) {
       }
 
       await fetchCart()
-      return { success: true }
+      return {
+        success: true,
+        meta: {
+          size: productRaw?.size ?? null,
+          color: productRaw?.color ?? null,
+          sku: productRaw?.sku ?? null,
+        },
+      }
     } catch (error) {
       console.error('Error en afegir:', error)
       return { success: false, error: error.response?.data }
@@ -156,14 +280,14 @@ export function CartProvider({ children }) {
     setLoading(true)
     try {
       const cartToken = localStorage.getItem('cart_token')
-      
+
       await api.delete('/cart', {
         params: cartToken ? { cart_token: cartToken } : {}
       })
-      
+
       setCart(null)
       localStorage.removeItem('cart_token') // Eliminar token en buidar
-      
+
       return { success: true }
     } catch (error) {
       console.error('Error en buidar:', error)

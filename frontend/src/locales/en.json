@@ -125,6 +125,24 @@
       "subtitle": "Add a product to get started.",
       "cta": "Browse products"
     },
+    "colors": {
+  "NEGRE": "Black",
+  "BLANC": "White",
+  "BLAU": "Blue",
+  "VERMELL": "Red",
+  "VERD": "Green",
+  "GRIS": "Gray",
+  "ROSA": "Pink",
+  "BEIX": "Beige",
+  "TARONJA": "Orange",
+  "GROC": "Yellow",
+  "LILA": "Purple",
+  "MARRO": "Brown"
+},
+    "details": {
+      "color": "Color",
+      "size": "Size"
+    },
     "productFallback": "Product",
     "lineTotal": "Total",
     "qty": {
@@ -440,6 +458,20 @@
     "errors": {
       "load": "Error loading product"
     },
+    "colors": {
+  "NEGRE": "Black",
+  "BLANC": "White",
+  "BLAU": "Blue",
+  "VERMELL": "Red",
+  "VERD": "Green",
+  "GRIS": "Gray",
+  "ROSA": "Pink",
+  "BEIX": "Beige",
+  "TARONJA": "Orange",
+  "GROC": "Yellow",
+  "LILA": "Purple",
+  "MARRO": "Brown"
+},
     "gallery": {
       "prev": "Previous image",
       "next": "Next image",

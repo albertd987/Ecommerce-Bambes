@@ -125,6 +125,24 @@
       "subtitle": "Afegeix algun producte per començar.",
       "cta": "Veure productes"
     },
+    "colors": {
+  "NEGRE": "Negre",
+  "BLANC": "Blanc",
+  "BLAU": "Blau",
+  "VERMELL": "Vermell",
+  "VERD": "Verd",
+  "GRIS": "Gris",
+  "ROSA": "Rosa",
+  "BEIX": "Beix",
+  "TARONJA": "Taronja",
+  "GROC": "Groc",
+  "LILA": "Lila",
+  "MARRO": "Marró"
+},
+    "details": {
+  "color": "Color",
+  "size": "Talla"
+},
     "productFallback": "Producte",
     "lineTotal": "Total",
     "qty": {
@@ -440,6 +458,20 @@
     "errors": {
       "load": "Error carregant el producte"
     },
+    "colors": {
+  "NEGRE": "Negre",
+  "BLANC": "Blanc",
+  "BLAU": "Blau",
+  "VERMELL": "Vermell",
+  "VERD": "Verd",
+  "GRIS": "Gris",
+  "ROSA": "Rosa",
+  "BEIX": "Beix",
+  "TARONJA": "Taronja",
+  "GROC": "Groc",
+  "LILA": "Lila",
+  "MARRO": "Marró"
+},
     "gallery": {
       "prev": "Imatge anterior",
       "next": "Imatge següent",

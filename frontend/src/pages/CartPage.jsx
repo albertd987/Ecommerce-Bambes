@@ -9,6 +9,76 @@ import { useTranslation } from "react-i18next"
 const SHIPPING_FLAT_RATE = 499 // 4.99€ en cèntims
 const TAX_RATE = 0.21 // 21% IVA (informatiu, ja inclòs)
 
+function getNestedValue(obj, path) {
+  return path.split(".").reduce((acc, key) => acc?.[key], obj)
+}
+
+function getSafeText(value) {
+  if (value == null) return null
+  if (typeof value === "string") return value
+  if (typeof value === "number") return String(value)
+
+  if (typeof value === "object") {
+    if (typeof value.value === "string") return value.value
+    if (typeof value.name === "string") return value.name
+    if (typeof value.label === "string") return value.label
+    if (typeof value.text === "string") return value.text
+
+    if (value.attribute_data) {
+      if (typeof value.attribute_data.value === "string") return value.attribute_data.value
+      if (typeof value.attribute_data.name === "string") return value.attribute_data.name
+    }
+  }
+
+  return null
+}
+
+function translateColor(color, t, scope = "cart") {
+  if (!color) return ""
+  const key = String(color).trim().toUpperCase()
+  return t(`${scope}.colors.${key}`, color)
+}
+
+
+
+function extractOption(line, product, keys = []) {
+  const candidates = [
+    line?.variant,
+    line?.meta,
+    line?.options,
+    line?.purchasable,
+    product?.variant,
+    product?.options,
+    product?.attribute_data,
+  ]
+
+  for (const source of candidates) {
+    if (!source || typeof source !== "object") continue
+
+    for (const key of keys) {
+      const direct = getSafeText(source[key])
+      if (direct) return direct
+
+      const nested = getSafeText(getNestedValue(source, key))
+      if (nested) return nested
+    }
+  }
+
+  if (Array.isArray(line?.options)) {
+    for (const opt of line.options) {
+      const name = String(opt?.name || opt?.label || "").toLowerCase()
+      const value = getSafeText(opt?.value)
+
+      if (!value) continue
+
+      if (keys.includes("color") && name.includes("color")) return value
+      if (keys.includes("size") && (name.includes("size") || name.includes("talla"))) return value
+    }
+  }
+
+  return null
+}
+
 export default function CartPage() {
   const { t } = useTranslation()
   const { items, cartCount, cartSubtotal, updateQty, removeItem, clearCart } = useCart()
@@ -19,7 +89,6 @@ export default function CartPage() {
   const shippingCents = items.length > 0 ? SHIPPING_FLAT_RATE : 0
   const totalCents = subtotalCents + shippingCents
 
-  // IVA inclòs (informatiu): gross - gross/(1+iva)
   const taxIncludedCents = useMemo(() => {
     if (!items.length || totalCents <= 0) return 0
     return Math.round(totalCents - totalCents / (1 + TAX_RATE))
@@ -69,9 +138,9 @@ export default function CartPage() {
           </Card>
         ) : (
           <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
-            {/* Llista */}
             <div className="space-y-4">
               {items.map((line) => {
+                console.log("CART LINE:", line)
                 const p = line.product || {}
                 const price = Number(p.price || 0)
                 const qty = Number(line.qty || 0)
@@ -80,7 +149,25 @@ export default function CartPage() {
                 const imgSrc =
                   typeof p.image === "string" && p.image.startsWith("http")
                     ? p.image
+                    : typeof p.thumbnail === "string" && p.thumbnail.startsWith("http")
+                    ? p.thumbnail
                     : "https://placehold.co/200x200?text=No+Image"
+
+                const color =
+                  extractOption(line, p, [
+                    "color",
+                    "colour",
+                    "attribute_data.color",
+                    "values.color",
+                  ]) || null
+
+                const size =
+                  extractOption(line, p, [
+                    "size",
+                    "talla",
+                    "attribute_data.size",
+                    "values.size",
+                  ]) || null
 
                 return (
                   <Card key={line.key}>
@@ -100,7 +187,37 @@ export default function CartPage() {
                               <p className="text-sm text-muted-foreground">{p.brand ?? "—"}</p>
                               <h3 className="font-semibold leading-tight">
                                 {p.name ?? t("cart.productFallback", "Producte")}
+                                
                               </h3>
+                              {(p.color || p.size) && (
+  <div className="mt-2 flex flex-wrap gap-2 text-xs">
+    {p.color && (
+      <span className="rounded-full border px-2.5 py-1 text-muted-foreground">
+        {t("cart.details.color", "Color")}: {translateColor(p.color, t, "cart")}
+      </span>
+    )}
+    {p.size && (
+      <span className="rounded-full border px-2.5 py-1 text-muted-foreground">
+        {t("cart.details.size", "Talla")}: {p.size}
+      </span>
+    )}
+  </div>
+)}
+
+                              {(color || size) && (
+                                <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                                  {color && (
+                                    <span className="rounded-full border px-2.5 py-1 text-muted-foreground">
+                                      {t("cart.details.color", "Color")}: {color}
+                                    </span>
+                                  )}
+                                  {size && (
+                                    <span className="rounded-full border px-2.5 py-1 text-muted-foreground">
+                                      {t("cart.details.size", "Talla")}: {size}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             </div>
 
                             <div className="text-right">
@@ -153,7 +270,6 @@ export default function CartPage() {
               </div>
             </div>
 
-            {/* Resum */}
             <Card className="h-fit">
               <CardHeader>
                 <CardTitle>{t("cart.summary.title", "Resum")}</CardTitle>
@@ -186,7 +302,7 @@ export default function CartPage() {
                   )}
                 </p>
 
-                {/* (Opcional) IVA informatiu (si el vols mostrar algun dia):
+                {/* IVA informatiu opcional
                 <p className="text-xs text-muted-foreground">
                   {t("cart.summary.taxIncluded", "IVA inclòs")}: {money(taxIncludedCents)}
                 </p>

@@ -61,6 +61,12 @@ function getSafeImage(value) {
   return null
 }
 
+function translateColor(color, t, scope = "productDetail") {
+  if (!color) return ""
+  const key = String(color).trim().toUpperCase()
+  return t(`${scope}.colors.${key}`, color)
+}
+
 export default function ProductDetailPage() {
   const { t } = useTranslation()
   const { id } = useParams()
@@ -163,7 +169,15 @@ export default function ProductDetailPage() {
     try {
       setAddingToCart(true)
 
-      const result = await addItem({ variant_id: variant.id }, 1)
+      const result = await addItem(
+        {
+          variant_id: variant.id,
+          size: selectedSize,
+          color: selectedColor,
+          sku: variant.sku,
+        },
+        1
+      )
 
       if (result.success) {
         toast.success(t("productDetail.toasts.addedToCart", "Producte afegit a la cistella!"))
@@ -380,28 +394,30 @@ export default function ProductDetailPage() {
               <div className="mt-6">
                 <p className="text-sm font-medium mb-3">
                   {t("productDetail.color.label", "Color")}:{" "}
-                  <span className="capitalize">{selectedColor}</span>
+                  <span>{translateColor(selectedColor, t, "productDetail")}</span>
                 </p>
                 <div className="flex gap-2 flex-wrap">
                   {variantsData.colors.map((color) => (
-                    <button
-                      key={color}
-                      onClick={() => setSelectedColor(color)}
-                      className={`px-4 py-2 rounded-full border text-sm capitalize transition-all ${
-                        selectedColor === color
-                          ? "border-foreground font-medium"
-                          : "border-border hover:border-muted-foreground"
-                      }`}
-                      aria-label={t(
-                        "productDetail.color.selectAria",
-                        "Seleccionar color {{color}}",
-                        { color }
-                      )}
-                      type="button"
-                    >
-                      {color}
-                    </button>
-                  ))}
+  <button
+    key={color}
+    onClick={() => setSelectedColor(color)}
+    className={`px-4 py-2 rounded-full border text-sm transition-all ${
+      selectedColor === color
+        ? "border-foreground font-medium"
+        : "border-border hover:border-muted-foreground"
+    }`}
+    aria-label={t(
+      "productDetail.color.selectAria",
+      "Seleccionar color {{color}}",
+      {
+        color: translateColor(color, t, "productDetail"),
+      }
+    )}
+    type="button"
+  >
+    {translateColor(color, t, "productDetail")}
+  </button>
+))}
                 </div>
               </div>
             )}
