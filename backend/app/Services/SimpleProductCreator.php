@@ -16,6 +16,7 @@ use Lunar\Models\ProductOptionValue;
 use Lunar\Models\ProductType;
 use Lunar\Models\ProductVariant;
 use Lunar\Models\TaxClass;
+use App\Services\StockService;
 
 /**
  * Crea productes complets a Lunar amb una interfície simplificada.
@@ -139,7 +140,10 @@ class SimpleProductCreator
                 }
 
                 if (isset($data['stock'])) {
-                    $firstVariant->update(['stock' => (int) $data['stock']]);
+                    $stockDiff = (int) $data['stock'] - $firstVariant->stock;
+                    if ($stockDiff !== 0) {
+                        app(StockService::class)->adjust($firstVariant, $stockDiff, 'Stock update via admin', null);
+                    }
                 }
             }
 
@@ -187,9 +191,14 @@ class SimpleProductCreator
             'product_id'  => $product->id,
             'tax_class_id'=> $taxClass->id,
             'sku'         => $sku,
-            'purchasable' => 'always',
-            'stock'       => (int) ($data['stock'] ?? 0),
+            'purchasable' => 'in_stock',
+            'stock'       => 0,
         ]);
+
+        $stock = (int) ($data['stock'] ?? 0);
+        if ($stock > 0) {
+            app(StockService::class)->setInitial($variant, $stock);
+        }
 
         Price::create([
             'customer_group_id' => $customerGroup->id,
@@ -254,9 +263,14 @@ class SimpleProductCreator
                 'product_id'   => $product->id,
                 'tax_class_id' => $taxClass->id,
                 'sku'          => $sku,
-                'purchasable'  => 'always',
-                'stock'        => (int) ($variantData['stock'] ?? 0),
+                'purchasable'  => 'in_stock',
+                'stock'        => 0,
             ]);
+
+            $stock = (int) ($variantData['stock'] ?? 0);
+            if ($stock > 0) {
+                app(StockService::class)->setInitial($variant, $stock);
+            }
 
             $optionValueIds = [$sizeValue->id, $colorValue->id];
             if (method_exists($variant, 'optionValues')) {
