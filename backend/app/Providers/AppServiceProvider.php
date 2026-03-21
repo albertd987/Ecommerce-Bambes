@@ -8,6 +8,7 @@ use App\Observers\MediaObserver;
 use Filament\Support\Facades\FilamentView;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Auth\Notifications\VerifyEmail;
@@ -16,6 +17,8 @@ use Lunar\Admin\Support\Facades\LunarPanel;
 use Lunar\Facades\ModelManifest;
 use Lunar\Models\Contracts\Product as ProductContract;
 use Lunar\Models\ProductVariant;
+use App\Events\StockUpdated;
+use App\Listeners\CheckLowStock;
 use App\Models\StockMovement;
 
 class AppServiceProvider extends ServiceProvider
@@ -63,5 +66,8 @@ class AppServiceProvider extends ServiceProvider
         ProductVariant::resolveRelationUsing('stockMovements', function ($model) {
             return $model->hasMany(StockMovement::class, 'product_variant_id');
         });
+
+        // Low stock alert listener
+        Event::listen(StockUpdated::class, CheckLowStock::class);
     }
 }
