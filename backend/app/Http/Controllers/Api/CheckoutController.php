@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Mail\OrderConfirmationMail;
 use Illuminate\Support\Facades\Mail;
+use App\Services\StockService;
 
 class CheckoutController extends Controller
 {
@@ -281,7 +282,7 @@ class CheckoutController extends Controller
                 'updated_at' => $now,
             ]);
 
-            $variant->decrement('stock', $qty);
+            app(StockService::class)->sell($variant, $qty, $orderId);
         }
 
         DB::commit();
