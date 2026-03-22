@@ -255,12 +255,17 @@ class ProductController extends Controller
     {
         $product = Product::with([
             'variants.prices',
+            'variants.values',
             'thumbnail',
             'images'
         ])->findOrFail($id);
 
         $firstVariant = $product->variants->first();
         $priceValue = $firstVariant?->prices->first()?->price->value ?? 0;
+
+        [$sizeOptionId, $colorOptionId] = $this->getOptionIds();
+        $getValueEn = fn($name) => is_array($name) ? ($name['en'] ?? null)
+            : (is_object($name) ? ($name['en'] ?? null) : null);
 
         return response()->json([
             'data' => [
@@ -271,11 +276,16 @@ class ProductController extends Controller
                 'price' => $priceValue / 100,
                 'thumbnail' => $product->thumbnail?->getUrl(),
                 'images' => $product->images->map(fn($img) => $img->getUrl()),
-                'variants' => $product->variants->map(function ($variant) {
+                'variants' => $product->variants->map(function ($variant) use ($sizeOptionId, $colorOptionId, $getValueEn) {
+                    $sizeVal  = $variant->values->first(fn($v) => $v->product_option_id === $sizeOptionId);
+                    $colorVal = $variant->values->first(fn($v) => $v->product_option_id === $colorOptionId);
+
                     return [
-                        'id' => $variant->id,
-                        'sku' => $variant->sku,
+                        'id'           => $variant->id,
+                        'sku'          => $variant->sku,
                         'stock_status' => StockService::getStatus($variant),
+                        'size'         => $sizeVal  ? $getValueEn($sizeVal->name)  : null,
+                        'color'        => $colorVal ? $getValueEn($colorVal->name) : null,
                     ];
                 }),
             ]

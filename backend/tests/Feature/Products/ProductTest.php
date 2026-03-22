@@ -135,4 +135,46 @@ class ProductTest extends TestCase
         $colors = $response->json('data.colors');
         $this->assertContains('Negre', $colors);
     }
+
+    public function test_product_show_returns_size_and_color_per_variant(): void
+    {
+        ['product' => $product, 'variant' => $variant] = $this->createProductWithVariantAndPrice();
+
+        $sizeOpt  = \Lunar\Models\ProductOption::firstOrCreate(['handle' => 'talla'], ['name' => 'Talla']);
+        $colorOpt = \Lunar\Models\ProductOption::firstOrCreate(['handle' => 'color'], ['name' => 'Color']);
+
+        $sizeVal  = \Lunar\Models\ProductOptionValue::create([
+            'product_option_id' => $sizeOpt->id,
+            'name' => ['en' => 'L'],
+        ]);
+        $colorVal = \Lunar\Models\ProductOptionValue::create([
+            'product_option_id' => $colorOpt->id,
+            'name' => ['en' => 'Blanc'],
+        ]);
+
+        $variant->values()->syncWithoutDetaching([$sizeVal->id, $colorVal->id]);
+
+        $response = $this->getJson("/api/products/{$product->id}");
+
+        $response->assertOk();
+        $variantData = $response->json('data.variants.0');
+        $this->assertArrayHasKey('size', $variantData);
+        $this->assertArrayHasKey('color', $variantData);
+        $this->assertEquals('L', $variantData['size']);
+        $this->assertEquals('Blanc', $variantData['color']);
+    }
+
+    public function test_product_show_returns_null_size_color_when_no_options(): void
+    {
+        ['product' => $product] = $this->createProductWithVariantAndPrice();
+
+        $response = $this->getJson("/api/products/{$product->id}");
+
+        $response->assertOk();
+        $variantData = $response->json('data.variants.0');
+        $this->assertArrayHasKey('size', $variantData);
+        $this->assertArrayHasKey('color', $variantData);
+        $this->assertNull($variantData['size']);
+        $this->assertNull($variantData['color']);
+    }
 }
