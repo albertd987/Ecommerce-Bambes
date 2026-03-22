@@ -101,4 +101,38 @@ class ProductTest extends TestCase
 
         $response->assertStatus(200);
     }
+
+    public function test_filters_returns_sizes_by_handle_not_hardcoded_id(): void
+    {
+        $opt = \Lunar\Models\ProductOption::firstOrCreate(
+            ['handle' => 'talla'],
+            ['name' => ['en' => 'Talla']]
+        );
+        \Lunar\Models\ProductOptionValue::firstOrCreate(
+            ['product_option_id' => $opt->id, 'name' => ['en' => 'M']]
+        );
+
+        $response = $this->getJson('/api/products/filters');
+
+        $response->assertOk();
+        $sizes = $response->json('data.sizes');
+        $this->assertContains('M', $sizes);
+    }
+
+    public function test_filters_returns_colors_by_handle_not_hardcoded_id(): void
+    {
+        $opt = \Lunar\Models\ProductOption::firstOrCreate(
+            ['handle' => 'color'],
+            ['name' => ['en' => 'Color']]
+        );
+        \Lunar\Models\ProductOptionValue::firstOrCreate(
+            ['product_option_id' => $opt->id, 'name' => ['en' => 'Negre']]
+        );
+
+        $response = $this->getJson('/api/products/filters');
+
+        $response->assertOk();
+        $colors = $response->json('data.colors');
+        $this->assertContains('Negre', $colors);
+    }
 }

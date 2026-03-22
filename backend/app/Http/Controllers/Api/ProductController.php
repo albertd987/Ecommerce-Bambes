@@ -10,6 +10,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Lunar\Models\Product;
 use Lunar\Models\Brand;
 use Lunar\Models\Collection;
+use Lunar\Models\ProductOption;
 use App\Services\StockService;
 
 class ProductController extends Controller
@@ -100,7 +101,9 @@ class ProductController extends Controller
                 return null;
             };
 
-            $mapped = $products->map(function ($product) use ($getValueEn) {
+            [$sizeOptionId, $colorOptionId] = $this->getOptionIds();
+
+            $mapped = $products->map(function ($product) use ($getValueEn, $sizeOptionId, $colorOptionId) {
                 $firstVariant = $product->variants->first();
 
                 $priceCents = (int) ($firstVariant?->prices->first()?->price?->value ?? 0);
@@ -112,8 +115,8 @@ class ProductController extends Controller
                     foreach ($firstVariant->values as $val) {
                         $vEn = $getValueEn($val->name);
 
-                        if ((int) $val->product_option_id === 1) $sizeValue = $vEn;   // talla
-                        if ((int) $val->product_option_id === 2) $colorValue = $vEn;  // color
+                        if ($val->product_option_id === $sizeOptionId) $sizeValue = $vEn;
+                        if ($val->product_option_id === $colorOptionId) $colorValue = $vEn;
                     }
                 }
 
@@ -290,6 +293,7 @@ class ProductController extends Controller
             ->values();
 
         $driver = DB::getDriverName();
+        [$sizeOptionId, $colorOptionId] = $this->getOptionIds();
 
         $nameSelect = match ($driver) {
             'sqlite' => DB::raw("json_extract(name, '$.en') as name"),
@@ -298,7 +302,7 @@ class ProductController extends Controller
 
         $sizes = DB::table('lunar_product_option_values')
             ->select($nameSelect)
-            ->where('product_option_id', 1)
+            ->where('product_option_id', $sizeOptionId)
             ->whereNotNull('name')
             ->distinct()
             ->orderBy('name')
@@ -308,7 +312,7 @@ class ProductController extends Controller
 
         $colors = DB::table('lunar_product_option_values')
             ->select($nameSelect)
-            ->where('product_option_id', 2)
+            ->where('product_option_id', $colorOptionId)
             ->whereNotNull('name')
             ->distinct()
             ->orderBy('name')
@@ -331,5 +335,16 @@ class ProductController extends Controller
                 'types'  => $types,
             ],
         ]);
+    }
+
+    /**
+     * Resol els IDs de les opcions 'talla' i 'color' per handle.
+     * Evita dependre dels IDs numèrics de la BD.
+     */
+    private function getOptionIds(): array
+    {
+        $sizeOption  = ProductOption::where('handle', 'talla')->first();
+        $colorOption = ProductOption::where('handle', 'color')->first();
+        return [$sizeOption?->id, $colorOption?->id];
     }
 }
