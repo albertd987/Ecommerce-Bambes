@@ -239,25 +239,38 @@ class SimpleProductCreator
             $size  = trim($variantData['size'] ?? '');
             $color = trim($variantData['color'] ?? '');
 
-            $sizeValue = $valHasHandle
-                ? ProductOptionValue::firstOrCreate(
-                    ['product_option_id' => $optSize->id, 'name' => [$locale => $size]],
-                    ['handle' => 'talla-' . Str::slug($size)]
-                )
-                : ProductOptionValue::firstOrCreate(
-                    ['product_option_id' => $optSize->id, 'name' => [$locale => $size]]
-                );
+            $optionValueIds = [];
 
-            $colorValue = $valHasHandle
-                ? ProductOptionValue::firstOrCreate(
-                    ['product_option_id' => $optColor->id, 'name' => [$locale => $color]],
-                    ['handle' => 'color-' . Str::slug($color)]
-                )
-                : ProductOptionValue::firstOrCreate(
-                    ['product_option_id' => $optColor->id, 'name' => [$locale => $color]]
-                );
+            if ($size !== '') {
+                $sizeValue = $valHasHandle
+                    ? ProductOptionValue::firstOrCreate(
+                        ['product_option_id' => $optSize->id, 'name' => [$locale => $size]],
+                        ['handle' => 'talla-' . Str::slug($size)]
+                    )
+                    : ProductOptionValue::firstOrCreate(
+                        ['product_option_id' => $optSize->id, 'name' => [$locale => $size]]
+                    );
+                $optionValueIds[] = $sizeValue->id;
+            }
 
-            $sku = $this->skuGenerator->generate($product->translateAttribute('name'), $brandName, $size, $color);
+            if ($color !== '') {
+                $colorValue = $valHasHandle
+                    ? ProductOptionValue::firstOrCreate(
+                        ['product_option_id' => $optColor->id, 'name' => [$locale => $color]],
+                        ['handle' => 'color-' . Str::slug($color)]
+                    )
+                    : ProductOptionValue::firstOrCreate(
+                        ['product_option_id' => $optColor->id, 'name' => [$locale => $color]]
+                    );
+                $optionValueIds[] = $colorValue->id;
+            }
+
+            $sku = $this->skuGenerator->generate(
+                $product->translateAttribute('name'),
+                $brandName,
+                $size !== '' ? $size : null,
+                $color !== '' ? $color : null
+            );
 
             $variant = ProductVariant::create([
                 'product_id'   => $product->id,
@@ -272,11 +285,12 @@ class SimpleProductCreator
                 app(StockService::class)->setInitial($variant, $stock);
             }
 
-            $optionValueIds = [$sizeValue->id, $colorValue->id];
-            if (method_exists($variant, 'optionValues')) {
-                $variant->optionValues()->syncWithoutDetaching($optionValueIds);
-            } else {
-                $variant->values()->syncWithoutDetaching($optionValueIds);
+            if (!empty($optionValueIds)) {
+                if (method_exists($variant, 'optionValues')) {
+                    $variant->optionValues()->syncWithoutDetaching($optionValueIds);
+                } else {
+                    $variant->values()->syncWithoutDetaching($optionValueIds);
+                }
             }
 
             Price::create([
