@@ -19,8 +19,6 @@ export default function ProfilePage() {
 
         {isLoggedIn ? (
           <div className="space-y-6">
-
-            {/* DADES PERSONALS */}
             <div className="border rounded-lg p-4">
               <h3 className="font-semibold mb-3">
                 {t("profile.sections.personal", "Dades personals")}
@@ -45,7 +43,6 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* SEGURETAT */}
             <div className="border rounded-lg p-4">
               <h3 className="font-semibold mb-3">
                 {t("profile.sections.security", "Seguretat")}
@@ -65,7 +62,6 @@ export default function ProfilePage() {
               </Link>
             </div>
 
-            {/* COMANDES */}
             <div className="border rounded-lg p-4">
               <h3 className="font-semibold mb-3">
                 {t("profile.sections.orders", "Comandes")}
@@ -82,14 +78,16 @@ export default function ProfilePage() {
               </Link>
             </div>
 
-            {/* FAVORITS */}
             <div className="border rounded-lg p-4">
               <h3 className="font-semibold mb-3">
                 {t("profile.sections.favorites", "Favorits")}
               </h3>
 
               <p className="text-sm text-muted-foreground mb-3">
-                {t("profile.favorites.description", "Consulta els productes que has guardat com a favorits.")}
+                {t(
+                  "profile.favorites.description",
+                  "Consulta els productes que has guardat com a favorits."
+                )}
               </p>
 
               <Link to="/favorites">
@@ -99,14 +97,31 @@ export default function ProfilePage() {
               </Link>
             </div>
 
-            {/* INFO */}
+            <div className="border rounded-lg p-4">
+              <h3 className="font-semibold mb-3">
+                {t("profile.sections.addresses", "Direccions")}
+              </h3>
+
+              <p className="text-sm text-muted-foreground mb-3">
+                {t(
+                  "profile.addresses.description",
+                  "Gestiona les teves direccions guardades per agilitzar futures compres."
+                )}
+              </p>
+
+              <Link to="/addresses">
+                <Button variant="outline">
+                  {t("profile.addresses.view", "Gestionar direccions")}
+                </Button>
+              </Link>
+            </div>
+
             <p className="text-xs text-muted-foreground">
               {t(
                 "profile.note",
                 "* Aquesta pàgina és una maqueta. Quan connectem el backend, aquestes dades vindran de la base de dades."
               )}
             </p>
-
           </div>
         ) : (
           <div className="border rounded-lg p-4 max-w-md">

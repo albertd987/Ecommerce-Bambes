@@ -11,12 +11,38 @@ import { loadStripe } from "@stripe/stripe-js"
 import { Elements } from "@stripe/react-stripe-js"
 import CheckoutForm from "@/components/CheckoutForm"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
+import { Plus } from "lucide-react"
 
 const STRIPE_PK = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
 const stripePromise = STRIPE_PK ? loadStripe(STRIPE_PK) : null
 
-const SHIPPING_FLAT_RATE = 499 // 4.99€ en cèntims
-const TAX_RATE = 0.21 // informatiu, IVA inclòs
+const SHIPPING_FLAT_RATE = 499
+const TAX_RATE = 0.21
+
+const EMPTY_BILLING = {
+  line_one: "",
+  line_two: "",
+  city: "",
+  postcode: "",
+  state: "",
+  country_code: "ES",
+}
+
+const EMPTY_SHIPPING = {
+  line_one: "",
+  line_two: "",
+  city: "",
+  postcode: "",
+  state: "",
+  country_code: "ES",
+}
+
+const EMPTY_SAVE_ADDRESS = {
+  enabled: false,
+  label: "",
+  is_default: false,
+}
 
 const InputField = React.memo(function InputField({
   label,
@@ -48,14 +74,78 @@ const InputField = React.memo(function InputField({
   )
 })
 
+function addressToBilling(address) {
+  if (!address) return EMPTY_BILLING
+  return {
+    line_one: address.line_one || "",
+    line_two: address.line_two || "",
+    city: address.city || "",
+    postcode: address.postcode || "",
+    state: address.state || "",
+    country_code: address.country_code || "ES",
+  }
+}
+
+function AddressSelectableCard({ address, selected, onClick, t }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full text-left rounded-xl border p-4 transition-all ${
+        selected
+          ? "border-foreground ring-2 ring-foreground/20 bg-muted/20"
+          : "border-border hover:border-foreground/40 hover:bg-muted/10"
+      }`}
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <p className="font-medium">{address.label}</p>
+        {address.is_default && (
+          <span className="text-xs rounded-full border px-2 py-0.5 text-muted-foreground">
+            {t("checkout.addressBook.defaultBadge", "Predeterminada")}
+          </span>
+        )}
+      </div>
+
+      <div className="text-sm text-muted-foreground space-y-1">
+        <p>
+          {address.first_name} {address.last_name}
+        </p>
+        <p>{address.line_one}</p>
+        {address.line_two ? <p>{address.line_two}</p> : null}
+        <p>
+          {address.postcode} · {address.city}
+        </p>
+      </div>
+    </button>
+  )
+}
+
+function NewAddressCard({ selected, onClick, t }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full h-full min-h-[152px] rounded-xl border p-4 transition-all flex flex-col items-center justify-center text-center ${
+        selected
+          ? "border-foreground ring-2 ring-foreground/20 bg-muted/20"
+          : "border-dashed border-border hover:border-foreground/40 hover:bg-muted/10"
+      }`}
+    >
+      <Plus className="h-6 w-6 mb-2" />
+      <p className="font-medium">{t("checkout.addressBook.newAddress", "Nova direcció")}</p>
+      <p className="text-sm text-muted-foreground mt-1">
+        {t("checkout.addressBook.newAddressHelp", "Introdueix una nova adreça manualment")}
+      </p>
+    </button>
+  )
+}
+
 export default function CheckoutPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const { items } = useCart()
   const { user } = useAuth()
 
-  // ✅ Stripe UI locale sincronitzat amb i18next
-  // Stripe accepta "en" i "ca" (Catalan). Si algun dia tens "en-US", ho normalitzem.
   const stripeLocale = i18n.language?.toLowerCase().startsWith("en") ? "en" : "ca"
 
   const [clientSecret, setClientSecret] = useState(null)
@@ -71,25 +161,20 @@ export default function CheckoutPage() {
     phone: "",
   })
 
-  const [billing, setBilling] = useState({
-    line_one: "",
-    line_two: "",
-    city: "",
-    postcode: "",
-    state: "",
-    country_code: "ES",
-  })
-
+  const [billing, setBilling] = useState(EMPTY_BILLING)
   const [shippingSameAsBilling, setShippingSameAsBilling] = useState(true)
+  const [shipping, setShipping] = useState(EMPTY_SHIPPING)
 
-  const [shipping, setShipping] = useState({
-    line_one: "",
-    line_two: "",
-    city: "",
-    postcode: "",
-    state: "",
-    country_code: "ES",
-  })
+  const [savedAddresses, setSavedAddresses] = useState([])
+  const [loadingAddresses, setLoadingAddresses] = useState(false)
+  const [selectedAddressId, setSelectedAddressId] = useState("")
+  const [useNewAddress, setUseNewAddress] = useState(false)
+
+  const [saveAddress, setSaveAddress] = useState(EMPTY_SAVE_ADDRESS)
+
+  const selectedSavedAddress = useMemo(() => {
+    return savedAddresses.find((addr) => String(addr.id) === String(selectedAddressId)) || null
+  }, [savedAddresses, selectedAddressId])
 
   useEffect(() => {
     if (!user) return
@@ -103,6 +188,35 @@ export default function CheckoutPage() {
     }))
   }, [user])
 
+  useEffect(() => {
+    const loadAddresses = async () => {
+      if (!user) return
+
+      try {
+        setLoadingAddresses(true)
+        const res = await api.get("/user/addresses")
+        const data = res.data?.data ?? []
+        setSavedAddresses(data)
+
+        const defaultAddress = data.find((addr) => addr.is_default)
+        if (defaultAddress) {
+          setSelectedAddressId(String(defaultAddress.id))
+          setBilling(addressToBilling(defaultAddress))
+          setUseNewAddress(false)
+        } else {
+          setUseNewAddress(true)
+        }
+      } catch (e) {
+        console.error("Error loading saved addresses:", e)
+        setUseNewAddress(true)
+      } finally {
+        setLoadingAddresses(false)
+      }
+    }
+
+    loadAddresses()
+  }, [user])
+
   const lines = useMemo(() => {
     return (items ?? []).map((l) => ({
       product_id: l?.product?.id,
@@ -110,7 +224,6 @@ export default function CheckoutPage() {
     }))
   }, [items])
 
-  // totals locals (fallback) — IVA inclòs
   const localSubtotal = useMemo(() => {
     return (items ?? []).reduce((acc, l) => {
       const price = Number(l?.product?.price || 0)
@@ -150,64 +263,80 @@ export default function CheckoutPage() {
     billing,
     shipping_same_as_billing: shippingSameAsBilling,
     shipping: shippingSameAsBilling ? billing : shipping,
-     lang: i18n.language?.toLowerCase().startsWith("en") ? "en" : "ca",
+    lang: i18n.language?.toLowerCase().startsWith("en") ? "en" : "ca",
   })
 
   const validateForm = () => {
     const errors = {}
 
-    if (!customer.first_name.trim())
+    if (!customer.first_name.trim()) {
       errors["customer.first_name"] = t(
         "checkout.validation.firstNameRequired",
         "El nom és obligatori"
       )
+    }
 
-    if (!customer.last_name.trim())
+    if (!customer.last_name.trim()) {
       errors["customer.last_name"] = t(
         "checkout.validation.lastNameRequired",
         "El cognom és obligatori"
       )
+    }
 
-    if (!customer.email.trim())
+    if (!customer.email.trim()) {
       errors["customer.email"] = t(
         "checkout.validation.emailRequired",
         "L'email és obligatori"
       )
+    }
 
-    if (!billing.line_one.trim())
+    if (!billing.line_one.trim()) {
       errors["billing.line_one"] = t(
         "checkout.validation.billingAddressRequired",
         "L'adreça és obligatòria"
       )
+    }
 
-    if (!billing.city.trim())
+    if (!billing.city.trim()) {
       errors["billing.city"] = t(
         "checkout.validation.billingCityRequired",
         "La ciutat és obligatòria"
       )
+    }
 
-    if (!billing.postcode.trim())
+    if (!billing.postcode.trim()) {
       errors["billing.postcode"] = t(
         "checkout.validation.billingPostcodeRequired",
         "El codi postal és obligatori"
       )
+    }
 
     if (!shippingSameAsBilling) {
-      if (!shipping.line_one.trim())
+      if (!shipping.line_one.trim()) {
         errors["shipping.line_one"] = t(
           "checkout.validation.shippingAddressRequired",
           "L'adreça d'enviament és obligatòria"
         )
-      if (!shipping.city.trim())
+      }
+      if (!shipping.city.trim()) {
         errors["shipping.city"] = t(
           "checkout.validation.shippingCityRequired",
           "La ciutat d'enviament és obligatòria"
         )
-      if (!shipping.postcode.trim())
+      }
+      if (!shipping.postcode.trim()) {
         errors["shipping.postcode"] = t(
           "checkout.validation.shippingPostcodeRequired",
           "El codi postal d'enviament és obligatori"
         )
+      }
+    }
+
+    if (useNewAddress && saveAddress.enabled && !saveAddress.label.trim()) {
+      errors["save_address.label"] = t(
+        "checkout.addressBook.validation.labelRequired",
+        "Posa un nom a la direcció"
+      )
     }
 
     setValidationErrors(errors)
@@ -284,6 +413,62 @@ export default function CheckoutPage() {
     }
   }
 
+  const handleSelectSavedAddress = (address) => {
+    setSelectedAddressId(String(address.id))
+    setBilling(addressToBilling(address))
+    setUseNewAddress(false)
+    setSaveAddress(EMPTY_SAVE_ADDRESS)
+  }
+
+  const handleSelectNewAddress = () => {
+    setSelectedAddressId("")
+    setUseNewAddress(true)
+    setBilling(EMPTY_BILLING)
+  }
+
+  const handleSaveCurrentAddress = async () => {
+    if (!useNewAddress || !saveAddress.enabled) return
+
+    try {
+      await api.post("/user/addresses", {
+        label: saveAddress.label,
+        first_name: customer.first_name,
+        last_name: customer.last_name,
+        contact_email: customer.email,
+        contact_phone: customer.phone,
+        line_one: billing.line_one,
+        line_two: billing.line_two,
+        city: billing.city,
+        state: billing.state,
+        postcode: billing.postcode,
+        country_code: billing.country_code || "ES",
+        is_default: saveAddress.is_default,
+      })
+
+      toast.success(
+        t("checkout.addressBook.toasts.saved", "Direcció guardada correctament")
+      )
+
+      const res = await api.get("/user/addresses")
+      const data = res.data?.data ?? []
+      setSavedAddresses(data)
+
+      const justSaved = data.find((addr) => addr.label === saveAddress.label)
+      if (justSaved) {
+        setSelectedAddressId(String(justSaved.id))
+        setUseNewAddress(false)
+      }
+
+      setSaveAddress(EMPTY_SAVE_ADDRESS)
+    } catch (e) {
+      console.error("Error saving checkout address:", e)
+      toast.error(
+        e?.response?.data?.message ||
+          t("checkout.addressBook.toasts.saveError", "No s'ha pogut guardar la direcció")
+      )
+    }
+  }
+
   if (!lines.length) {
     return (
       <div className="min-h-screen bg-background">
@@ -318,7 +503,6 @@ export default function CheckoutPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
-          {/* Formulari */}
           <div className="space-y-6">
             <Card>
               <CardHeader>
@@ -378,61 +562,183 @@ export default function CheckoutPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">
-                  {t("checkout.billing.title", "Adreça de facturació")}
+                  {t("checkout.addressBook.title", "Direccions")}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <InputField
-                  label={t("checkout.billing.address1", "Adreça")}
-                  required
-                  value={billing.line_one}
-                  onChange={(e) =>
-                    setBilling((p) => ({ ...p, line_one: e.target.value }))
-                  }
-                  error={validationErrors["billing.line_one"]}
-                  placeholder={t("checkout.placeholders.address1", "Carrer Major, 1")}
-                />
+              <CardContent className="space-y-5">
+                {loadingAddresses ? (
+                  <p className="text-sm text-muted-foreground">
+                    {t("checkout.addressBook.loading", "Carregant direccions...")}
+                  </p>
+                ) : (
+                  <>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {savedAddresses.map((address) => (
+                        <AddressSelectableCard
+                          key={address.id}
+                          address={address}
+                          selected={!useNewAddress && String(address.id) === String(selectedAddressId)}
+                          onClick={() => handleSelectSavedAddress(address)}
+                          t={t}
+                        />
+                      ))}
 
-                <InputField
-                  label={t("checkout.billing.address2", "Adreça (línia 2)")}
-                  value={billing.line_two}
-                  onChange={(e) =>
-                    setBilling((p) => ({ ...p, line_two: e.target.value }))
-                  }
-                  placeholder={t("checkout.placeholders.address2", "Pis 2n, Porta A")}
-                />
+                      <NewAddressCard
+                        selected={useNewAddress}
+                        onClick={handleSelectNewAddress}
+                        t={t}
+                      />
+                    </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <InputField
-                    label={t("checkout.billing.city", "Ciutat")}
-                    required
-                    value={billing.city}
-                    onChange={(e) =>
-                      setBilling((p) => ({ ...p, city: e.target.value }))
-                    }
-                    error={validationErrors["billing.city"]}
-                    placeholder={t("checkout.placeholders.city", "Barcelona")}
-                  />
-                  <InputField
-                    label={t("checkout.billing.postcode", "Codi postal")}
-                    required
-                    value={billing.postcode}
-                    onChange={(e) =>
-                      setBilling((p) => ({ ...p, postcode: e.target.value }))
-                    }
-                    error={validationErrors["billing.postcode"]}
-                    placeholder={t("checkout.placeholders.postcode", "08001")}
-                  />
-                </div>
+                    {savedAddresses.length > 0 ? (
+                      <p className="text-xs text-muted-foreground">
+                        {t(
+                          "checkout.addressBook.helpCards",
+                          "Clica una direcció guardada per utilitzar-la, o selecciona nova direcció per escriure'n una manualment."
+                        )}
+                      </p>
+                    ) : null}
 
-                <InputField
-                  label={t("checkout.billing.state", "Província")}
-                  value={billing.state}
-                  onChange={(e) =>
-                    setBilling((p) => ({ ...p, state: e.target.value }))
-                  }
-                  placeholder={t("checkout.placeholders.state", "Barcelona")}
-                />
+                    {!useNewAddress && selectedSavedAddress ? (
+                      <div className="border rounded-xl p-4 bg-muted/20">
+                        <div className="flex items-center gap-2 mb-2">
+                          <p className="font-medium">
+                            {t("checkout.addressBook.selectedAddress", "Direcció seleccionada")}
+                          </p>
+                          {selectedSavedAddress.is_default && (
+                            <span className="text-xs rounded-full border px-2 py-0.5 text-muted-foreground">
+                              {t("checkout.addressBook.defaultBadge", "Predeterminada")}
+                            </span>
+                          )}
+                        </div>
+
+                        {selectedSavedAddress.label ? (
+                          <p className="text-sm font-medium mb-2">{selectedSavedAddress.label}</p>
+                        ) : null}
+
+                        <div className="text-sm text-muted-foreground space-y-1">
+                          <p>
+                            {selectedSavedAddress.first_name} {selectedSavedAddress.last_name}
+                          </p>
+                          <p>{selectedSavedAddress.line_one}</p>
+                          {selectedSavedAddress.line_two ? <p>{selectedSavedAddress.line_two}</p> : null}
+                          <p>
+                            {selectedSavedAddress.postcode} · {selectedSavedAddress.city}
+                          </p>
+                          {selectedSavedAddress.state ? <p>{selectedSavedAddress.state}</p> : null}
+                          {selectedSavedAddress.contact_phone ? <p>{selectedSavedAddress.contact_phone}</p> : null}
+                          {selectedSavedAddress.contact_email ? <p>{selectedSavedAddress.contact_email}</p> : null}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="border rounded-xl p-4 space-y-4">
+                        <InputField
+                          label={t("checkout.billing.address1", "Adreça")}
+                          required
+                          value={billing.line_one}
+                          onChange={(e) =>
+                            setBilling((p) => ({ ...p, line_one: e.target.value }))
+                          }
+                          error={validationErrors["billing.line_one"]}
+                          placeholder={t("checkout.placeholders.address1", "Carrer Major, 1")}
+                        />
+
+                        <InputField
+                          label={t("checkout.billing.address2", "Adreça (línia 2)")}
+                          value={billing.line_two}
+                          onChange={(e) =>
+                            setBilling((p) => ({ ...p, line_two: e.target.value }))
+                          }
+                          placeholder={t("checkout.placeholders.address2", "Pis 2n, Porta A")}
+                        />
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <InputField
+                            label={t("checkout.billing.city", "Ciutat")}
+                            required
+                            value={billing.city}
+                            onChange={(e) =>
+                              setBilling((p) => ({ ...p, city: e.target.value }))
+                            }
+                            error={validationErrors["billing.city"]}
+                            placeholder={t("checkout.placeholders.city", "Barcelona")}
+                          />
+                          <InputField
+                            label={t("checkout.billing.postcode", "Codi postal")}
+                            required
+                            value={billing.postcode}
+                            onChange={(e) =>
+                              setBilling((p) => ({ ...p, postcode: e.target.value }))
+                            }
+                            error={validationErrors["billing.postcode"]}
+                            placeholder={t("checkout.placeholders.postcode", "08001")}
+                          />
+                        </div>
+
+                        <InputField
+                          label={t("checkout.billing.state", "Província")}
+                          value={billing.state}
+                          onChange={(e) =>
+                            setBilling((p) => ({ ...p, state: e.target.value }))
+                          }
+                          placeholder={t("checkout.placeholders.state", "Barcelona")}
+                        />
+
+                        <div className="border rounded-lg p-4 space-y-3">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={saveAddress.enabled}
+                              onChange={(e) =>
+                                setSaveAddress((p) => ({ ...p, enabled: e.target.checked }))
+                              }
+                            />
+                            <span className="text-sm">
+                              {t(
+                                "checkout.addressBook.saveThisAddress",
+                                "Guardar aquesta direcció per a futures compres"
+                              )}
+                            </span>
+                          </label>
+
+                          {saveAddress.enabled && (
+                            <>
+                              <InputField
+                                label={t("checkout.addressBook.label", "Nom de la direcció")}
+                                required
+                                value={saveAddress.label}
+                                onChange={(e) =>
+                                  setSaveAddress((p) => ({ ...p, label: e.target.value }))
+                                }
+                                error={validationErrors["save_address.label"]}
+                                placeholder={t("checkout.addressBook.labelPlaceholder", "Casa")}
+                              />
+
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={saveAddress.is_default}
+                                  onChange={(e) =>
+                                    setSaveAddress((p) => ({
+                                      ...p,
+                                      is_default: e.target.checked,
+                                    }))
+                                  }
+                                />
+                                <span className="text-sm">
+                                  {t(
+                                    "checkout.addressBook.setDefault",
+                                    "Marcar com a direcció predeterminada"
+                                  )}
+                                </span>
+                              </label>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -516,7 +822,6 @@ export default function CheckoutPage() {
               </CardContent>
             </Card>
 
-            {/* PAGAMENT */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">
@@ -548,14 +853,12 @@ export default function CheckoutPage() {
                       )}
                     </div>
 
-                    {/* ✅ IMPORTANT: locale + key per re-mount quan canvies idioma */}
                     <Elements
                       key={`${clientSecret}-${stripeLocale}`}
                       stripe={stripePromise}
                       options={{
                         clientSecret,
                         locale: stripeLocale,
-                        // appearance opcional, però ajuda a consistència visual
                         appearance: { theme: "stripe" },
                       }}
                     >
@@ -576,6 +879,8 @@ export default function CheckoutPage() {
                               ...buildPayload(),
                               payment_intent_id: paymentIntentId,
                             })
+
+                            await handleSaveCurrentAddress()
 
                             navigate("/checkout/success", {
                               state: {
@@ -607,7 +912,6 @@ export default function CheckoutPage() {
             </Card>
           </div>
 
-          {/* Resum */}
           <div className="lg:sticky lg:top-6 h-fit">
             <Card>
               <CardHeader>

@@ -14,6 +14,7 @@ import ChangePasswordPage from "./pages/ChangePasswordPage"
 import VerifyEmailPage from "./pages/VerifyEmailPage"
 import AboutPage from "@/pages/AboutPage"
 import FavoritesPage from "@/pages/FavoritesPage"
+import AddressesPage from "@/pages/AddressesPage"
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
         <Route path="/orders/:id" element={<OrderDetailPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/favorites" element={<FavoritesPage />} />
+        <Route path="/addresses" element={<AddressesPage />} />
       </Routes>
       <Toaster position="bottom-right" richColors theme="light" />
     </BrowserRouter>

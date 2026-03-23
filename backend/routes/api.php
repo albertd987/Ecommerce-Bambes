@@ -11,6 +11,7 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 use App\Http\Controllers\Api\FavoriteController;
+use App\Http\Controllers\Api\UserAddressController;
 
 // ==========================================
 // RUTES PÚBLIQUES
@@ -62,6 +63,13 @@ Route::middleware(['web', 'auth:sanctum'])->group(function () {
     Route::get('/favorites', [FavoriteController::class, 'index']);
 
     Route::post('/favorites/{product}', [FavoriteController::class, 'toggle']);
+
+    // Adreces d'usuari
+    Route::get('/user/addresses', [UserAddressController::class, 'index']);
+    Route::post('/user/addresses', [UserAddressController::class, 'store']);
+    Route::get('/user/addresses/{id}', [UserAddressController::class, 'show']);
+    Route::put('/user/addresses/{id}', [UserAddressController::class, 'update']);
+    Route::delete('/user/addresses/{id}', [UserAddressController::class, 'destroy']);
 });
 
 // ==========================================

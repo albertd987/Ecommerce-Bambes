@@ -87,8 +87,17 @@
       "personal": "Personal details",
       "security": "Security",
       "orders": "Orders",
-      "favorites": "Favorites"
+      "favorites": "Favorites",
+      "addresses": "Addresses"
     },
+    "addresses": {
+    "description": "Manage your saved addresses to make future purchases faster.",
+    "view": "Manage addresses"
+
+
+},
+
+
     "fields": {
       "name": "Name",
       "email": "Email"

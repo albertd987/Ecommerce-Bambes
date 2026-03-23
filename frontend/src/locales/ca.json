@@ -81,14 +81,64 @@
       "last": "Última"
     }
   },
+  "addresses": {
+  "title": "Les meves direccions",
+  "signedInAs": "Sessió iniciada com",
+  "backToProfile": "Tornar al perfil",
+  "loading": "Carregant direccions...",
+  "empty": "Encara no tens cap direcció guardada.",
+  "defaultBadge": "Predeterminada",
+  "notLoggedIn": "Has d’iniciar sessió per gestionar les teves direccions.",
+  "form": {
+    "createTitle": "Nova direcció",
+    "editTitle": "Editar direcció"
+  },
+  "fields": {
+    "label": "Nom de la direcció",
+    "firstName": "Nom",
+    "lastName": "Cognom",
+    "email": "Email",
+    "phone": "Telèfon",
+    "lineOne": "Adreça",
+    "lineTwo": "Adreça (línia 2)",
+    "city": "Ciutat",
+    "postcode": "Codi postal",
+    "state": "Província",
+    "isDefault": "Marcar com a predeterminada"
+  },
+  "placeholders": {
+    "label": "Casa"
+  },
+  "actions": {
+    "create": "Guardar direcció",
+    "update": "Actualitzar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "cancel": "Cancel·lar",
+    "saving": "Desant..."
+  },
+  "toasts": {
+    "loadError": "No s'han pogut carregar les direccions",
+    "saveError": "No s'ha pogut desar la direcció",
+    "deleteError": "No s'ha pogut eliminar la direcció",
+    "created": "Direcció creada correctament",
+    "updated": "Direcció actualitzada correctament",
+    "deleted": "Direcció eliminada correctament"
+  }
+},
   "profile": {
     "title": "El meu perfil",
     "sections": {
       "personal": "Dades personals",
       "security": "Seguretat",
       "orders": "Comandes",
-      "favorites": "Favorits"
+      "favorites": "Favorits",
+      "addresses": "Direccions"
     },
+    "addresses": {
+    "description": "Gestiona les teves direccions guardades per agilitzar futures compres.",
+    "view": "Gestionar direccions"
+  },
     "fields": {
       "name": "Nom",
       "email": "Email"
