@@ -10,10 +10,6 @@ class UserAddress extends Model
     protected $fillable = [
         'user_id',
         'label',
-        'first_name',
-        'last_name',
-        'contact_email',
-        'contact_phone',
         'line_one',
         'line_two',
         'city',

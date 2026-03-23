@@ -95,10 +95,6 @@ class UserAddressController extends Controller
     {
         return $request->validate([
             'label' => ['required', 'string', 'max:100'],
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'contact_email' => ['nullable', 'email', 'max:255'],
-            'contact_phone' => ['nullable', 'string', 'max:50'],
             'line_one' => ['required', 'string', 'max:255'],
             'line_two' => ['nullable', 'string', 'max:255'],
             'city' => ['required', 'string', 'max:255'],
@@ -114,10 +110,6 @@ class UserAddressController extends Controller
         return [
             'id' => $address->id,
             'label' => $address->label,
-            'first_name' => $address->first_name,
-            'last_name' => $address->last_name,
-            'contact_email' => $address->contact_email,
-            'contact_phone' => $address->contact_phone,
             'line_one' => $address->line_one,
             'line_two' => $address->line_two,
             'city' => $address->city,

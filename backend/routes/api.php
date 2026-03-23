@@ -46,6 +46,7 @@ Route::middleware(['web', 'auth:sanctum'])->group(function () {
     // Auth
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
+    Route::put('/user/profile', [AuthController::class, 'updateProfile']);
 
     // Checkout
     Route::post('/checkout/intent', [CheckoutController::class, 'createIntent']);
@@ -59,9 +60,8 @@ Route::middleware(['web', 'auth:sanctum'])->group(function () {
     // Canviar contrasenya
     Route::put('/user/password', [AuthController::class, 'updatePassword']);
 
-    //Favorits
+    // Favorits
     Route::get('/favorites', [FavoriteController::class, 'index']);
-
     Route::post('/favorites/{product}', [FavoriteController::class, 'toggle']);
 
     // Adreces d'usuari

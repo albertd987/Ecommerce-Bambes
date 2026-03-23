@@ -10,10 +10,6 @@ import api from "@/services/api"
 
 const EMPTY_FORM = {
   label: "",
-  first_name: "",
-  last_name: "",
-  contact_email: "",
-  contact_phone: "",
   line_one: "",
   line_two: "",
   city: "",
@@ -79,20 +75,9 @@ export default function AddressesPage() {
     loadAddresses()
   }, [isLoggedIn])
 
-  useEffect(() => {
-    if (!user) return
-    setForm((prev) => ({
-      ...prev,
-      contact_email: prev.contact_email || user.email || "",
-    }))
-  }, [user])
-
   const resetForm = () => {
     setEditingId(null)
-    setForm({
-      ...EMPTY_FORM,
-      contact_email: user?.email || "",
-    })
+    setForm(EMPTY_FORM)
   }
 
   const handleSubmit = async (e) => {
@@ -129,10 +114,6 @@ export default function AddressesPage() {
     setEditingId(address.id)
     setForm({
       label: address.label || "",
-      first_name: address.first_name || "",
-      last_name: address.last_name || "",
-      contact_email: address.contact_email || "",
-      contact_phone: address.contact_phone || "",
       line_one: address.line_one || "",
       line_two: address.line_two || "",
       city: address.city || "",
@@ -223,34 +204,6 @@ export default function AddressesPage() {
                   value={form.label}
                   onChange={(e) => setForm((p) => ({ ...p, label: e.target.value }))}
                   placeholder={t("addresses.placeholders.label", "Casa")}
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <InputField
-                    label={t("addresses.fields.firstName", "Nom")}
-                    required
-                    value={form.first_name}
-                    onChange={(e) => setForm((p) => ({ ...p, first_name: e.target.value }))}
-                  />
-                  <InputField
-                    label={t("addresses.fields.lastName", "Cognom")}
-                    required
-                    value={form.last_name}
-                    onChange={(e) => setForm((p) => ({ ...p, last_name: e.target.value }))}
-                  />
-                </div>
-
-                <InputField
-                  label={t("addresses.fields.email", "Email")}
-                  type="email"
-                  value={form.contact_email}
-                  onChange={(e) => setForm((p) => ({ ...p, contact_email: e.target.value }))}
-                />
-
-                <InputField
-                  label={t("addresses.fields.phone", "Telèfon")}
-                  value={form.contact_phone}
-                  onChange={(e) => setForm((p) => ({ ...p, contact_phone: e.target.value }))}
                 />
 
                 <InputField
@@ -354,17 +307,12 @@ export default function AddressesPage() {
                         </div>
 
                         <div className="mt-2 text-sm text-muted-foreground space-y-1">
-                          <p>
-                            {address.first_name} {address.last_name}
-                          </p>
                           <p>{address.line_one}</p>
                           {address.line_two ? <p>{address.line_two}</p> : null}
                           <p>
                             {address.postcode} · {address.city}
                           </p>
                           {address.state ? <p>{address.state}</p> : null}
-                          {address.contact_phone ? <p>{address.contact_phone}</p> : null}
-                          {address.contact_email ? <p>{address.contact_email}</p> : null}
                         </div>
                       </div>
 

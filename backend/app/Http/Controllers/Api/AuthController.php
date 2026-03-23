@@ -153,27 +153,28 @@ class AuthController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse Dades de l'usuari (HTTP 200) o "No autenticat" (HTTP 401).
      */
-    public function user(Request $request)
-    {
-        $user = $request->user();
+        public function user(Request $request)
+        {
+            $user = $request->user();
 
-        if (!$user) {
+            if (!$user) {
+                return response()->json([
+                    'data' => null,
+                    'message' => 'No autenticat',
+                ], 401);
+            }
+
             return response()->json([
-                'data' => null,
-                'message' => 'No autenticat',
-            ], 401);
+                'data' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'email_verified_at' => $user->email_verified_at,
+                    'created_at' => $user->created_at,
+                ],
+            ]);
         }
-
-        return response()->json([
-            'data' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'email_verified_at' => $user->email_verified_at,
-                'created_at' => $user->created_at,
-            ],
-        ]);
-    }
 
     public function updatePassword(Request $request)
 {
@@ -203,6 +204,34 @@ class AuthController extends Controller
 
     return response()->json([
         'message' => 'Contrasenya actualitzada correctament.',
+    ]);
+}
+
+public function updateProfile(Request $request)
+{
+    $user = $request->user();
+
+    $data = $request->validate([
+        'name' => ['required', 'string', 'max:255'],
+        'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
+        'phone' => ['nullable', 'string', 'max:50'],
+    ]);
+
+    $user->name = $data['name'];
+    $user->email = $data['email'];
+    $user->phone = $data['phone'] ?? null;
+    $user->save();
+
+    return response()->json([
+        'message' => 'Dades personals actualitzades correctament.',
+        'data' => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'email_verified_at' => $user->email_verified_at,
+            'created_at' => $user->created_at,
+        ],
     ]);
 }
 

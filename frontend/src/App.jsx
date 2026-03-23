@@ -15,6 +15,7 @@ import VerifyEmailPage from "./pages/VerifyEmailPage"
 import AboutPage from "@/pages/AboutPage"
 import FavoritesPage from "@/pages/FavoritesPage"
 import AddressesPage from "@/pages/AddressesPage"
+import ProfileEditPage from "@/pages/ProfileEditPage"
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/addresses" element={<AddressesPage />} />
+        <Route path="/profile/edit" element={<ProfileEditPage />} />
       </Routes>
       <Toaster position="bottom-right" richColors theme="light" />
     </BrowserRouter>

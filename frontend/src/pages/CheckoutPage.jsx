@@ -86,6 +86,18 @@ function addressToBilling(address) {
   }
 }
 
+function addressToShipping(address) {
+  if (!address) return EMPTY_SHIPPING
+  return {
+    line_one: address.line_one || "",
+    line_two: address.line_two || "",
+    city: address.city || "",
+    postcode: address.postcode || "",
+    state: address.state || "",
+    country_code: address.country_code || "ES",
+  }
+}
+
 function AddressSelectableCard({ address, selected, onClick, t }) {
   return (
     <button
@@ -140,6 +152,25 @@ function NewAddressCard({ selected, onClick, t }) {
   )
 }
 
+function AddressSummaryBox({ title, address }) {
+  if (!address) return null
+
+  return (
+    <div className="border rounded-xl p-4 bg-muted/20">
+      <p className="font-medium mb-2">{title}</p>
+
+      <div className="text-sm text-muted-foreground space-y-1">
+        <p>{address.line_one}</p>
+        {address.line_two ? <p>{address.line_two}</p> : null}
+        <p>
+          {address.postcode} · {address.city}
+        </p>
+        {address.state ? <p>{address.state}</p> : null}
+      </div>
+    </div>
+  )
+}
+
 export default function CheckoutPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
@@ -167,8 +198,12 @@ export default function CheckoutPage() {
 
   const [savedAddresses, setSavedAddresses] = useState([])
   const [loadingAddresses, setLoadingAddresses] = useState(false)
+
   const [selectedAddressId, setSelectedAddressId] = useState("")
   const [useNewAddress, setUseNewAddress] = useState(false)
+
+  const [selectedShippingAddressId, setSelectedShippingAddressId] = useState("")
+  const [useNewShippingAddress, setUseNewShippingAddress] = useState(false)
 
   const [saveAddress, setSaveAddress] = useState(EMPTY_SAVE_ADDRESS)
 
@@ -176,17 +211,25 @@ export default function CheckoutPage() {
     return savedAddresses.find((addr) => String(addr.id) === String(selectedAddressId)) || null
   }, [savedAddresses, selectedAddressId])
 
-  useEffect(() => {
-    if (!user) return
-    const nameParts = (user.name || "").trim().split(" ").filter(Boolean)
+  const selectedSavedShippingAddress = useMemo(() => {
+    return (
+      savedAddresses.find((addr) => String(addr.id) === String(selectedShippingAddressId)) || null
+    )
+  }, [savedAddresses, selectedShippingAddressId])
 
-    setCustomer((prev) => ({
-      ...prev,
-      first_name: prev.first_name || nameParts[0] || "",
-      last_name: prev.last_name || nameParts.slice(1).join(" ") || "",
-      email: prev.email || user.email || "",
-    }))
-  }, [user])
+useEffect(() => {
+  if (!user) return
+
+  const nameParts = (user.name || "").trim().split(" ").filter(Boolean)
+
+  setCustomer((prev) => ({
+    ...prev,
+    first_name: prev.first_name || nameParts[0] || "",
+    last_name: prev.last_name || nameParts.slice(1).join(" ") || "",
+    email: prev.email || user.email || "",
+    phone: prev.phone || user.phone || "",
+  }))
+}, [user])
 
   useEffect(() => {
     const loadAddresses = async () => {
@@ -203,12 +246,18 @@ export default function CheckoutPage() {
           setSelectedAddressId(String(defaultAddress.id))
           setBilling(addressToBilling(defaultAddress))
           setUseNewAddress(false)
+
+          setSelectedShippingAddressId(String(defaultAddress.id))
+          setShipping(addressToShipping(defaultAddress))
+          setUseNewShippingAddress(false)
         } else {
           setUseNewAddress(true)
+          setUseNewShippingAddress(true)
         }
       } catch (e) {
         console.error("Error loading saved addresses:", e)
         setUseNewAddress(true)
+        setUseNewShippingAddress(true)
       } finally {
         setLoadingAddresses(false)
       }
@@ -424,6 +473,18 @@ export default function CheckoutPage() {
     setSelectedAddressId("")
     setUseNewAddress(true)
     setBilling(EMPTY_BILLING)
+  }
+
+  const handleSelectSavedShippingAddress = (address) => {
+    setSelectedShippingAddressId(String(address.id))
+    setShipping(addressToShipping(address))
+    setUseNewShippingAddress(false)
+  }
+
+  const handleSelectNewShippingAddress = () => {
+    setSelectedShippingAddressId("")
+    setUseNewShippingAddress(true)
+    setShipping(EMPTY_SHIPPING)
   }
 
   const handleSaveCurrentAddress = async () => {
@@ -748,7 +809,7 @@ export default function CheckoutPage() {
                   {t("checkout.shipping.title", "Adreça d'enviament")}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-5">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -764,60 +825,142 @@ export default function CheckoutPage() {
                   </span>
                 </label>
 
-                {!shippingSameAsBilling && (
-                  <div className="space-y-4 pt-2">
-                    <InputField
-                      label={t("checkout.shipping.address1", "Adreça")}
-                      required
-                      value={shipping.line_one}
-                      onChange={(e) =>
-                        setShipping((p) => ({ ...p, line_one: e.target.value }))
-                      }
-                      error={validationErrors["shipping.line_one"]}
-                      placeholder={t("checkout.placeholders.address1", "Carrer Major, 1")}
-                    />
+                {shippingSameAsBilling ? (
+                  <AddressSummaryBox
+                    title={t("checkout.shipping.sameAddressSummary", "S'utilitzarà la mateixa adreça")}
+                    address={billing}
+                  />
+                ) : (
+                  <>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {savedAddresses.map((address) => (
+                        <AddressSelectableCard
+                          key={address.id}
+                          address={address}
+                          selected={
+                            !useNewShippingAddress &&
+                            String(address.id) === String(selectedShippingAddressId)
+                          }
+                          onClick={() => handleSelectSavedShippingAddress(address)}
+                          t={t}
+                        />
+                      ))}
 
-                    <InputField
-                      label={t("checkout.shipping.address2", "Adreça (línia 2)")}
-                      value={shipping.line_two}
-                      onChange={(e) =>
-                        setShipping((p) => ({ ...p, line_two: e.target.value }))
-                      }
-                      placeholder={t("checkout.placeholders.address2", "Pis 2n, Porta A")}
-                    />
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <InputField
-                        label={t("checkout.shipping.city", "Ciutat")}
-                        required
-                        value={shipping.city}
-                        onChange={(e) =>
-                          setShipping((p) => ({ ...p, city: e.target.value }))
-                        }
-                        error={validationErrors["shipping.city"]}
-                        placeholder={t("checkout.placeholders.city", "Barcelona")}
-                      />
-                      <InputField
-                        label={t("checkout.shipping.postcode", "Codi postal")}
-                        required
-                        value={shipping.postcode}
-                        onChange={(e) =>
-                          setShipping((p) => ({ ...p, postcode: e.target.value }))
-                        }
-                        error={validationErrors["shipping.postcode"]}
-                        placeholder={t("checkout.placeholders.postcode", "08001")}
+                      <NewAddressCard
+                        selected={useNewShippingAddress}
+                        onClick={handleSelectNewShippingAddress}
+                        t={t}
                       />
                     </div>
 
-                    <InputField
-                      label={t("checkout.shipping.state", "Província")}
-                      value={shipping.state}
-                      onChange={(e) =>
-                        setShipping((p) => ({ ...p, state: e.target.value }))
-                      }
-                      placeholder={t("checkout.placeholders.state", "Barcelona")}
-                    />
-                  </div>
+                    {savedAddresses.length > 0 ? (
+                      <p className="text-xs text-muted-foreground">
+                        {t(
+                          "checkout.shipping.helpCards",
+                          "Selecciona una direcció guardada per a l'enviament o tria nova direcció per introduir-ne una de manual."
+                        )}
+                      </p>
+                    ) : null}
+
+                    {!useNewShippingAddress && selectedSavedShippingAddress ? (
+                      <div className="border rounded-xl p-4 bg-muted/20">
+                        <div className="flex items-center gap-2 mb-2">
+                          <p className="font-medium">
+                            {t("checkout.shipping.selectedAddress", "Adreça d'enviament seleccionada")}
+                          </p>
+                          {selectedSavedShippingAddress.is_default && (
+                            <span className="text-xs rounded-full border px-2 py-0.5 text-muted-foreground">
+                              {t("checkout.addressBook.defaultBadge", "Predeterminada")}
+                            </span>
+                          )}
+                        </div>
+
+                        {selectedSavedShippingAddress.label ? (
+                          <p className="text-sm font-medium mb-2">
+                            {selectedSavedShippingAddress.label}
+                          </p>
+                        ) : null}
+
+                        <div className="text-sm text-muted-foreground space-y-1">
+                          <p>
+                            {selectedSavedShippingAddress.first_name}{" "}
+                            {selectedSavedShippingAddress.last_name}
+                          </p>
+                          <p>{selectedSavedShippingAddress.line_one}</p>
+                          {selectedSavedShippingAddress.line_two ? (
+                            <p>{selectedSavedShippingAddress.line_two}</p>
+                          ) : null}
+                          <p>
+                            {selectedSavedShippingAddress.postcode} ·{" "}
+                            {selectedSavedShippingAddress.city}
+                          </p>
+                          {selectedSavedShippingAddress.state ? (
+                            <p>{selectedSavedShippingAddress.state}</p>
+                          ) : null}
+                          {selectedSavedShippingAddress.contact_phone ? (
+                            <p>{selectedSavedShippingAddress.contact_phone}</p>
+                          ) : null}
+                          {selectedSavedShippingAddress.contact_email ? (
+                            <p>{selectedSavedShippingAddress.contact_email}</p>
+                          ) : null}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="border rounded-xl p-4 space-y-4">
+                        <InputField
+                          label={t("checkout.shipping.address1", "Adreça")}
+                          required
+                          value={shipping.line_one}
+                          onChange={(e) =>
+                            setShipping((p) => ({ ...p, line_one: e.target.value }))
+                          }
+                          error={validationErrors["shipping.line_one"]}
+                          placeholder={t("checkout.placeholders.address1", "Carrer Major, 1")}
+                        />
+
+                        <InputField
+                          label={t("checkout.shipping.address2", "Adreça (línia 2)")}
+                          value={shipping.line_two}
+                          onChange={(e) =>
+                            setShipping((p) => ({ ...p, line_two: e.target.value }))
+                          }
+                          placeholder={t("checkout.placeholders.address2", "Pis 2n, Porta A")}
+                        />
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <InputField
+                            label={t("checkout.shipping.city", "Ciutat")}
+                            required
+                            value={shipping.city}
+                            onChange={(e) =>
+                              setShipping((p) => ({ ...p, city: e.target.value }))
+                            }
+                            error={validationErrors["shipping.city"]}
+                            placeholder={t("checkout.placeholders.city", "Barcelona")}
+                          />
+                          <InputField
+                            label={t("checkout.shipping.postcode", "Codi postal")}
+                            required
+                            value={shipping.postcode}
+                            onChange={(e) =>
+                              setShipping((p) => ({ ...p, postcode: e.target.value }))
+                            }
+                            error={validationErrors["shipping.postcode"]}
+                            placeholder={t("checkout.placeholders.postcode", "08001")}
+                          />
+                        </div>
+
+                        <InputField
+                          label={t("checkout.shipping.state", "Província")}
+                          value={shipping.state}
+                          onChange={(e) =>
+                            setShipping((p) => ({ ...p, state: e.target.value }))
+                          }
+                          placeholder={t("checkout.placeholders.state", "Barcelona")}
+                        />
+                      </div>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>
