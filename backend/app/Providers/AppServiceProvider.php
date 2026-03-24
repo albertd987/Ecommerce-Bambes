@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Filament\Lunar\Extensions\ProductResourceColorsExtension;
 use App\Filament\Lunar\Extensions\ProductResourceExtension;
 use App\Filament\Lunar\Extensions\ProductResourceStockExtension;
 use App\Models\Product;
@@ -31,8 +32,11 @@ class AppServiceProvider extends ServiceProvider
 
         // Registrar extensions al panell Lunar (cal fer-ho a register, abans del boot)
         LunarPanel::extensions([
-            LunarListProducts::class => ProductResourceExtension::class,
-            LunarProductResource::class => ProductResourceStockExtension::class,
+            LunarListProducts::class    => ProductResourceExtension::class,
+            LunarProductResource::class => [
+                ProductResourceStockExtension::class,
+                ProductResourceColorsExtension::class,
+            ],
         ]);
 
         // Registrar App\Models\Product al manifest de Lunar perquè
