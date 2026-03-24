@@ -100,10 +100,11 @@ class ManageProductColors extends Page implements HasForms
                 ->hidden()
                 ->modalHeading('Editar color')
                 ->form($this->colorForm())
-                ->fillForm(fn(array $arguments) => [
-                    'name'  => $arguments['name'] ?? '',
-                    'sizes' => $arguments['sizes'] ?? [],
-                ])
+                ->fillForm(function (array $arguments): array {
+                    $color = ProductColor::where('product_id', $this->getRecord()->id)
+                                         ->findOrFail($arguments['colorId'] ?? 0);
+                    return ['name' => $color->name, 'sizes' => $color->sizes ?? []];
+                })
                 ->action(function (array $data): void {
                     app(ProductColorManager::class)->syncColor(
                         $this->getRecord(),
