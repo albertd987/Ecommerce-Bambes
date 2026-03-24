@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { useCart } from "@/context/cart-context"
 import api from "@/services/api"
-import { organizeVariants, findVariant } from "@/utils/variantParser"
+import { organizeVariants, findVariant, organizeColors, findColorVariant } from "@/utils/variantParser"
 import { ChevronLeft, ChevronRight, Heart } from "lucide-react"
 import { toast } from "sonner"
 import { useTranslation } from "react-i18next"
@@ -96,10 +96,14 @@ export default function ProductDetailPage() {
 
         setProduct(productData)
 
-        if (productData?.variants?.length > 0) {
+        // Use new colors structure if available, fall back to legacy variants
+        if (productData?.colors?.length > 0) {
+          const organized = organizeColors(productData.colors)
+          setVariantsData({ ...organized, isNewFormat: true })
+          setSelectedColor(organized.colorNames[0] ?? null)
+        } else if (productData?.variants?.length > 0) {
           const organized = organizeVariants(productData.variants)
           setVariantsData(organized)
-
           if (organized.colors.length > 0) {
             setSelectedColor(organized.colors[0])
           }
@@ -116,6 +120,11 @@ export default function ProductDetailPage() {
 
     fetchProduct()
   }, [id, t])
+
+  // Reset image gallery to first image when color changes
+  useEffect(() => {
+    setSelectedImageIndex(0)
+  }, [selectedColor])
 
   const productName = useMemo(
     () => getSafeText(product?.name, "Producte"),
@@ -140,13 +149,21 @@ export default function ProductDetailPage() {
   const allImages = useMemo(() => {
     if (!product) return []
 
+    // New format: images come from the selected color
+    if (variantsData?.isNewFormat && selectedColor && variantsData.imagesByColor) {
+      const colorImages = variantsData.imagesByColor[selectedColor] ?? []
+      if (colorImages.length > 0) {
+        return colorImages.filter(Boolean)
+      }
+    }
+
+    // Legacy fallback: product-level thumbnail + images
     const thumb = getSafeImage(product.thumbnail)
-    const rest = Array.isArray(product.images)
+    const rest  = Array.isArray(product.images)
       ? product.images.map(getSafeImage).filter(Boolean)
       : []
-
     return [thumb, ...rest.filter((img) => img !== thumb)].filter(Boolean)
-  }, [product])
+  }, [product, variantsData, selectedColor])
 
   const handleAddToCart = async () => {
     if (!selectedSize || !selectedColor) {
@@ -154,7 +171,9 @@ export default function ProductDetailPage() {
       return
     }
 
-    const variant = findVariant(variantsData?.variantMap, selectedSize, selectedColor)
+    const variant = variantsData?.isNewFormat
+      ? findColorVariant(variantsData?.variantMap, selectedColor, selectedSize)
+      : findVariant(variantsData?.variantMap, selectedSize, selectedColor)
 
     if (!variant) {
       toast.error(t("productDetail.toasts.variantUnavailable", "Variant no disponible"))
@@ -268,7 +287,9 @@ export default function ProductDetailPage() {
 
   const currentVariant =
     selectedSize && selectedColor
-      ? findVariant(variantsData?.variantMap, selectedSize, selectedColor)
+      ? variantsData?.isNewFormat
+        ? findColorVariant(variantsData?.variantMap, selectedColor, selectedSize)
+        : findVariant(variantsData?.variantMap, selectedSize, selectedColor)
       : null
 
   const isOutOfStock = currentVariant && currentVariant.stock_status === 'out_of_stock'
@@ -390,14 +411,14 @@ export default function ProductDetailPage() {
               {Number(productPrice).toFixed(2)} &euro;
             </p>
 
-            {variantsData && variantsData.colors.length > 1 && (
+            {variantsData && (variantsData.isNewFormat ? variantsData.colorNames : variantsData.colors).length > 1 && (
               <div className="mt-6">
                 <p className="text-sm font-medium mb-3">
                   {t("productDetail.color.label", "Color")}:{" "}
                   <span>{translateColor(selectedColor, t, "productDetail")}</span>
                 </p>
                 <div className="flex gap-2 flex-wrap">
-                  {variantsData.colors.map((color) => (
+                  {(variantsData.isNewFormat ? variantsData.colorNames : variantsData.colors).map((color) => (
   <button
     key={color}
     onClick={() => setSelectedColor(color)}
@@ -422,7 +443,7 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            {variantsData && variantsData.sizes.length > 0 && (
+            {variantsData && (variantsData.isNewFormat ? (variantsData.sizesByColor[selectedColor] ?? []) : variantsData.sizes).length > 0 && (
               <div className="mt-6">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-base font-medium">
@@ -442,8 +463,10 @@ export default function ProductDetailPage() {
                 </div>
 
                 <div className="grid grid-cols-3 gap-[7px]">
-                  {variantsData.sizes.map((size) => {
-                    const variant = findVariant(variantsData.variantMap, size, selectedColor)
+                  {(variantsData.isNewFormat ? (variantsData.sizesByColor[selectedColor] ?? []) : variantsData.sizes).map((size) => {
+                    const variant = variantsData?.isNewFormat
+                      ? findColorVariant(variantsData.variantMap, selectedColor, size)
+                      : findVariant(variantsData.variantMap, size, selectedColor)
                     const hasStock = variant && variant.stock_status !== 'out_of_stock'
                     const isSelected = selectedSize === size
 
