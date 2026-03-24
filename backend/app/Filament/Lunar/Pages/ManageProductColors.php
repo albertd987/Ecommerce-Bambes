@@ -147,7 +147,7 @@ class ManageProductColors extends Page implements HasForms
 
     public function editColor(int $colorId): void
     {
-        $color = ProductColor::findOrFail($colorId);
+        $color = ProductColor::where('product_id', $this->getRecord()->id)->findOrFail($colorId);
         $this->mountAction('editColorModal', [
             'colorId' => $colorId,
             'name'    => $color->name,
@@ -168,6 +168,8 @@ class ManageProductColors extends Page implements HasForms
         if ($color && $media->model_type === ProductColor::class) {
             $media->delete();
             Notification::make()->title('Imatge eliminada')->success()->send();
+        } else {
+            Notification::make()->title('No s\'ha pogut eliminar la imatge')->danger()->send();
         }
     }
 
