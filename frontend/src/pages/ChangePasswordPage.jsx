@@ -2,13 +2,44 @@ import { useState } from "react"
 import Header from "@/components/Header"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/context/auth-context"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { changePassword } from "@/services/api"
 import { useTranslation } from "react-i18next"
+import { Card, CardContent } from "@/components/ui/card"
+import { ArrowLeft, KeyRound, Shield } from "lucide-react"
+
+function PasswordField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  error,
+  autoComplete,
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-sm font-medium text-foreground">
+        {label}
+      </label>
+      <input
+        value={value}
+        onChange={onChange}
+        type="password"
+        autoComplete={autoComplete}
+        placeholder={placeholder}
+        className={`w-full rounded-xl border bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-foreground ${
+          error ? "border-destructive" : ""
+        }`}
+      />
+      {error ? <p className="mt-1 text-xs text-destructive">{error}</p> : null}
+    </div>
+  )
+}
 
 export default function ChangePasswordPage() {
   const { t } = useTranslation()
   const { isLoggedIn } = useAuth()
+  const navigate = useNavigate()
 
   const [currentPassword, setCurrentPassword] = useState("")
   const [password, setPassword] = useState("")
@@ -23,16 +54,20 @@ export default function ChangePasswordPage() {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <main className="container mx-auto px-4 py-10 max-w-3xl">
-          <p className="text-muted-foreground mb-3">
-            {t(
-              "changePassword.notLoggedIn",
-              "No has iniciat sessió. Entra per canviar la teva contrasenya."
-            )}
-          </p>
-          <Link to="/login">
-            <Button>{t("auth.login.title", "Iniciar sessió")}</Button>
-          </Link>
+        <main className="container mx-auto max-w-2xl px-4 py-10">
+          <Card className="rounded-2xl border shadow-sm">
+            <CardContent className="p-6">
+              <p className="mb-4 text-muted-foreground">
+                {t(
+                  "changePassword.notLoggedIn",
+                  "No has iniciat sessió. Entra per canviar la teva contrasenya."
+                )}
+              </p>
+              <Link to="/login">
+                <Button>{t("auth.login.title", "Iniciar sessió")}</Button>
+              </Link>
+            </CardContent>
+          </Card>
         </main>
       </div>
     )
@@ -48,7 +83,6 @@ export default function ChangePasswordPage() {
     e.preventDefault()
     resetMessages()
 
-    // ✅ Validació frontend mínima
     if (!currentPassword || !password || !passwordConfirmation) {
       setErrorMsg(t("changePassword.errors.fillAll", "Omple tots els camps."))
       return
@@ -124,112 +158,134 @@ export default function ChangePasswordPage() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto px-4 py-10 max-w-3xl">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">
-            {t("changePassword.title", "Canviar contrasenya")}
-          </h2>
+      <main className="container mx-auto max-w-4xl px-4 py-10">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm text-muted-foreground">
+              {t("profile.sections.security", "Seguretat")}
+            </p>
+            <h1 className="mt-1 text-3xl font-bold tracking-tight">
+              {t("changePassword.title", "Canviar contrasenya")}
+            </h1>
+          </div>
 
-          <Link to="/profile">
-            <Button variant="outline">
-              {t("changePassword.backToProfile", "Tornar al perfil")}
-            </Button>
-          </Link>
+          <Button variant="outline" onClick={() => navigate("/profile")}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            {t("changePassword.backToProfile", "Tornar al perfil")}
+          </Button>
         </div>
 
-        <p className="text-sm text-muted-foreground mb-6">
-          {t(
-            "changePassword.description",
-            "Introdueix la contrasenya actual i la nova contrasenya."
-          )}
-        </p>
+        <Card className="rounded-3xl border shadow-sm">
+          <CardContent className="p-6 md:p-8">
+            <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
+                  <KeyRound className="h-7 w-7" />
+                </div>
 
-        {successMsg && (
-          <div className="mb-4 border rounded-lg p-3 text-sm">✅ {successMsg}</div>
-        )}
+                <div>
+                  <h2 className="text-xl font-semibold">
+                    {t("changePassword.title", "Canviar contrasenya")}
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {t(
+                      "changePassword.description",
+                      "Introdueix la contrasenya actual i la nova contrasenya."
+                    )}
+                  </p>
+                </div>
+              </div>
 
-        {errorMsg && (
-          <div className="mb-4 border rounded-lg p-3 text-sm text-destructive">
-            {errorMsg}
-          </div>
-        )}
+              <div className="flex items-center gap-3 rounded-2xl bg-muted/50 px-4 py-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-background">
+                  <Shield className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">
+                    {t("profile.sections.security", "Seguretat")}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {t(
+                      "changePassword.helper",
+                      "Protegeix el teu compte amb una contrasenya segura."
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-1">
-              {t("changePassword.fields.current.label", "Contrasenya actual")}
-            </label>
-            <input
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              type="password"
-              className="w-full rounded-md border px-3 py-2 focus:ring focus:ring-primary/50"
-              placeholder={t(
-                "changePassword.fields.current.placeholder",
-                "Introdueix la teva contrasenya actual"
-              )}
-              autoComplete="current-password"
-            />
-            {fieldErrors?.current_password?.length ? (
-              <p className="text-xs text-destructive mt-1">
-                {fieldErrors.current_password[0]}
-              </p>
+            {successMsg ? (
+              <div className="mb-4 rounded-2xl border border-border bg-muted/40 p-4 text-sm">
+                ✅ {successMsg}
+              </div>
             ) : null}
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-1">
-              {t("changePassword.fields.new.label", "Nova contrasenya")}
-            </label>
-            <input
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              type="password"
-              className="w-full rounded-md border px-3 py-2 focus:ring focus:ring-primary/50"
-              placeholder={t(
-                "changePassword.fields.new.placeholder",
-                "Introdueix la teva nova contrasenya"
-              )}
-              autoComplete="new-password"
-            />
-            {fieldErrors?.password?.length ? (
-              <p className="text-xs text-destructive mt-1">
-                {fieldErrors.password[0]}
-              </p>
+            {errorMsg ? (
+              <div className="mb-4 rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+                {errorMsg}
+              </div>
             ) : null}
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-1">
-              {t(
-                "changePassword.fields.confirm.label",
-                "Confirma la nova contrasenya"
-              )}
-            </label>
-            <input
-              value={passwordConfirmation}
-              onChange={(e) => setPasswordConfirmation(e.target.value)}
-              type="password"
-              className="w-full rounded-md border px-3 py-2 focus:ring focus:ring-primary/50"
-              placeholder={t(
-                "changePassword.fields.confirm.placeholder",
-                "Confirma la teva nova contrasenya"
-              )}
-              autoComplete="new-password"
-            />
-            {fieldErrors?.password_confirmation?.length ? (
-              <p className="text-xs text-destructive mt-1">
-                {fieldErrors.password_confirmation[0]}
-              </p>
-            ) : null}
-          </div>
+            <form className="space-y-5" onSubmit={handleSubmit}>
+              <PasswordField
+                label={t("changePassword.fields.current.label", "Contrasenya actual")}
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder={t(
+                  "changePassword.fields.current.placeholder",
+                  "Introdueix la teva contrasenya actual"
+                )}
+                autoComplete="current-password"
+                error={fieldErrors?.current_password?.[0]}
+              />
 
-          <Button type="submit" disabled={loading}>
-            {loading
-              ? t("changePassword.actions.changing", "Canviant...")
-              : t("changePassword.actions.submit", "Canviar contrasenya")}
-          </Button>
-        </form>
+              <div className="grid gap-5 md:grid-cols-2">
+                <PasswordField
+                  label={t("changePassword.fields.new.label", "Nova contrasenya")}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={t(
+                    "changePassword.fields.new.placeholder",
+                    "Introdueix la teva nova contrasenya"
+                  )}
+                  autoComplete="new-password"
+                  error={fieldErrors?.password?.[0]}
+                />
+
+                <PasswordField
+                  label={t(
+                    "changePassword.fields.confirm.label",
+                    "Confirma la nova contrasenya"
+                  )}
+                  value={passwordConfirmation}
+                  onChange={(e) => setPasswordConfirmation(e.target.value)}
+                  placeholder={t(
+                    "changePassword.fields.confirm.placeholder",
+                    "Confirma la teva nova contrasenya"
+                  )}
+                  autoComplete="new-password"
+                  error={fieldErrors?.password_confirmation?.[0]}
+                />
+              </div>
+
+              <div className="flex flex-col gap-3 pt-4 sm:flex-row">
+                <Button type="submit" disabled={loading}>
+                  {loading
+                    ? t("changePassword.actions.changing", "Canviant...")
+                    : t("changePassword.actions.submit", "Canviar contrasenya")}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate("/profile")}
+                >
+                  {t("profileEdit.actions.cancel", "Cancel·lar")}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       </main>
     </div>
   )

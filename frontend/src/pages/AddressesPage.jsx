@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react"
 import Header from "@/components/Header"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { useAuth } from "@/context/auth-context"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import api from "@/services/api"
+import { ArrowLeft, Home, MapPin, PencilLine, User } from "lucide-react"
 
 const EMPTY_FORM = {
   label: "",
@@ -29,7 +30,7 @@ function InputField({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium mb-1">
+      <label className="mb-1 block text-sm font-medium text-foreground">
         {label} {required && <span className="text-destructive">*</span>}
       </label>
       <input
@@ -37,7 +38,7 @@ function InputField({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="w-full rounded-md border px-3 py-2 text-sm bg-background"
+        className="w-full rounded-xl border bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-foreground"
       />
     </div>
   )
@@ -46,6 +47,7 @@ function InputField({
 export default function AddressesPage() {
   const { t } = useTranslation()
   const { isLoggedIn, user } = useAuth()
+  const navigate = useNavigate()
 
   const [addresses, setAddresses] = useState([])
   const [loading, setLoading] = useState(true)
@@ -145,10 +147,10 @@ export default function AddressesPage() {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <main className="container mx-auto px-4 py-10 max-w-4xl">
-          <Card>
+        <main className="container mx-auto max-w-3xl px-4 py-10">
+          <Card className="rounded-2xl border shadow-sm">
             <CardContent className="p-6">
-              <p className="text-muted-foreground mb-4">
+              <p className="mb-4 text-muted-foreground">
                 {t(
                   "addresses.notLoggedIn",
                   "Has d’iniciar sessió per gestionar les teves direccions."
@@ -168,35 +170,91 @@ export default function AddressesPage() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto px-4 py-10 max-w-5xl">
-        <div className="flex items-center justify-between mb-6 gap-3">
+      <main className="container mx-auto max-w-6xl px-4 py-10">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-2xl font-bold">
-              {t("addresses.title", "Les meves direccions")}
-            </h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              {t("addresses.signedInAs", "Sessió iniciada com")}: {user?.name || user?.email}
+            <p className="text-sm text-muted-foreground">
+              {t("profile.sections.addresses", "Direccions")}
             </p>
+            <h1 className="mt-1 text-3xl font-bold tracking-tight">
+              {t("addresses.title", "Les meves direccions")}
+            </h1>
           </div>
 
-          <Link to="/profile">
-            <Button variant="outline">
-              {t("addresses.backToProfile", "Tornar al perfil")}
-            </Button>
-          </Link>
+          <Button variant="outline" onClick={() => navigate("/profile")}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            {t("addresses.backToProfile", "Tornar al perfil")}
+          </Button>
+        </div>
+
+        <div className="mb-6">
+          <Card className="rounded-3xl border shadow-sm">
+            <CardContent className="p-6 md:p-8">
+              <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
+                    <MapPin className="h-7 w-7" />
+                  </div>
+
+                  <div>
+                    <h2 className="text-xl font-semibold">
+                      {t("addresses.title", "Les meves direccions")}
+                    </h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {t(
+                        "addresses.subtitle",
+                        "Gestiona les teves adreces guardades per agilitzar les compres."
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 rounded-2xl bg-muted/50 px-4 py-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-background">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      {user?.name || user?.email}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {user?.email}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {isEditing
-                  ? t("addresses.form.editTitle", "Editar direcció")
-                  : t("addresses.form.createTitle", "Nova direcció")}
-              </CardTitle>
-            </CardHeader>
+          <Card className="rounded-3xl border shadow-sm">
+            <CardContent className="p-6">
+              <div className="mb-6 flex items-start gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted">
+                  <PencilLine className="h-5 w-5" />
+                </div>
 
-            <CardContent>
+                <div>
+                  <h3 className="font-semibold text-foreground">
+                    {isEditing
+                      ? t("addresses.form.editTitle", "Editar direcció")
+                      : t("addresses.form.createTitle", "Nova direcció")}
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {isEditing
+                      ? t(
+                          "addresses.form.editSubtitle",
+                          "Modifica la direcció seleccionada."
+                        )
+                      : t(
+                          "addresses.form.createSubtitle",
+                          "Afegeix una nova direcció al teu compte."
+                        )}
+                  </p>
+                </div>
+              </div>
+
               <form onSubmit={handleSubmit} className="space-y-4">
                 <InputField
                   label={t("addresses.fields.label", "Nom de la direcció")}
@@ -241,7 +299,7 @@ export default function AddressesPage() {
                 />
 
                 <div>
-                  <label className="flex items-center gap-2 cursor-pointer">
+                  <label className="flex cursor-pointer items-center gap-2 rounded-xl bg-muted/40 px-4 py-3">
                     <input
                       type="checkbox"
                       checked={form.is_default}
@@ -255,7 +313,7 @@ export default function AddressesPage() {
                   </label>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-3 pt-2 sm:flex-row">
                   <Button type="submit" disabled={saving}>
                     {saving
                       ? t("addresses.actions.saving", "Desant...")
@@ -276,7 +334,7 @@ export default function AddressesPage() {
 
           <div className="space-y-4">
             {loading ? (
-              <Card>
+              <Card className="rounded-2xl border shadow-sm">
                 <CardContent className="p-6">
                   <p className="text-muted-foreground">
                     {t("addresses.loading", "Carregant direccions...")}
@@ -284,7 +342,7 @@ export default function AddressesPage() {
                 </CardContent>
               </Card>
             ) : addresses.length === 0 ? (
-              <Card>
+              <Card className="rounded-2xl border shadow-sm">
                 <CardContent className="p-6">
                   <p className="text-muted-foreground">
                     {t("addresses.empty", "Encara no tens cap direcció guardada.")}
@@ -293,20 +351,31 @@ export default function AddressesPage() {
               </Card>
             ) : (
               addresses.map((address) => (
-                <Card key={address.id}>
-                  <CardContent className="p-5">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold">{address.label}</h3>
-                          {address.is_default && (
-                            <span className="text-xs rounded-full border px-2 py-0.5 text-muted-foreground">
-                              {t("addresses.defaultBadge", "Predeterminada")}
-                            </span>
-                          )}
+                <Card
+                  key={address.id}
+                  className="rounded-3xl border shadow-sm transition-all hover:shadow-md"
+                >
+                  <CardContent className="p-6">
+                    <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted">
+                            <Home className="h-5 w-5" />
+                          </div>
+
+                          <div className="min-w-0">
+                            <h3 className="truncate font-semibold text-foreground">
+                              {address.label}
+                            </h3>
+                            {address.is_default && (
+                              <span className="mt-1 inline-flex rounded-full border px-2.5 py-1 text-xs text-muted-foreground">
+                                {t("addresses.defaultBadge", "Predeterminada")}
+                              </span>
+                            )}
+                          </div>
                         </div>
 
-                        <div className="mt-2 text-sm text-muted-foreground space-y-1">
+                        <div className="mt-4 space-y-1 text-sm text-muted-foreground">
                           <p>{address.line_one}</p>
                           {address.line_two ? <p>{address.line_two}</p> : null}
                           <p>
@@ -316,7 +385,7 @@ export default function AddressesPage() {
                         </div>
                       </div>
 
-                      <div className="flex gap-2">
+                      <div className="flex shrink-0 gap-2">
                         <Button variant="outline" onClick={() => handleEdit(address)}>
                           {t("addresses.actions.edit", "Editar")}
                         </Button>

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react"
 import Header from "@/components/Header"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Link, useNavigate } from "react-router-dom"
 import api from "@/services/api"
 import { useCart } from "@/context/cart-context"
@@ -12,7 +12,15 @@ import { Elements } from "@stripe/react-stripe-js"
 import CheckoutForm from "@/components/CheckoutForm"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
-import { Plus } from "lucide-react"
+import {
+  ArrowLeft,
+  CreditCard,
+  MapPin,
+  Package,
+  Plus,
+  Truck,
+  User,
+} from "lucide-react"
 
 const STRIPE_PK = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
 const stripePromise = STRIPE_PK ? loadStripe(STRIPE_PK) : null
@@ -55,7 +63,7 @@ const InputField = React.memo(function InputField({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium mb-1">
+      <label className="mb-1 block text-sm font-medium text-foreground">
         {label} {required && <span className="text-destructive">*</span>}
       </label>
 
@@ -64,7 +72,7 @@ const InputField = React.memo(function InputField({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className={`w-full rounded-md border px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary ${
+        className={`w-full rounded-xl border px-4 py-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary ${
           error ? "border-destructive" : "border-input"
         }`}
       />
@@ -73,6 +81,29 @@ const InputField = React.memo(function InputField({
     </div>
   )
 })
+
+function SectionCard({ icon: Icon, title, subtitle, children }) {
+  return (
+    <Card className="rounded-3xl border shadow-sm">
+      <CardContent className="p-6 md:p-8">
+        <div className="mb-6 flex items-start gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted">
+            <Icon className="h-5 w-5" />
+          </div>
+
+          <div>
+            <h3 className="font-semibold text-foreground">{title}</h3>
+            {subtitle ? (
+              <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+            ) : null}
+          </div>
+        </div>
+
+        {children}
+      </CardContent>
+    </Card>
+  )
+}
 
 function addressToBilling(address) {
   if (!address) return EMPTY_BILLING
@@ -103,7 +134,7 @@ function AddressSelectableCard({ address, selected, onClick, t }) {
     <button
       type="button"
       onClick={onClick}
-      className={`w-full text-left rounded-xl border p-4 transition-all ${
+      className={`w-full text-left rounded-2xl border p-4 transition-all ${
         selected
           ? "border-foreground ring-2 ring-foreground/20 bg-muted/20"
           : "border-border hover:border-foreground/40 hover:bg-muted/10"
@@ -137,7 +168,7 @@ function NewAddressCard({ selected, onClick, t }) {
     <button
       type="button"
       onClick={onClick}
-      className={`w-full h-full min-h-[152px] rounded-xl border p-4 transition-all flex flex-col items-center justify-center text-center ${
+      className={`w-full h-full min-h-[160px] rounded-2xl border p-4 transition-all flex flex-col items-center justify-center text-center ${
         selected
           ? "border-foreground ring-2 ring-foreground/20 bg-muted/20"
           : "border-dashed border-border hover:border-foreground/40 hover:bg-muted/10"
@@ -156,7 +187,7 @@ function AddressSummaryBox({ title, address }) {
   if (!address) return null
 
   return (
-    <div className="border rounded-xl p-4 bg-muted/20">
+    <div className="border rounded-2xl p-4 bg-muted/20">
       <p className="font-medium mb-2">{title}</p>
 
       <div className="text-sm text-muted-foreground space-y-1">
@@ -217,19 +248,19 @@ export default function CheckoutPage() {
     )
   }, [savedAddresses, selectedShippingAddressId])
 
-useEffect(() => {
-  if (!user) return
+  useEffect(() => {
+    if (!user) return
 
-  const nameParts = (user.name || "").trim().split(" ").filter(Boolean)
+    const nameParts = (user.name || "").trim().split(" ").filter(Boolean)
 
-  setCustomer((prev) => ({
-    ...prev,
-    first_name: prev.first_name || nameParts[0] || "",
-    last_name: prev.last_name || nameParts.slice(1).join(" ") || "",
-    email: prev.email || user.email || "",
-    phone: prev.phone || user.phone || "",
-  }))
-}, [user])
+    setCustomer((prev) => ({
+      ...prev,
+      first_name: prev.first_name || nameParts[0] || "",
+      last_name: prev.last_name || nameParts.slice(1).join(" ") || "",
+      email: prev.email || user.email || "",
+      phone: prev.phone || user.phone || "",
+    }))
+  }, [user])
 
   useEffect(() => {
     const loadAddresses = async () => {
@@ -553,25 +584,76 @@ useEffect(() => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto px-4 py-10 max-w-5xl">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">{t("checkout.title", "Checkout")}</h2>
+      <main className="container mx-auto max-w-6xl px-4 py-10">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm text-muted-foreground">
+              {t("checkout.title", "Checkout")}
+            </p>
+            <h1 className="mt-1 text-3xl font-bold tracking-tight">
+              {t("checkout.title", "Checkout")}
+            </h1>
+          </div>
+
           <Link to="/cart">
             <Button variant="outline" type="button">
+              <ArrowLeft className="mr-2 h-4 w-4" />
               {t("checkout.backToCart", "Tornar al carret")}
             </Button>
           </Link>
         </div>
 
+        <div className="mb-6">
+          <Card className="rounded-3xl border shadow-sm">
+            <CardContent className="p-6 md:p-8">
+              <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
+                    <Package className="h-7 w-7" />
+                  </div>
+
+                  <div>
+                    <h2 className="text-xl font-semibold">
+                      {t("checkout.title", "Checkout")}
+                    </h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {t(
+                        "checkout.subtitle",
+                        "Revisa les teves dades, tria l'adreça i completa el pagament."
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 rounded-2xl bg-muted/50 px-4 py-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-background">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      {user?.name || user?.email}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {user?.email}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
           <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  {t("checkout.contact.title", "Dades de contacte")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <SectionCard
+              icon={User}
+              title={t("checkout.contact.title", "Dades de contacte")}
+              subtitle={t(
+                "checkout.contact.subtitle",
+                "Confirma la informació personal per a la comanda."
+              )}
+            >
+              <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <InputField
                     label={t("checkout.contact.firstName", "Nom")}
@@ -617,16 +699,18 @@ useEffect(() => {
                   error={validationErrors["customer.phone"]}
                   placeholder={t("checkout.placeholders.phone", "+34 612 345 678")}
                 />
-              </CardContent>
-            </Card>
+              </div>
+            </SectionCard>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  {t("checkout.addressBook.title", "Direccions")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-5">
+            <SectionCard
+              icon={MapPin}
+              title={t("checkout.addressBook.title", "Direccions")}
+              subtitle={t(
+                "checkout.addressBook.subtitle",
+                "Selecciona una direcció guardada o crea'n una de nova."
+              )}
+            >
+              <div className="space-y-5">
                 {loadingAddresses ? (
                   <p className="text-sm text-muted-foreground">
                     {t("checkout.addressBook.loading", "Carregant direccions...")}
@@ -661,7 +745,7 @@ useEffect(() => {
                     ) : null}
 
                     {!useNewAddress && selectedSavedAddress ? (
-                      <div className="border rounded-xl p-4 bg-muted/20">
+                      <div className="border rounded-2xl p-4 bg-muted/20">
                         <div className="flex items-center gap-2 mb-2">
                           <p className="font-medium">
                             {t("checkout.addressBook.selectedAddress", "Direcció seleccionada")}
@@ -692,7 +776,7 @@ useEffect(() => {
                         </div>
                       </div>
                     ) : (
-                      <div className="border rounded-xl p-4 space-y-4">
+                      <div className="border rounded-2xl p-4 space-y-4">
                         <InputField
                           label={t("checkout.billing.address1", "Adreça")}
                           required
@@ -745,7 +829,7 @@ useEffect(() => {
                           placeholder={t("checkout.placeholders.state", "Barcelona")}
                         />
 
-                        <div className="border rounded-lg p-4 space-y-3">
+                        <div className="border rounded-xl p-4 space-y-3">
                           <label className="flex items-center gap-2 cursor-pointer">
                             <input
                               type="checkbox"
@@ -800,16 +884,18 @@ useEffect(() => {
                     )}
                   </>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </SectionCard>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  {t("checkout.shipping.title", "Adreça d'enviament")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-5">
+            <SectionCard
+              icon={Truck}
+              title={t("checkout.shipping.title", "Adreça d'enviament")}
+              subtitle={t(
+                "checkout.shipping.subtitle",
+                "Tria on vols rebre la teva comanda."
+              )}
+            >
+              <div className="space-y-5">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -863,7 +949,7 @@ useEffect(() => {
                     ) : null}
 
                     {!useNewShippingAddress && selectedSavedShippingAddress ? (
-                      <div className="border rounded-xl p-4 bg-muted/20">
+                      <div className="border rounded-2xl p-4 bg-muted/20">
                         <div className="flex items-center gap-2 mb-2">
                           <p className="font-medium">
                             {t("checkout.shipping.selectedAddress", "Adreça d'enviament seleccionada")}
@@ -906,7 +992,7 @@ useEffect(() => {
                         </div>
                       </div>
                     ) : (
-                      <div className="border rounded-xl p-4 space-y-4">
+                      <div className="border rounded-2xl p-4 space-y-4">
                         <InputField
                           label={t("checkout.shipping.address1", "Adreça")}
                           required
@@ -962,17 +1048,18 @@ useEffect(() => {
                     )}
                   </>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </SectionCard>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  {t("checkout.payment.title", "Dades de pagament")}
-                </CardTitle>
-              </CardHeader>
-
-              <CardContent className="space-y-4">
+            <SectionCard
+              icon={CreditCard}
+              title={t("checkout.payment.title", "Dades de pagament")}
+              subtitle={t(
+                "checkout.payment.subtitle",
+                "Completa el pagament de manera segura amb Stripe."
+              )}
+            >
+              <div className="space-y-4">
                 {error && <p className="text-destructive text-sm">{error}</p>}
 
                 {!clientSecret ? (
@@ -989,7 +1076,7 @@ useEffect(() => {
                   </Button>
                 ) : (
                   <>
-                    <div className="rounded-md border p-3 text-sm text-muted-foreground">
+                    <div className="rounded-xl border p-4 text-sm text-muted-foreground">
                       {t(
                         "checkout.payment.intentCreated",
                         "✅ Intent creat. Ja pots completar el pagament."
@@ -1051,26 +1138,26 @@ useEffect(() => {
                     </Elements>
                   </>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </SectionCard>
           </div>
 
           <div className="lg:sticky lg:top-6 h-fit">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  {t("checkout.summary.title", "Resum de la comanda")}
-                </CardTitle>
-              </CardHeader>
+            <Card className="rounded-3xl border shadow-sm">
+              <CardContent className="p-6">
+                <div className="mb-5">
+                  <h3 className="text-lg font-semibold">
+                    {t("checkout.summary.title", "Resum de la comanda")}
+                  </h3>
+                </div>
 
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {items.map((line) => {
                     const p = line.product || {}
                     const price = Number(p.price || 0)
                     const qty = Number(line.qty || 0)
                     return (
-                      <div key={line.key} className="flex justify-between text-sm">
+                      <div key={line.key} className="flex justify-between gap-4 text-sm">
                         <span className="text-muted-foreground">
                           {p.name || t("checkout.summary.productFallback", "Producte")} x{qty}
                         </span>
@@ -1080,7 +1167,7 @@ useEffect(() => {
                   })}
                 </div>
 
-                <div className="border-t pt-3 space-y-2 text-sm">
+                <div className="border-t pt-4 mt-4 space-y-3 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">
                       {t("checkout.summary.subtotal", "Subtotal (IVA inclòs)")}
@@ -1102,11 +1189,11 @@ useEffect(() => {
                 </div>
 
                 {serverTotals ? (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground mt-4">
                     {t("checkout.summary.confirmed", "* Totals confirmats pel servidor.")}
                   </p>
                 ) : (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground mt-4">
                     {t(
                       "checkout.summary.estimated",
                       "* Estimació. El total definitiu es confirmarà al pagar."

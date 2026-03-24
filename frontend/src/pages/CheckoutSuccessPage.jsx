@@ -1,13 +1,41 @@
 import { useEffect, useRef, useState } from "react"
 import Header from "@/components/Header"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import { Link, useLocation } from "react-router-dom"
 import { loadStripe } from "@stripe/stripe-js"
 import { useCart } from "@/context/cart-context"
 import api from "@/services/api"
 import { useTranslation } from "react-i18next"
+import {
+  CheckCircle2,
+  FileText,
+  MapPin,
+  Package,
+  ShoppingBag,
+  User,
+} from "lucide-react"
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
+
+function SectionCard({ icon: Icon, title, children }) {
+  return (
+    <Card className="rounded-3xl border shadow-sm">
+      <CardContent className="p-6">
+        <div className="mb-4 flex items-start gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted">
+            <Icon className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-foreground">{title}</h3>
+          </div>
+        </div>
+
+        {children}
+      </CardContent>
+    </Card>
+  )
+}
 
 export default function CheckoutSuccessPage() {
   const { t } = useTranslation()
@@ -59,8 +87,9 @@ export default function CheckoutSuccessPage() {
     if (status === "processing") return t("checkoutSuccess.status.processing")
     if (status === "requires_payment_method") return t("checkoutSuccess.status.failed")
     if (status === "unknown") return t("checkoutSuccess.status.unknown")
-    if (status === "error")
+    if (status === "error") {
       return t("checkoutSuccess.status.error", { error: error || "" })
+    }
     return t("checkoutSuccess.status.generic", { status })
   }
 
@@ -118,7 +147,6 @@ export default function CheckoutSuccessPage() {
           return
         }
 
-        // Cas redirect real
         const stripe = await stripePromise
         if (!stripe) throw new Error(t("checkoutSuccess.errors.stripeNotInit"))
 
@@ -144,7 +172,6 @@ export default function CheckoutSuccessPage() {
             return
           }
 
-          // Intentar crear la comanda amb pending data
           const rawLines = localStorage.getItem("pending_checkout_lines")
           const rawCustomer = localStorage.getItem("pending_checkout_customer")
           const pendingLines = rawLines ? JSON.parse(rawLines) : null
@@ -219,167 +246,198 @@ export default function CheckoutSuccessPage() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto px-4 py-10 max-w-3xl">
-        <h2 className="text-2xl font-bold mb-2">
-          {t("checkoutSuccess.title")}
-        </h2>
-        <p className="text-muted-foreground mb-6">{renderMessage()}</p>
+      <main className="container mx-auto max-w-5xl px-4 py-10">
+        <div className="mb-8">
+          <div className="flex items-center gap-3">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
+              <CheckCircle2 className="h-7 w-7" />
+            </div>
+
+            <div>
+              <p className="text-sm text-muted-foreground">
+                {t("checkoutSuccess.title")}
+              </p>
+              <h1 className="text-3xl font-bold tracking-tight">
+                {t("checkoutSuccess.title")}
+              </h1>
+            </div>
+          </div>
+
+          <p className="mt-4 text-sm text-muted-foreground">{renderMessage()}</p>
+        </div>
 
         {state?.confirmError && (
-          <div className="border border-destructive rounded-lg p-3 mb-4 text-sm text-destructive">
+          <div className="mb-6 rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
             {t("checkoutSuccess.confirmError", { error: state.confirmError })}
           </div>
         )}
 
-        <div className="border rounded-lg p-4 space-y-3 bg-background">
-          <div className="flex items-center justify-between">
-            <p className="font-semibold">{t("checkoutSuccess.orderSummary.title")}</p>
-            <p className="text-sm text-muted-foreground">
-              {t("checkoutSuccess.orderSummary.idLabel")} {orderId}
-            </p>
-          </div>
+        <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+          <div className="space-y-6">
+            <Card className="rounded-3xl border shadow-sm">
+              <CardContent className="p-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      {t("checkoutSuccess.orderSummary.title")}
+                    </p>
+                    <h2 className="mt-1 text-xl font-semibold">
+                      {t("checkoutSuccess.orderSummary.idLabel")} {orderId}
+                    </h2>
+                  </div>
 
-          {reference && (
-            <p className="text-sm text-muted-foreground">
-              {t("checkoutSuccess.orderSummary.referenceLabel")}{" "}
-              <span className="font-medium text-foreground">{reference}</span>
-            </p>
-          )}
-
-          {/* Productes */}
-          <div className="border-t pt-3">
-            <p className="text-sm font-medium mb-2">
-              {t("checkoutSuccess.products.title")}
-            </p>
-
-            {lines.length ? (
-              <div className="space-y-2">
-                {lines.map((l) => (
-                  <div
-                    key={l.id || l.identifier}
-                    className="flex items-center justify-between text-sm"
-                  >
-                    <span>
-                      {l.name}{" "}
+                  {reference ? (
+                    <div className="rounded-2xl bg-muted/40 px-4 py-3 text-sm">
                       <span className="text-muted-foreground">
-                        x{l.quantity}
+                        {t("checkoutSuccess.orderSummary.referenceLabel")}{" "}
                       </span>
-                    </span>
-                    <span>{money(lineTotal(l))}</span>
+                      <span className="font-medium text-foreground">{reference}</span>
+                    </div>
+                  ) : null}
+                </div>
+              </CardContent>
+            </Card>
+
+            <SectionCard icon={Package} title={t("checkoutSuccess.products.title")}>
+              {lines.length ? (
+                <div className="space-y-3">
+                  {lines.map((l) => (
+                    <div
+                      key={l.id || l.identifier}
+                      className="flex items-center justify-between gap-4 rounded-2xl bg-muted/30 px-4 py-3 text-sm"
+                    >
+                      <span className="min-w-0">
+                        {l.name}{" "}
+                        <span className="text-muted-foreground">x{l.quantity}</span>
+                      </span>
+                      <span className="shrink-0 font-medium">{money(lineTotal(l))}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {t("checkoutSuccess.products.emptyNote")}
+                </p>
+              )}
+            </SectionCard>
+
+            <SectionCard icon={User} title={t("checkoutSuccess.customer.title")}>
+              {customer ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl bg-muted/30 px-4 py-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      {t("checkoutSuccess.customer.name")}
+                    </p>
+                    <p className="mt-1 font-medium">
+                      {customer.first_name} {customer.last_name}
+                    </p>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                {t("checkoutSuccess.products.emptyNote")}
-              </p>
+
+                  <div className="rounded-2xl bg-muted/30 px-4 py-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      {t("checkoutSuccess.customer.email")}
+                    </p>
+                    <p className="mt-1 font-medium">{customer.email}</p>
+                  </div>
+
+                  {customer.phone ? (
+                    <div className="rounded-2xl bg-muted/30 px-4 py-3 sm:col-span-2">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                        {t("checkoutSuccess.customer.phone")}
+                      </p>
+                      <p className="mt-1 font-medium">{customer.phone}</p>
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {t("checkoutSuccess.customer.notAvailable")}
+                </p>
+              )}
+            </SectionCard>
+
+            {(billingAddress || shippingAddress) && (
+              <SectionCard icon={MapPin} title={t("checkoutSuccess.addresses.title")}>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {billingAddress && (
+                    <div className="rounded-2xl bg-muted/30 px-4 py-3">
+                      <p className="text-sm font-medium mb-2">
+                        {t("checkoutSuccess.addresses.billing")}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatAddress(billingAddress)}
+                      </p>
+                    </div>
+                  )}
+
+                  {shippingAddress && (
+                    <div className="rounded-2xl bg-muted/30 px-4 py-3">
+                      <p className="text-sm font-medium mb-2">
+                        {t("checkoutSuccess.addresses.shipping")}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatAddress(shippingAddress)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </SectionCard>
             )}
           </div>
 
-          {/* Totals */}
-          <div className="border-t pt-3 text-sm space-y-1">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">
-                {t("checkoutSuccess.totals.subtotal")}
-              </span>
-              <span>{money(totals?.sub_total)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">
-                {t("checkoutSuccess.totals.discount")}
-              </span>
-              <span>{money(totals?.discount_total)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">
-                {t("checkoutSuccess.totals.shipping")}
-              </span>
-              <span>{money(totals?.shipping_total)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">
-                {t("checkoutSuccess.totals.vat")}
-              </span>
-              <span>{money(totals?.tax_total)}</span>
-            </div>
-            <div className="flex justify-between font-medium pt-2">
-              <span>{t("checkoutSuccess.totals.total")}</span>
-              <span>{money(totals?.total)}</span>
-            </div>
-          </div>
-
-          {/* Dades del client */}
-          <div className="border-t pt-3">
-            <p className="text-sm font-medium mb-2">
-              {t("checkoutSuccess.customer.title")}
-            </p>
-
-            {customer ? (
-              <div className="text-sm space-y-1">
-                <p>
+          <div className="space-y-6 lg:sticky lg:top-6 h-fit">
+            <SectionCard icon={ShoppingBag} title={t("checkoutSuccess.totals.title")}>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between">
                   <span className="text-muted-foreground">
-                    {t("checkoutSuccess.customer.name")}{" "}
+                    {t("checkoutSuccess.totals.subtotal")}
                   </span>
-                  {customer.first_name} {customer.last_name}
-                </p>
-                <p>
+                  <span>{money(totals?.sub_total)}</span>
+                </div>
+
+                <div className="flex justify-between">
                   <span className="text-muted-foreground">
-                    {t("checkoutSuccess.customer.email")}{" "}
+                    {t("checkoutSuccess.totals.discount")}
                   </span>
-                  {customer.email}
-                </p>
-                {customer.phone && (
-                  <p>
-                    <span className="text-muted-foreground">
-                      {t("checkoutSuccess.customer.phone")}{" "}
-                    </span>
-                    {customer.phone}
-                  </p>
-                )}
+                  <span>{money(totals?.discount_total)}</span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    {t("checkoutSuccess.totals.shipping")}
+                  </span>
+                  <span>{money(totals?.shipping_total)}</span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    {t("checkoutSuccess.totals.vat")}
+                  </span>
+                  <span>{money(totals?.tax_total)}</span>
+                </div>
+
+                <div className="flex justify-between border-t pt-3 text-base font-semibold">
+                  <span>{t("checkoutSuccess.totals.total")}</span>
+                  <span>{money(totals?.total)}</span>
+                </div>
               </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                {t("checkoutSuccess.customer.notAvailable")}
-              </p>
-            )}
+            </SectionCard>
+
+            <Card className="rounded-3xl border shadow-sm">
+              <CardContent className="p-6 space-y-3">
+                <Link to="/">
+                  <Button className="w-full">{t("checkoutSuccess.actions.backToShop")}</Button>
+                </Link>
+
+                <Link to="/orders">
+                  <Button variant="outline" className="w-full">
+                    <FileText className="mr-2 h-4 w-4" />
+                    {t("checkoutSuccess.actions.viewOrders")}
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
           </div>
-
-          {/* Adreces */}
-          {(billingAddress || shippingAddress) && (
-            <div className="border-t pt-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {billingAddress && (
-                  <div>
-                    <p className="text-sm font-medium mb-1">
-                      {t("checkoutSuccess.addresses.billing")}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {formatAddress(billingAddress)}
-                    </p>
-                  </div>
-                )}
-                {shippingAddress && (
-                  <div>
-                    <p className="text-sm font-medium mb-1">
-                      {t("checkoutSuccess.addresses.shipping")}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {formatAddress(shippingAddress)}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="flex gap-3 mt-6">
-          <Link to="/">
-            <Button>{t("checkoutSuccess.actions.backToShop")}</Button>
-          </Link>
-          <Link to="/orders">
-            <Button variant="outline">{t("checkoutSuccess.actions.viewOrders")}</Button>
-          </Link>
         </div>
       </main>
     </div>

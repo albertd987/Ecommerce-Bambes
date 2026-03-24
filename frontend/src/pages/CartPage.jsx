@@ -5,6 +5,7 @@ import { useCart } from "@/context/cart-context"
 import { Link } from "react-router-dom"
 import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
+import { ArrowLeft, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react"
 
 const SHIPPING_FLAT_RATE = 499 // 4.99€ en cèntims
 const TAX_RATE = 0.21 // 21% IVA (informatiu, ja inclòs)
@@ -38,8 +39,6 @@ function translateColor(color, t, scope = "cart") {
   const key = String(color).trim().toUpperCase()
   return t(`${scope}.colors.${key}`, color)
 }
-
-
 
 function extractOption(line, product, keys = []) {
   const candidates = [
@@ -79,6 +78,14 @@ function extractOption(line, product, keys = []) {
   return null
 }
 
+function DetailPill({ children }) {
+  return (
+    <span className="rounded-full border px-2.5 py-1 text-xs text-muted-foreground">
+      {children}
+    </span>
+  )
+}
+
 export default function CartPage() {
   const { t } = useTranslation()
   const { items, cartCount, cartSubtotal, updateQty, removeItem, clearCart } = useCart()
@@ -100,25 +107,30 @@ export default function CartPage() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
+      <main className="container mx-auto max-w-6xl px-4 py-10">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-2xl font-bold">{t("cart.title", "Carret")}</h2>
-            <p className="text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
+              {t("cart.title", "Carret")}
+            </p>
+            <h1 className="mt-1 text-3xl font-bold tracking-tight">
+              {t("cart.title", "Carret")}
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
               {t("cart.items", { count: cartCount, defaultValue: "{{count}} article(s)" })}
             </p>
           </div>
 
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
-          >
-            {t("cart.continueShopping", "Continuar comprant")}
+          <Link to="/">
+            <Button variant="outline">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              {t("cart.continueShopping", "Continuar comprant")}
+            </Button>
           </Link>
         </div>
 
         {items.length === 0 ? (
-          <Card>
+          <Card className="rounded-3xl border shadow-sm">
             <CardHeader>
               <CardTitle>{t("cart.empty.title", "El carret està buit")}</CardTitle>
             </CardHeader>
@@ -140,7 +152,6 @@ export default function CartPage() {
           <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
             <div className="space-y-4">
               {items.map((line) => {
-                console.log("CART LINE:", line)
                 const p = line.product || {}
                 const price = Number(p.price || 0)
                 const qty = Number(line.qty || 0)
@@ -153,27 +164,34 @@ export default function CartPage() {
                     ? p.thumbnail
                     : "https://placehold.co/200x200?text=No+Image"
 
-                const color =
+                const resolvedColor =
+                  p.color ||
                   extractOption(line, p, [
                     "color",
                     "colour",
                     "attribute_data.color",
                     "values.color",
-                  ]) || null
+                  ]) ||
+                  null
 
-                const size =
+                const resolvedSize =
+                  p.size ||
                   extractOption(line, p, [
                     "size",
                     "talla",
                     "attribute_data.size",
                     "values.size",
-                  ]) || null
+                  ]) ||
+                  null
 
                 return (
-                  <Card key={line.key}>
-                    <CardContent className="p-4">
+                  <Card
+                    key={line.key}
+                    className="rounded-3xl border shadow-sm transition-all hover:shadow-md"
+                  >
+                    <CardContent className="p-5">
                       <div className="flex gap-4">
-                        <div className="h-20 w-20 rounded-md overflow-hidden bg-muted flex-shrink-0">
+                        <div className="h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-muted">
                           <img
                             src={imgSrc}
                             alt={p.name || t("cart.productFallback", "Producte")}
@@ -181,46 +199,34 @@ export default function CartPage() {
                           />
                         </div>
 
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between gap-4">
-                            <div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                            <div className="min-w-0">
                               <p className="text-sm text-muted-foreground">{p.brand ?? "—"}</p>
-                              <h3 className="font-semibold leading-tight">
-                                {p.name ?? t("cart.productFallback", "Producte")}
-                                
-                              </h3>
-                              {(p.color || p.size) && (
-  <div className="mt-2 flex flex-wrap gap-2 text-xs">
-    {p.color && (
-      <span className="rounded-full border px-2.5 py-1 text-muted-foreground">
-        {t("cart.details.color", "Color")}: {translateColor(p.color, t, "cart")}
-      </span>
-    )}
-    {p.size && (
-      <span className="rounded-full border px-2.5 py-1 text-muted-foreground">
-        {t("cart.details.size", "Talla")}: {p.size}
-      </span>
-    )}
-  </div>
-)}
 
-                              {(color || size) && (
-                                <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                                  {color && (
-                                    <span className="rounded-full border px-2.5 py-1 text-muted-foreground">
-                                      {t("cart.details.color", "Color")}: {color}
-                                    </span>
+                              <h3 className="mt-1 font-semibold leading-tight text-foreground">
+                                {p.name ?? t("cart.productFallback", "Producte")}
+                              </h3>
+
+                              {(resolvedColor || resolvedSize) && (
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                  {resolvedColor && (
+                                    <DetailPill>
+                                      {t("cart.details.color", "Color")}:{" "}
+                                      {translateColor(resolvedColor, t, "cart")}
+                                    </DetailPill>
                                   )}
-                                  {size && (
-                                    <span className="rounded-full border px-2.5 py-1 text-muted-foreground">
-                                      {t("cart.details.size", "Talla")}: {size}
-                                    </span>
+
+                                  {resolvedSize && (
+                                    <DetailPill>
+                                      {t("cart.details.size", "Talla")}: {resolvedSize}
+                                    </DetailPill>
                                   )}
                                 </div>
                               )}
                             </div>
 
-                            <div className="text-right">
+                            <div className="shrink-0 text-left sm:text-right">
                               <p className="text-lg font-bold">{price.toFixed(2)}€</p>
                               <p className="text-sm text-muted-foreground">
                                 {t("cart.lineTotal", "Total")}: {lineTotal.toFixed(2)}€
@@ -228,31 +234,34 @@ export default function CartPage() {
                             </div>
                           </div>
 
-                          <div className="mt-3 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
+                          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="inline-flex w-fit items-center rounded-2xl border bg-background p-1">
                               <Button
-                                variant="outline"
+                                variant="ghost"
                                 size="icon"
                                 onClick={() => updateQty(line.key, qty - 1)}
                                 aria-label={t("cart.qty.decrease", "Disminuir quantitat")}
                                 disabled={qty <= 1}
                               >
-                                −
+                                <Minus className="h-4 w-4" />
                               </Button>
 
-                              <span className="min-w-10 text-center font-medium">{qty}</span>
+                              <span className="min-w-10 text-center text-sm font-medium">
+                                {qty}
+                              </span>
 
                               <Button
-                                variant="outline"
+                                variant="ghost"
                                 size="icon"
                                 onClick={() => updateQty(line.key, qty + 1)}
                                 aria-label={t("cart.qty.increase", "Augmentar quantitat")}
                               >
-                                +
+                                <Plus className="h-4 w-4" />
                               </Button>
                             </div>
 
                             <Button variant="destructive" onClick={() => removeItem(line.key)}>
+                              <Trash2 className="mr-2 h-4 w-4" />
                               {t("cart.remove", "Eliminar")}
                             </Button>
                           </div>
@@ -270,29 +279,39 @@ export default function CartPage() {
               </div>
             </div>
 
-            <Card className="h-fit">
+            <Card className="h-fit rounded-3xl border shadow-sm lg:sticky lg:top-6">
               <CardHeader>
-                <CardTitle>{t("cart.summary.title", "Resum")}</CardTitle>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted">
+                    <ShoppingBag className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <CardTitle>{t("cart.summary.title", "Resum")}</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      {t("cart.items", { count: cartCount, defaultValue: "{{count}} article(s)" })}
+                    </p>
+                  </div>
+                </div>
               </CardHeader>
 
-              <CardContent className="space-y-3">
-                <div className="flex justify-between">
+              <CardContent className="space-y-4">
+                <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">
                     {t("cart.summary.subtotal", "Subtotal (IVA inclòs)")}
                   </span>
                   <span className="font-medium">{subtotalNumber.toFixed(2)}€</span>
                 </div>
 
-                <div className="flex justify-between">
+                <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">
                     {t("cart.summary.shipping", "Enviament")}
                   </span>
                   <span className="font-medium">{money(shippingCents)}</span>
                 </div>
 
-                <div className="border-t pt-3 flex justify-between">
+                <div className="border-t pt-4 flex justify-between">
                   <span className="font-semibold">{t("cart.summary.total", "Total")}</span>
-                  <span className="font-bold text-lg">{money(totalCents)}</span>
+                  <span className="text-lg font-bold">{money(totalCents)}</span>
                 </div>
 
                 <p className="text-xs text-muted-foreground">
