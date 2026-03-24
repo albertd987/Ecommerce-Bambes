@@ -12,6 +12,7 @@ use Lunar\Models\Brand;
 use Lunar\Models\Collection;
 use Lunar\Models\ProductOption;
 use App\Services\StockService;
+use App\Services\ProductColorManager;
 
 class ProductController extends Controller
 {
@@ -257,26 +258,30 @@ class ProductController extends Controller
             'variants.prices',
             'variants.values',
             'thumbnail',
-            'images'
+            'images',
         ])->findOrFail($id);
 
         $firstVariant = $product->variants->first();
-        $priceValue = $firstVariant?->prices->first()?->price->value ?? 0;
+        $priceValue   = $firstVariant?->prices->first()?->price->value ?? 0;
 
         [$sizeOptionId, $colorOptionId] = $this->getOptionIds();
         $getValueEn = fn($name) => is_array($name) ? ($name['en'] ?? null)
             : (is_object($name) ? ($name['en'] ?? null) : null);
 
+        // Build colors structure from product_colors table
+        $colors = app(ProductColorManager::class)->getColorsWithVariantData($product);
+
         return response()->json([
             'data' => [
-                'id' => $product->id,
-                'name' => $product->translateAttribute('name'),
+                'id'          => $product->id,
+                'name'        => $product->translateAttribute('name'),
                 'description' => $product->translateAttribute('description'),
-                'brand' => $product->brand?->name ?? 'Sense marca',
-                'price' => $priceValue / 100,
-                'thumbnail' => $product->thumbnail?->getUrl(),
-                'images' => $product->images->map(fn($img) => $img->getUrl()),
-                'variants' => $product->variants->map(function ($variant) use ($sizeOptionId, $colorOptionId, $getValueEn) {
+                'brand'       => $product->brand?->name ?? 'Sense marca',
+                'price'       => $priceValue / 100,
+                'thumbnail'   => $product->thumbnail?->getUrl(),
+                'images'      => $product->images->map(fn($img) => $img->getUrl()),
+                'colors'      => $colors,   // NEW — per-color images + sizes
+                'variants'    => $product->variants->map(function ($variant) use ($sizeOptionId, $colorOptionId, $getValueEn) {
                     $sizeVal  = $variant->values->first(fn($v) => $v->product_option_id === $sizeOptionId);
                     $colorVal = $variant->values->first(fn($v) => $v->product_option_id === $colorOptionId);
 
@@ -288,7 +293,7 @@ class ProductController extends Controller
                         'color'        => $colorVal ? $getValueEn($colorVal->name) : null,
                     ];
                 }),
-            ]
+            ],
         ]);
     }
 
