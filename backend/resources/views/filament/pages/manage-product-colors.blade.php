@@ -22,7 +22,7 @@
                                 size="sm"
                                 color="gray"
                                 icon="heroicon-m-pencil"
-                                wire:click="editColor({{ $color->id }})"
+                                wire:click="mountAction('editColorModal', {{ \Illuminate\Support\Js::from(['colorId' => $color->id, 'name' => $color->name, 'sizes' => $color->sizes]) }})"
                             >
                                 Editar
                             </x-filament::button>
@@ -85,7 +85,8 @@
 
                                 {{-- Add images button --}}
                                 <button
-                                    wire:click="addImages({{ $color->id }})"
+                                    type="button"
+                                    wire:click="mountAction('addImagesModal', {{ \Illuminate\Support\Js::from(['colorId' => $color->id]) }})"
                                     class="h-24 w-24 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600
                                            flex flex-col items-center justify-center gap-1
                                            text-gray-400 hover:border-primary-400 hover:text-primary-500

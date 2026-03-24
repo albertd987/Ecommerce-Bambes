@@ -145,21 +145,6 @@ class ManageProductColors extends Page implements HasForms
     // Per-color Livewire methods (called from Blade with wire:click)
     // -------------------------------------------------------------------------
 
-    public function editColor(int $colorId): void
-    {
-        $color = ProductColor::where('product_id', $this->getRecord()->id)->findOrFail($colorId);
-        $this->mountAction('editColorModal', [
-            'colorId' => $colorId,
-            'name'    => $color->name,
-            'sizes'   => $color->sizes,
-        ]);
-    }
-
-    public function addImages(int $colorId): void
-    {
-        $this->mountAction('addImagesModal', ['colorId' => $colorId]);
-    }
-
     public function deleteImage(int $mediaId): void
     {
         $media = \Spatie\MediaLibrary\MediaCollections\Models\Media::findOrFail($mediaId);
