@@ -5,6 +5,17 @@ import { Link } from "react-router-dom"
 import { useAuth } from "@/context/auth-context"
 import api, { downloadInvoice } from "@/services/api"
 import { useTranslation } from "react-i18next"
+import { ArrowLeft, FileText, Package, Receipt, RefreshCw, User } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+
+function OrderInfoPill({ label, value }) {
+  return (
+    <div className="rounded-xl bg-muted/50 px-3 py-2">
+      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="mt-1 text-sm font-medium text-foreground">{value || "—"}</p>
+    </div>
+  )
+}
 
 export default function OrdersPage() {
   const { t } = useTranslation()
@@ -15,12 +26,6 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState([])
   const didRunRef = useRef(false)
 
-  /**
-   * ✅ Normalitza imports que poden venir com:
-   * - number (15999)
-   * - string ("15999")
-   * - object ({ value: 15999, ... }) o ({ amount: 15999, ... })
-   */
   const toCents = (value) => {
     if (value === null || value === undefined) return null
 
@@ -55,10 +60,10 @@ export default function OrdersPage() {
     setError(null)
 
     try {
-      // Portem un grapat (si després vols paginació, ho fem)
       const res = await api.get("/orders", { params: { per_page: 20 } })
       setOrders(res.data?.data || [])
     } catch (e) {
+      console.error("Error loading orders:", e)
       setError(e?.response?.data?.message || e.message)
       setOrders([])
     } finally {
@@ -74,62 +79,112 @@ export default function OrdersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoggedIn])
 
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+
+        <main className="container mx-auto max-w-3xl px-4 py-10">
+          <Card className="rounded-2xl border shadow-sm">
+            <CardContent className="p-6">
+              <p className="text-muted-foreground">
+                {t("orders.notLoggedIn", "Has d’iniciar sessió per veure les comandes.")}
+              </p>
+
+              <div className="mt-4">
+                <Link to="/login">
+                  <Button>{t("auth.login.title", "Iniciar sessió")}</Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto px-4 py-10 max-w-3xl">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">
-            {t("orders.title", "Les meves comandes")}
-          </h2>
+      <main className="container mx-auto max-w-5xl px-4 py-10">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm text-muted-foreground">
+              {t("profile.sections.orders", "Comandes")}
+            </p>
+            <h1 className="mt-1 text-3xl font-bold tracking-tight">
+              {t("orders.title", "Les meves comandes")}
+            </h1>
+          </div>
 
-          <div className="flex gap-2">
-            {isLoggedIn && (
-              <Button variant="outline" onClick={loadOrders} disabled={loading}>
-                {loading
-                  ? t("orders.actions.refreshing", "Actualitzant...")
-                  : t("orders.actions.refresh", "Actualitzar")}
-              </Button>
-            )}
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={loadOrders} disabled={loading}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              {loading
+                ? t("orders.actions.refreshing", "Actualitzant...")
+                : t("orders.actions.refresh", "Actualitzar")}
+            </Button>
 
             <Link to="/profile">
               <Button variant="outline">
+                <ArrowLeft className="mr-2 h-4 w-4" />
                 {t("orders.actions.backToProfile", "Tornar al perfil")}
               </Button>
             </Link>
           </div>
         </div>
 
-        {!isLoggedIn ? (
-          <div className="border rounded-lg p-4">
-            <p className="text-muted-foreground">
-              {t("orders.notLoggedIn", "Has d’iniciar sessió per veure les comandes.")}
-            </p>
-            <Link to="/login">
-              <Button className="mt-3">
-                {t("auth.login.title", "Iniciar sessió")}
-              </Button>
-            </Link>
-          </div>
-        ) : error ? (
-          <div className="border rounded-lg p-4">
-            <p className="text-destructive">
-              {t("common.errorLabel", "Error")}: {error}
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <div className="border rounded-lg p-4">
-              <p className="text-sm text-muted-foreground">
-                {t("orders.signedInAs", "Sessió iniciada com")}
-              </p>
-              <p className="font-medium truncate">{user?.name || user?.email}</p>
-            </div>
+        <div className="space-y-6">
+          <Card className="rounded-3xl border shadow-sm">
+            <CardContent className="p-6 md:p-8">
+              <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
+                    <Package className="h-7 w-7" />
+                  </div>
 
-            {orders.length ? (
-              orders.map((o) => {
-                // ✅ Total robust: pot venir com o.totals.total o o.total (root)
+                  <div>
+                    <h2 className="text-xl font-semibold">
+                      {t("orders.title", "Les meves comandes")}
+                    </h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {t(
+                        "orders.subtitle",
+                        "Consulta l’historial de compres i descarrega les teves factures."
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 rounded-2xl bg-muted/50 px-4 py-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-background">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      {user?.name || user?.email}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {user?.email}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {error ? (
+            <Card className="rounded-2xl border shadow-sm">
+              <CardContent className="p-6">
+                <p className="text-destructive">
+                  {t("common.errorLabel", "Error")}: {error}
+                </p>
+              </CardContent>
+            </Card>
+          ) : orders.length ? (
+            <div className="space-y-4">
+              {orders.map((o) => {
                 const total =
                   o?.totals?.total !== undefined && o?.totals?.total !== null
                     ? o.totals.total
@@ -138,78 +193,94 @@ export default function OrdersPage() {
                 const createdAt = o?.created_at ? new Date(o.created_at) : null
 
                 return (
-                  <div key={o.id} className="border rounded-lg p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="font-semibold">
-                          {t("orders.orderLabel", "Comanda")} #{o.id}
-                        </p>
+                  <Card
+                    key={o.id}
+                    className="rounded-3xl border shadow-sm transition-all hover:shadow-md"
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted">
+                              <Receipt className="h-5 w-5" />
+                            </div>
 
-                        <p className="text-sm text-muted-foreground">
-                          {t("orders.fields.status", "Estat")}: {o?.status || "—"} ·{" "}
-                          {t("orders.fields.referenceShort", "Ref")}: {o?.reference || "—"}
-                        </p>
+                            <div>
+                              <h3 className="font-semibold text-foreground">
+                                {t("orders.orderLabel", "Comanda")} #{o.id}
+                              </h3>
+                              <p className="text-sm text-muted-foreground">
+                                {t("orders.fields.referenceShort", "Ref")}: {o?.reference || "—"}
+                              </p>
+                            </div>
+                          </div>
 
-                        {createdAt && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {createdAt.toLocaleString()}
-                          </p>
-                        )}
+                          {createdAt && (
+                            <p className="mt-4 text-sm text-muted-foreground">
+                              {createdAt.toLocaleString()}
+                            </p>
+                          )}
+
+                          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                            <OrderInfoPill
+                              label={t("orders.fields.status", "Estat")}
+                              value={o?.status || "—"}
+                            />
+                            <OrderInfoPill
+                              label={t("orders.fields.lines", "Línies")}
+                              value={o?.lines_count ?? "—"}
+                            />
+                            <OrderInfoPill
+                              label={t("orders.fields.total", "Total")}
+                              value={money(total)}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex shrink-0 flex-col gap-2 sm:flex-row lg:flex-col">
+                          <Button
+                            variant="outline"
+                            onClick={async () => {
+                              try {
+                                await downloadInvoice(o.id)
+                              } catch (e) {
+                                console.error("Error downloading invoice:", e)
+                                alert(
+                                  e?.message ||
+                                    t(
+                                      "orders.actions.downloadInvoiceError",
+                                      "Could not download the invoice."
+                                    )
+                                )
+                              }
+                            }}
+                          >
+                            <FileText className="mr-2 h-4 w-4" />
+                            {t("orders.actions.downloadInvoice", "Download invoice")}
+                          </Button>
+
+                          <Link to={`/orders/${o.id}`}>
+                            <Button variant="outline" className="w-full">
+                              {t("orders.actions.viewDetail", "View details")}
+                            </Button>
+                          </Link>
+                        </div>
                       </div>
-
-                      <div className="text-right">
-                        <p className="text-sm text-muted-foreground">
-                          {t("orders.fields.total", "Total")}
-                        </p>
-                        <p className="font-semibold">{money(total)}</p>
-                      </div>
-                    </div>
-
-                    <div className="h-px bg-border my-4" />
-
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm text-muted-foreground">
-                        {t("orders.fields.lines", "Línies")}: {o?.lines_count ?? "—"}
-                      </div>
-
-<div className="flex items-center gap-2">
-  <Button
-    variant="outline"
-    size="sm"
-    onClick={async () => {
-      try {
-        await downloadInvoice(o.id)
-      } catch (e) {
-        console.error("Error downloading invoice:", e)
-        alert(
-          e?.message ||
-            t("orders.actions.downloadInvoiceError", "Could not download the invoice.")
-        )
-      }
-    }}
-  >
-    {t("orders.actions.downloadInvoice", "Download invoice")}
-  </Button>
-
-  <Link to={`/orders/${o.id}`}>
-    <Button variant="outline" size="sm">
-      {t("orders.actions.viewDetail", "View details")}
-    </Button>
-  </Link>
-</div>
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                 )
-              })
-            ) : (
-              <div className="border rounded-lg p-4">
+              })}
+            </div>
+          ) : (
+            <Card className="rounded-2xl border shadow-sm">
+              <CardContent className="p-6">
                 <p className="text-muted-foreground">
                   {t("orders.empty", "Encara no tens cap comanda.")}
                 </p>
-              </div>
-            )}
-          </div>
-        )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </main>
     </div>
   )

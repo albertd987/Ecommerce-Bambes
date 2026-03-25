@@ -81,17 +81,71 @@
       "last": "Última"
     }
   },
+  "addresses": {
+    "title": "Les meves direccions",
+    "subtitle": "Gestiona les teves adreces guardades per agilitzar les compres.",
+    "signedInAs": "Sessió iniciada com",
+    "backToProfile": "Tornar al perfil",
+    "loading": "Carregant direccions...",
+    "empty": "Encara no tens cap direcció guardada.",
+    "defaultBadge": "Predeterminada",
+    "notLoggedIn": "Has d’iniciar sessió per gestionar les teves direccions.",
+    "form": {
+      "createTitle": "Nova direcció",
+      "editTitle": "Editar direcció",
+      "createSubtitle": "Afegeix una nova direcció al teu compte.",
+      "editSubtitle": "Modifica la direcció seleccionada."
+    },
+    "fields": {
+      "label": "Nom de la direcció",
+      "firstName": "Nom",
+      "lastName": "Cognom",
+      "email": "Email",
+      "phone": "Telèfon",
+      "lineOne": "Adreça",
+      "lineTwo": "Adreça (línia 2)",
+      "city": "Ciutat",
+      "postcode": "Codi postal",
+      "state": "Província",
+      "isDefault": "Marcar com a predeterminada"
+    },
+    "placeholders": {
+      "label": "Casa"
+    },
+    "actions": {
+      "create": "Guardar direcció",
+      "update": "Actualitzar",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "cancel": "Cancel·lar",
+      "saving": "Desant..."
+    },
+    "toasts": {
+      "loadError": "No s'han pogut carregar les direccions",
+      "saveError": "No s'ha pogut desar la direcció",
+      "deleteError": "No s'ha pogut eliminar la direcció",
+      "created": "Direcció creada correctament",
+      "updated": "Direcció actualitzada correctament",
+      "deleted": "Direcció eliminada correctament"
+    }
+  },
   "profile": {
     "title": "El meu perfil",
     "sections": {
       "personal": "Dades personals",
       "security": "Seguretat",
       "orders": "Comandes",
-      "favorites": "Favorits"
+      "favorites": "Favorits",
+      "addresses": "Direccions"
+    },
+    "addresses": {
+      "description": "Gestiona les teves direccions guardades per agilitzar futures compres.",
+      "view": "Gestionar direccions"
     },
     "fields": {
       "name": "Nom",
-      "email": "Email"
+      "email": "Email",
+      "phone": "Telèfon"
     },
     "placeholders": {
       "namePending": "— pendent de backend —"
@@ -111,6 +165,30 @@
     "note": "* Aquesta pàgina és una maqueta. Quan connectem el backend, aquestes dades vindran de la base de dades.",
     "loggedOut": {
       "message": "No has iniciat sessió. Entra per veure el teu perfil."
+    },
+    "actions": {
+      "edit": "Editar"
+    }
+  },
+  "profileEdit": {
+    "title": "Editar perfil",
+    "form": {
+      "title": "Dades personals"
+    },
+    "actions": {
+      "save": "Guardar canvis",
+      "saving": "Desant...",
+      "cancel": "Cancel·lar",
+      "back": "Tornar al perfil"
+    },
+    "placeholders": {
+      "name": "El teu nom",
+      "email": "tu@exemple.com",
+      "phone": "+34 612 345 678"
+    },
+    "toasts": {
+      "success": "Dades actualitzades correctament",
+      "error": "Error actualitzant dades"
     }
   },
   "auth": {
@@ -126,23 +204,23 @@
       "cta": "Veure productes"
     },
     "colors": {
-  "NEGRE": "Negre",
-  "BLANC": "Blanc",
-  "BLAU": "Blau",
-  "VERMELL": "Vermell",
-  "VERD": "Verd",
-  "GRIS": "Gris",
-  "ROSA": "Rosa",
-  "BEIX": "Beix",
-  "TARONJA": "Taronja",
-  "GROC": "Groc",
-  "LILA": "Lila",
-  "MARRO": "Marró"
-},
+      "NEGRE": "Negre",
+      "BLANC": "Blanc",
+      "BLAU": "Blau",
+      "VERMELL": "Vermell",
+      "VERD": "Verd",
+      "GRIS": "Gris",
+      "ROSA": "Rosa",
+      "BEIX": "Beix",
+      "TARONJA": "Taronja",
+      "GROC": "Groc",
+      "LILA": "Lila",
+      "MARRO": "Marró"
+    },
     "details": {
-  "color": "Color",
-  "size": "Talla"
-},
+      "color": "Color",
+      "size": "Talla"
+    },
     "productFallback": "Producte",
     "lineTotal": "Total",
     "qty": {
@@ -163,11 +241,13 @@
   },
   "checkout": {
     "title": "Checkout",
+    "subtitle": "Revisa les teves dades, tria l'adreça i completa el pagament.",
     "emptyCart": "No tens productes al carret.",
     "backToProducts": "Tornar a productes",
     "backToCart": "Tornar al carret",
     "contact": {
       "title": "Dades de contacte",
+      "subtitle": "Confirma la informació personal per a la comanda.",
       "firstName": "Nom",
       "lastName": "Cognom",
       "email": "Email",
@@ -181,9 +261,34 @@
       "postcode": "Codi postal",
       "state": "Província"
     },
+    "addressBook": {
+      "title": "Direccions",
+      "subtitle": "Selecciona una direcció guardada o crea'n una de nova.",
+      "loading": "Carregant direccions...",
+      "defaultBadge": "Predeterminada",
+      "newAddress": "Nova direcció",
+      "newAddressHelp": "Introdueix una nova adreça manualment",
+      "helpCards": "Clica una direcció guardada per utilitzar-la, o selecciona nova direcció per escriure'n una manualment.",
+      "selectedAddress": "Direcció seleccionada",
+      "saveThisAddress": "Guardar aquesta direcció per a futures compres",
+      "label": "Nom de la direcció",
+      "labelPlaceholder": "Casa",
+      "setDefault": "Marcar com a direcció predeterminada",
+      "validation": {
+        "labelRequired": "Posa un nom a la direcció"
+      },
+      "toasts": {
+        "saved": "Direcció guardada correctament",
+        "saveError": "No s'ha pogut guardar la direcció"
+      }
+    },
     "shipping": {
       "title": "Adreça d'enviament",
+      "subtitle": "Tria on vols rebre la teva comanda.",
       "sameAsBilling": "Mateixa adreça que la de facturació",
+      "sameAddressSummary": "S'utilitzarà la mateixa adreça",
+      "selectedAddress": "Adreça d'enviament seleccionada",
+      "helpCards": "Selecciona una direcció guardada per a l'enviament o tria nova direcció per introduir-ne una de manual.",
       "address1": "Adreça",
       "address2": "Adreça (línia 2)",
       "city": "Ciutat",
@@ -192,6 +297,7 @@
     },
     "payment": {
       "title": "Dades de pagament",
+      "subtitle": "Completa el pagament de manera segura amb Stripe.",
       "processing": "Processant...",
       "continue": "Continuar al pagament",
       "intentCreated": "✅ Intent creat. Ja pots completar el pagament."
@@ -237,6 +343,7 @@
   },
   "checkoutSuccess": {
     "title": "Compra finalitzada",
+    "confirmError": "Error creant la comanda: {{error}}",
     "status": {
       "loading": "Comprovant pagament...",
       "succeeded": "Pagament completat",
@@ -249,7 +356,6 @@
     "errors": {
       "stripeNotInit": "Stripe no inicialitzat (revisa la key)."
     },
-    "confirmError": "Error creant la comanda: {{error}}",
     "orderSummary": {
       "title": "Resum de la comanda",
       "idLabel": "ID:",
@@ -260,6 +366,7 @@
       "emptyNote": "(Si Stripe ha redirigit, pot ser que aquí no tinguem el carret al frontend.)"
     },
     "totals": {
+      "title": "Imports",
       "subtotal": "Subtotal",
       "discount": "Descompte",
       "shipping": "Enviament",
@@ -274,6 +381,7 @@
       "notAvailable": "No disponible"
     },
     "addresses": {
+      "title": "Adreces",
       "billing": "Adreça de facturació",
       "shipping": "Adreça d'enviament"
     },
@@ -386,16 +494,15 @@
   },
   "orderDetail": {
     "title": "Detall de comanda",
-    "actions": {
-      "refresh": "Actualitzar",
-      "refreshing": "Actualitzant...",
-      "backToOrders": "Tornar a comandes"
-    },
-    "notLoggedIn": "Has d’iniciar sessió per veure aquesta comanda.",
     "loading": "Carregant comanda...",
+    "notLoggedIn": "Has d’iniciar sessió per veure aquesta comanda.",
     "notFound": "No s’ha trobat la comanda.",
     "unauthorizedHint": "Si diu “No autoritzat”, és perquè la comanda no és teva o no estàs autenticat correctament.",
     "signedInAs": "Sessió iniciada com",
+    "summary": {
+      "title": "Resum de la comanda",
+      "subtitle": "Consulta tota la informació relacionada amb aquesta compra."
+    },
     "fields": {
       "id": "ID",
       "status": "Estat",
@@ -407,6 +514,11 @@
       "totals": "Totals",
       "customer": "Dades del client",
       "addresses": "Adreces"
+    },
+    "actions": {
+      "refresh": "Actualitzar",
+      "refreshing": "Actualitzant...",
+      "backToOrders": "Tornar a comandes"
     },
     "noLines": "No hi ha línies.",
     "totals": {
@@ -432,6 +544,7 @@
   },
   "orders": {
     "title": "Les meves comandes",
+    "subtitle": "Consulta l’historial de compres i descarrega les teves factures.",
     "actions": {
       "refresh": "Actualitzar",
       "refreshing": "Actualitzant...",
@@ -459,19 +572,19 @@
       "load": "Error carregant el producte"
     },
     "colors": {
-  "NEGRE": "Negre",
-  "BLANC": "Blanc",
-  "BLAU": "Blau",
-  "VERMELL": "Vermell",
-  "VERD": "Verd",
-  "GRIS": "Gris",
-  "ROSA": "Rosa",
-  "BEIX": "Beix",
-  "TARONJA": "Taronja",
-  "GROC": "Groc",
-  "LILA": "Lila",
-  "MARRO": "Marró"
-},
+      "NEGRE": "Negre",
+      "BLANC": "Blanc",
+      "BLAU": "Blau",
+      "VERMELL": "Vermell",
+      "VERD": "Verd",
+      "GRIS": "Gris",
+      "ROSA": "Rosa",
+      "BEIX": "Beix",
+      "TARONJA": "Taronja",
+      "GROC": "Groc",
+      "LILA": "Lila",
+      "MARRO": "Marró"
+    },
     "gallery": {
       "prev": "Imatge anterior",
       "next": "Imatge següent",
@@ -584,6 +697,7 @@
   },
   "favorites": {
     "title": "Els meus favorits",
+    "subtitle": "Consulta i gestiona els productes que has guardat per més endavant.",
     "signedInAs": "Sessió iniciada com",
     "backToProfile": "Tornar al perfil",
     "loading": "Carregant favorits...",

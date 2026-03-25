@@ -10,6 +10,8 @@ use Lunar\Base\Traits\LunarUser;
 use Lunar\Models\Cart;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\UserAddress;
 
 /**
  * Model d'usuari de l'aplicació ecommerce.
@@ -46,6 +48,7 @@ class User extends Authenticatable implements MustVerifyEmail, \Lunar\Base\Lunar
         'name',
         'email',
         'password',
+        'phone',
     ];
 
     /**
@@ -101,6 +104,11 @@ class User extends Authenticatable implements MustVerifyEmail, \Lunar\Base\Lunar
 public function favorites()
 {
     return $this->hasMany(Favorite::class);
+}
+
+public function addresses(): HasMany
+{
+    return $this->hasMany(UserAddress::class)->orderByDesc('is_default')->orderBy('label');
 }
 
 }

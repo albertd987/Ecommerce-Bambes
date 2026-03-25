@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react"
 import Header from "@/components/Header"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Link, useNavigate } from "react-router-dom"
 import api from "@/services/api"
 import { useCart } from "@/context/cart-context"
@@ -11,12 +11,46 @@ import { loadStripe } from "@stripe/stripe-js"
 import { Elements } from "@stripe/react-stripe-js"
 import CheckoutForm from "@/components/CheckoutForm"
 import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
+import {
+  ArrowLeft,
+  CreditCard,
+  MapPin,
+  Package,
+  Plus,
+  Truck,
+  User,
+} from "lucide-react"
 
 const STRIPE_PK = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
 const stripePromise = STRIPE_PK ? loadStripe(STRIPE_PK) : null
 
-const SHIPPING_FLAT_RATE = 499 // 4.99€ en cèntims
-const TAX_RATE = 0.21 // informatiu, IVA inclòs
+const SHIPPING_FLAT_RATE = 499
+const TAX_RATE = 0.21
+
+const EMPTY_BILLING = {
+  line_one: "",
+  line_two: "",
+  city: "",
+  postcode: "",
+  state: "",
+  country_code: "ES",
+}
+
+const EMPTY_SHIPPING = {
+  line_one: "",
+  line_two: "",
+  city: "",
+  postcode: "",
+  state: "",
+  country_code: "ES",
+}
+
+const EMPTY_SAVE_ADDRESS = {
+  enabled: false,
+  label: "",
+  is_default: false,
+}
 
 const InputField = React.memo(function InputField({
   label,
@@ -29,7 +63,7 @@ const InputField = React.memo(function InputField({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium mb-1">
+      <label className="mb-1 block text-sm font-medium text-foreground">
         {label} {required && <span className="text-destructive">*</span>}
       </label>
 
@@ -38,7 +72,7 @@ const InputField = React.memo(function InputField({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className={`w-full rounded-md border px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary ${
+        className={`w-full rounded-xl border px-4 py-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary ${
           error ? "border-destructive" : "border-input"
         }`}
       />
@@ -48,14 +82,132 @@ const InputField = React.memo(function InputField({
   )
 })
 
+function SectionCard({ icon: Icon, title, subtitle, children }) {
+  return (
+    <Card className="rounded-3xl border shadow-sm">
+      <CardContent className="p-6 md:p-8">
+        <div className="mb-6 flex items-start gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted">
+            <Icon className="h-5 w-5" />
+          </div>
+
+          <div>
+            <h3 className="font-semibold text-foreground">{title}</h3>
+            {subtitle ? (
+              <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+            ) : null}
+          </div>
+        </div>
+
+        {children}
+      </CardContent>
+    </Card>
+  )
+}
+
+function addressToBilling(address) {
+  if (!address) return EMPTY_BILLING
+  return {
+    line_one: address.line_one || "",
+    line_two: address.line_two || "",
+    city: address.city || "",
+    postcode: address.postcode || "",
+    state: address.state || "",
+    country_code: address.country_code || "ES",
+  }
+}
+
+function addressToShipping(address) {
+  if (!address) return EMPTY_SHIPPING
+  return {
+    line_one: address.line_one || "",
+    line_two: address.line_two || "",
+    city: address.city || "",
+    postcode: address.postcode || "",
+    state: address.state || "",
+    country_code: address.country_code || "ES",
+  }
+}
+
+function AddressSelectableCard({ address, selected, onClick, t }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full text-left rounded-2xl border p-4 transition-all ${
+        selected
+          ? "border-foreground ring-2 ring-foreground/20 bg-muted/20"
+          : "border-border hover:border-foreground/40 hover:bg-muted/10"
+      }`}
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <p className="font-medium">{address.label}</p>
+        {address.is_default && (
+          <span className="text-xs rounded-full border px-2 py-0.5 text-muted-foreground">
+            {t("checkout.addressBook.defaultBadge", "Predeterminada")}
+          </span>
+        )}
+      </div>
+
+      <div className="text-sm text-muted-foreground space-y-1">
+        <p>
+          {address.first_name} {address.last_name}
+        </p>
+        <p>{address.line_one}</p>
+        {address.line_two ? <p>{address.line_two}</p> : null}
+        <p>
+          {address.postcode} · {address.city}
+        </p>
+      </div>
+    </button>
+  )
+}
+
+function NewAddressCard({ selected, onClick, t }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full h-full min-h-[160px] rounded-2xl border p-4 transition-all flex flex-col items-center justify-center text-center ${
+        selected
+          ? "border-foreground ring-2 ring-foreground/20 bg-muted/20"
+          : "border-dashed border-border hover:border-foreground/40 hover:bg-muted/10"
+      }`}
+    >
+      <Plus className="h-6 w-6 mb-2" />
+      <p className="font-medium">{t("checkout.addressBook.newAddress", "Nova direcció")}</p>
+      <p className="text-sm text-muted-foreground mt-1">
+        {t("checkout.addressBook.newAddressHelp", "Introdueix una nova adreça manualment")}
+      </p>
+    </button>
+  )
+}
+
+function AddressSummaryBox({ title, address }) {
+  if (!address) return null
+
+  return (
+    <div className="border rounded-2xl p-4 bg-muted/20">
+      <p className="font-medium mb-2">{title}</p>
+
+      <div className="text-sm text-muted-foreground space-y-1">
+        <p>{address.line_one}</p>
+        {address.line_two ? <p>{address.line_two}</p> : null}
+        <p>
+          {address.postcode} · {address.city}
+        </p>
+        {address.state ? <p>{address.state}</p> : null}
+      </div>
+    </div>
+  )
+}
+
 export default function CheckoutPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const { items } = useCart()
   const { user } = useAuth()
 
-  // ✅ Stripe UI locale sincronitzat amb i18next
-  // Stripe accepta "en" i "ca" (Catalan). Si algun dia tens "en-US", ho normalitzem.
   const stripeLocale = i18n.language?.toLowerCase().startsWith("en") ? "en" : "ca"
 
   const [clientSecret, setClientSecret] = useState(null)
@@ -71,28 +223,34 @@ export default function CheckoutPage() {
     phone: "",
   })
 
-  const [billing, setBilling] = useState({
-    line_one: "",
-    line_two: "",
-    city: "",
-    postcode: "",
-    state: "",
-    country_code: "ES",
-  })
-
+  const [billing, setBilling] = useState(EMPTY_BILLING)
   const [shippingSameAsBilling, setShippingSameAsBilling] = useState(true)
+  const [shipping, setShipping] = useState(EMPTY_SHIPPING)
 
-  const [shipping, setShipping] = useState({
-    line_one: "",
-    line_two: "",
-    city: "",
-    postcode: "",
-    state: "",
-    country_code: "ES",
-  })
+  const [savedAddresses, setSavedAddresses] = useState([])
+  const [loadingAddresses, setLoadingAddresses] = useState(false)
+
+  const [selectedAddressId, setSelectedAddressId] = useState("")
+  const [useNewAddress, setUseNewAddress] = useState(false)
+
+  const [selectedShippingAddressId, setSelectedShippingAddressId] = useState("")
+  const [useNewShippingAddress, setUseNewShippingAddress] = useState(false)
+
+  const [saveAddress, setSaveAddress] = useState(EMPTY_SAVE_ADDRESS)
+
+  const selectedSavedAddress = useMemo(() => {
+    return savedAddresses.find((addr) => String(addr.id) === String(selectedAddressId)) || null
+  }, [savedAddresses, selectedAddressId])
+
+  const selectedSavedShippingAddress = useMemo(() => {
+    return (
+      savedAddresses.find((addr) => String(addr.id) === String(selectedShippingAddressId)) || null
+    )
+  }, [savedAddresses, selectedShippingAddressId])
 
   useEffect(() => {
     if (!user) return
+
     const nameParts = (user.name || "").trim().split(" ").filter(Boolean)
 
     setCustomer((prev) => ({
@@ -100,7 +258,43 @@ export default function CheckoutPage() {
       first_name: prev.first_name || nameParts[0] || "",
       last_name: prev.last_name || nameParts.slice(1).join(" ") || "",
       email: prev.email || user.email || "",
+      phone: prev.phone || user.phone || "",
     }))
+  }, [user])
+
+  useEffect(() => {
+    const loadAddresses = async () => {
+      if (!user) return
+
+      try {
+        setLoadingAddresses(true)
+        const res = await api.get("/user/addresses")
+        const data = res.data?.data ?? []
+        setSavedAddresses(data)
+
+        const defaultAddress = data.find((addr) => addr.is_default)
+        if (defaultAddress) {
+          setSelectedAddressId(String(defaultAddress.id))
+          setBilling(addressToBilling(defaultAddress))
+          setUseNewAddress(false)
+
+          setSelectedShippingAddressId(String(defaultAddress.id))
+          setShipping(addressToShipping(defaultAddress))
+          setUseNewShippingAddress(false)
+        } else {
+          setUseNewAddress(true)
+          setUseNewShippingAddress(true)
+        }
+      } catch (e) {
+        console.error("Error loading saved addresses:", e)
+        setUseNewAddress(true)
+        setUseNewShippingAddress(true)
+      } finally {
+        setLoadingAddresses(false)
+      }
+    }
+
+    loadAddresses()
   }, [user])
 
   const lines = useMemo(() => {
@@ -110,7 +304,6 @@ export default function CheckoutPage() {
     }))
   }, [items])
 
-  // totals locals (fallback) — IVA inclòs
   const localSubtotal = useMemo(() => {
     return (items ?? []).reduce((acc, l) => {
       const price = Number(l?.product?.price || 0)
@@ -150,64 +343,80 @@ export default function CheckoutPage() {
     billing,
     shipping_same_as_billing: shippingSameAsBilling,
     shipping: shippingSameAsBilling ? billing : shipping,
-     lang: i18n.language?.toLowerCase().startsWith("en") ? "en" : "ca",
+    lang: i18n.language?.toLowerCase().startsWith("en") ? "en" : "ca",
   })
 
   const validateForm = () => {
     const errors = {}
 
-    if (!customer.first_name.trim())
+    if (!customer.first_name.trim()) {
       errors["customer.first_name"] = t(
         "checkout.validation.firstNameRequired",
         "El nom és obligatori"
       )
+    }
 
-    if (!customer.last_name.trim())
+    if (!customer.last_name.trim()) {
       errors["customer.last_name"] = t(
         "checkout.validation.lastNameRequired",
         "El cognom és obligatori"
       )
+    }
 
-    if (!customer.email.trim())
+    if (!customer.email.trim()) {
       errors["customer.email"] = t(
         "checkout.validation.emailRequired",
         "L'email és obligatori"
       )
+    }
 
-    if (!billing.line_one.trim())
+    if (!billing.line_one.trim()) {
       errors["billing.line_one"] = t(
         "checkout.validation.billingAddressRequired",
         "L'adreça és obligatòria"
       )
+    }
 
-    if (!billing.city.trim())
+    if (!billing.city.trim()) {
       errors["billing.city"] = t(
         "checkout.validation.billingCityRequired",
         "La ciutat és obligatòria"
       )
+    }
 
-    if (!billing.postcode.trim())
+    if (!billing.postcode.trim()) {
       errors["billing.postcode"] = t(
         "checkout.validation.billingPostcodeRequired",
         "El codi postal és obligatori"
       )
+    }
 
     if (!shippingSameAsBilling) {
-      if (!shipping.line_one.trim())
+      if (!shipping.line_one.trim()) {
         errors["shipping.line_one"] = t(
           "checkout.validation.shippingAddressRequired",
           "L'adreça d'enviament és obligatòria"
         )
-      if (!shipping.city.trim())
+      }
+      if (!shipping.city.trim()) {
         errors["shipping.city"] = t(
           "checkout.validation.shippingCityRequired",
           "La ciutat d'enviament és obligatòria"
         )
-      if (!shipping.postcode.trim())
+      }
+      if (!shipping.postcode.trim()) {
         errors["shipping.postcode"] = t(
           "checkout.validation.shippingPostcodeRequired",
           "El codi postal d'enviament és obligatori"
         )
+      }
+    }
+
+    if (useNewAddress && saveAddress.enabled && !saveAddress.label.trim()) {
+      errors["save_address.label"] = t(
+        "checkout.addressBook.validation.labelRequired",
+        "Posa un nom a la direcció"
+      )
     }
 
     setValidationErrors(errors)
@@ -284,6 +493,74 @@ export default function CheckoutPage() {
     }
   }
 
+  const handleSelectSavedAddress = (address) => {
+    setSelectedAddressId(String(address.id))
+    setBilling(addressToBilling(address))
+    setUseNewAddress(false)
+    setSaveAddress(EMPTY_SAVE_ADDRESS)
+  }
+
+  const handleSelectNewAddress = () => {
+    setSelectedAddressId("")
+    setUseNewAddress(true)
+    setBilling(EMPTY_BILLING)
+  }
+
+  const handleSelectSavedShippingAddress = (address) => {
+    setSelectedShippingAddressId(String(address.id))
+    setShipping(addressToShipping(address))
+    setUseNewShippingAddress(false)
+  }
+
+  const handleSelectNewShippingAddress = () => {
+    setSelectedShippingAddressId("")
+    setUseNewShippingAddress(true)
+    setShipping(EMPTY_SHIPPING)
+  }
+
+  const handleSaveCurrentAddress = async () => {
+    if (!useNewAddress || !saveAddress.enabled) return
+
+    try {
+      await api.post("/user/addresses", {
+        label: saveAddress.label,
+        first_name: customer.first_name,
+        last_name: customer.last_name,
+        contact_email: customer.email,
+        contact_phone: customer.phone,
+        line_one: billing.line_one,
+        line_two: billing.line_two,
+        city: billing.city,
+        state: billing.state,
+        postcode: billing.postcode,
+        country_code: billing.country_code || "ES",
+        is_default: saveAddress.is_default,
+      })
+
+      toast.success(
+        t("checkout.addressBook.toasts.saved", "Direcció guardada correctament")
+      )
+
+      const res = await api.get("/user/addresses")
+      const data = res.data?.data ?? []
+      setSavedAddresses(data)
+
+      const justSaved = data.find((addr) => addr.label === saveAddress.label)
+      if (justSaved) {
+        setSelectedAddressId(String(justSaved.id))
+        setUseNewAddress(false)
+      }
+
+      setSaveAddress(EMPTY_SAVE_ADDRESS)
+    } catch (e) {
+      console.error("Error saving checkout address:", e)
+      toast.error(
+        e?.response?.data?.message ||
+          t("checkout.addressBook.toasts.saveError", "No s'ha pogut guardar la direcció")
+      )
+    }
+  }
+
   if (!lines.length) {
     return (
       <div className="min-h-screen bg-background">
@@ -307,26 +584,76 @@ export default function CheckoutPage() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto px-4 py-10 max-w-5xl">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">{t("checkout.title", "Checkout")}</h2>
+      <main className="container mx-auto max-w-6xl px-4 py-10">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm text-muted-foreground">
+              {t("checkout.title", "Checkout")}
+            </p>
+            <h1 className="mt-1 text-3xl font-bold tracking-tight">
+              {t("checkout.title", "Checkout")}
+            </h1>
+          </div>
+
           <Link to="/cart">
             <Button variant="outline" type="button">
+              <ArrowLeft className="mr-2 h-4 w-4" />
               {t("checkout.backToCart", "Tornar al carret")}
             </Button>
           </Link>
         </div>
 
+        <div className="mb-6">
+          <Card className="rounded-3xl border shadow-sm">
+            <CardContent className="p-6 md:p-8">
+              <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
+                    <Package className="h-7 w-7" />
+                  </div>
+
+                  <div>
+                    <h2 className="text-xl font-semibold">
+                      {t("checkout.title", "Checkout")}
+                    </h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {t(
+                        "checkout.subtitle",
+                        "Revisa les teves dades, tria l'adreça i completa el pagament."
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 rounded-2xl bg-muted/50 px-4 py-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-background">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      {user?.name || user?.email}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {user?.email}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
-          {/* Formulari */}
           <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  {t("checkout.contact.title", "Dades de contacte")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <SectionCard
+              icon={User}
+              title={t("checkout.contact.title", "Dades de contacte")}
+              subtitle={t(
+                "checkout.contact.subtitle",
+                "Confirma la informació personal per a la comanda."
+              )}
+            >
+              <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <InputField
                     label={t("checkout.contact.firstName", "Nom")}
@@ -372,77 +699,203 @@ export default function CheckoutPage() {
                   error={validationErrors["customer.phone"]}
                   placeholder={t("checkout.placeholders.phone", "+34 612 345 678")}
                 />
-              </CardContent>
-            </Card>
+              </div>
+            </SectionCard>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  {t("checkout.billing.title", "Adreça de facturació")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <InputField
-                  label={t("checkout.billing.address1", "Adreça")}
-                  required
-                  value={billing.line_one}
-                  onChange={(e) =>
-                    setBilling((p) => ({ ...p, line_one: e.target.value }))
-                  }
-                  error={validationErrors["billing.line_one"]}
-                  placeholder={t("checkout.placeholders.address1", "Carrer Major, 1")}
-                />
+            <SectionCard
+              icon={MapPin}
+              title={t("checkout.addressBook.title", "Direccions")}
+              subtitle={t(
+                "checkout.addressBook.subtitle",
+                "Selecciona una direcció guardada o crea'n una de nova."
+              )}
+            >
+              <div className="space-y-5">
+                {loadingAddresses ? (
+                  <p className="text-sm text-muted-foreground">
+                    {t("checkout.addressBook.loading", "Carregant direccions...")}
+                  </p>
+                ) : (
+                  <>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {savedAddresses.map((address) => (
+                        <AddressSelectableCard
+                          key={address.id}
+                          address={address}
+                          selected={!useNewAddress && String(address.id) === String(selectedAddressId)}
+                          onClick={() => handleSelectSavedAddress(address)}
+                          t={t}
+                        />
+                      ))}
 
-                <InputField
-                  label={t("checkout.billing.address2", "Adreça (línia 2)")}
-                  value={billing.line_two}
-                  onChange={(e) =>
-                    setBilling((p) => ({ ...p, line_two: e.target.value }))
-                  }
-                  placeholder={t("checkout.placeholders.address2", "Pis 2n, Porta A")}
-                />
+                      <NewAddressCard
+                        selected={useNewAddress}
+                        onClick={handleSelectNewAddress}
+                        t={t}
+                      />
+                    </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <InputField
-                    label={t("checkout.billing.city", "Ciutat")}
-                    required
-                    value={billing.city}
-                    onChange={(e) =>
-                      setBilling((p) => ({ ...p, city: e.target.value }))
-                    }
-                    error={validationErrors["billing.city"]}
-                    placeholder={t("checkout.placeholders.city", "Barcelona")}
-                  />
-                  <InputField
-                    label={t("checkout.billing.postcode", "Codi postal")}
-                    required
-                    value={billing.postcode}
-                    onChange={(e) =>
-                      setBilling((p) => ({ ...p, postcode: e.target.value }))
-                    }
-                    error={validationErrors["billing.postcode"]}
-                    placeholder={t("checkout.placeholders.postcode", "08001")}
-                  />
-                </div>
+                    {savedAddresses.length > 0 ? (
+                      <p className="text-xs text-muted-foreground">
+                        {t(
+                          "checkout.addressBook.helpCards",
+                          "Clica una direcció guardada per utilitzar-la, o selecciona nova direcció per escriure'n una manualment."
+                        )}
+                      </p>
+                    ) : null}
 
-                <InputField
-                  label={t("checkout.billing.state", "Província")}
-                  value={billing.state}
-                  onChange={(e) =>
-                    setBilling((p) => ({ ...p, state: e.target.value }))
-                  }
-                  placeholder={t("checkout.placeholders.state", "Barcelona")}
-                />
-              </CardContent>
-            </Card>
+                    {!useNewAddress && selectedSavedAddress ? (
+                      <div className="border rounded-2xl p-4 bg-muted/20">
+                        <div className="flex items-center gap-2 mb-2">
+                          <p className="font-medium">
+                            {t("checkout.addressBook.selectedAddress", "Direcció seleccionada")}
+                          </p>
+                          {selectedSavedAddress.is_default && (
+                            <span className="text-xs rounded-full border px-2 py-0.5 text-muted-foreground">
+                              {t("checkout.addressBook.defaultBadge", "Predeterminada")}
+                            </span>
+                          )}
+                        </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  {t("checkout.shipping.title", "Adreça d'enviament")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+                        {selectedSavedAddress.label ? (
+                          <p className="text-sm font-medium mb-2">{selectedSavedAddress.label}</p>
+                        ) : null}
+
+                        <div className="text-sm text-muted-foreground space-y-1">
+                          <p>
+                            {selectedSavedAddress.first_name} {selectedSavedAddress.last_name}
+                          </p>
+                          <p>{selectedSavedAddress.line_one}</p>
+                          {selectedSavedAddress.line_two ? <p>{selectedSavedAddress.line_two}</p> : null}
+                          <p>
+                            {selectedSavedAddress.postcode} · {selectedSavedAddress.city}
+                          </p>
+                          {selectedSavedAddress.state ? <p>{selectedSavedAddress.state}</p> : null}
+                          {selectedSavedAddress.contact_phone ? <p>{selectedSavedAddress.contact_phone}</p> : null}
+                          {selectedSavedAddress.contact_email ? <p>{selectedSavedAddress.contact_email}</p> : null}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="border rounded-2xl p-4 space-y-4">
+                        <InputField
+                          label={t("checkout.billing.address1", "Adreça")}
+                          required
+                          value={billing.line_one}
+                          onChange={(e) =>
+                            setBilling((p) => ({ ...p, line_one: e.target.value }))
+                          }
+                          error={validationErrors["billing.line_one"]}
+                          placeholder={t("checkout.placeholders.address1", "Carrer Major, 1")}
+                        />
+
+                        <InputField
+                          label={t("checkout.billing.address2", "Adreça (línia 2)")}
+                          value={billing.line_two}
+                          onChange={(e) =>
+                            setBilling((p) => ({ ...p, line_two: e.target.value }))
+                          }
+                          placeholder={t("checkout.placeholders.address2", "Pis 2n, Porta A")}
+                        />
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <InputField
+                            label={t("checkout.billing.city", "Ciutat")}
+                            required
+                            value={billing.city}
+                            onChange={(e) =>
+                              setBilling((p) => ({ ...p, city: e.target.value }))
+                            }
+                            error={validationErrors["billing.city"]}
+                            placeholder={t("checkout.placeholders.city", "Barcelona")}
+                          />
+                          <InputField
+                            label={t("checkout.billing.postcode", "Codi postal")}
+                            required
+                            value={billing.postcode}
+                            onChange={(e) =>
+                              setBilling((p) => ({ ...p, postcode: e.target.value }))
+                            }
+                            error={validationErrors["billing.postcode"]}
+                            placeholder={t("checkout.placeholders.postcode", "08001")}
+                          />
+                        </div>
+
+                        <InputField
+                          label={t("checkout.billing.state", "Província")}
+                          value={billing.state}
+                          onChange={(e) =>
+                            setBilling((p) => ({ ...p, state: e.target.value }))
+                          }
+                          placeholder={t("checkout.placeholders.state", "Barcelona")}
+                        />
+
+                        <div className="border rounded-xl p-4 space-y-3">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={saveAddress.enabled}
+                              onChange={(e) =>
+                                setSaveAddress((p) => ({ ...p, enabled: e.target.checked }))
+                              }
+                            />
+                            <span className="text-sm">
+                              {t(
+                                "checkout.addressBook.saveThisAddress",
+                                "Guardar aquesta direcció per a futures compres"
+                              )}
+                            </span>
+                          </label>
+
+                          {saveAddress.enabled && (
+                            <>
+                              <InputField
+                                label={t("checkout.addressBook.label", "Nom de la direcció")}
+                                required
+                                value={saveAddress.label}
+                                onChange={(e) =>
+                                  setSaveAddress((p) => ({ ...p, label: e.target.value }))
+                                }
+                                error={validationErrors["save_address.label"]}
+                                placeholder={t("checkout.addressBook.labelPlaceholder", "Casa")}
+                              />
+
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={saveAddress.is_default}
+                                  onChange={(e) =>
+                                    setSaveAddress((p) => ({
+                                      ...p,
+                                      is_default: e.target.checked,
+                                    }))
+                                  }
+                                />
+                                <span className="text-sm">
+                                  {t(
+                                    "checkout.addressBook.setDefault",
+                                    "Marcar com a direcció predeterminada"
+                                  )}
+                                </span>
+                              </label>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </SectionCard>
+
+            <SectionCard
+              icon={Truck}
+              title={t("checkout.shipping.title", "Adreça d'enviament")}
+              subtitle={t(
+                "checkout.shipping.subtitle",
+                "Tria on vols rebre la teva comanda."
+              )}
+            >
+              <div className="space-y-5">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -458,73 +911,155 @@ export default function CheckoutPage() {
                   </span>
                 </label>
 
-                {!shippingSameAsBilling && (
-                  <div className="space-y-4 pt-2">
-                    <InputField
-                      label={t("checkout.shipping.address1", "Adreça")}
-                      required
-                      value={shipping.line_one}
-                      onChange={(e) =>
-                        setShipping((p) => ({ ...p, line_one: e.target.value }))
-                      }
-                      error={validationErrors["shipping.line_one"]}
-                      placeholder={t("checkout.placeholders.address1", "Carrer Major, 1")}
-                    />
+                {shippingSameAsBilling ? (
+                  <AddressSummaryBox
+                    title={t("checkout.shipping.sameAddressSummary", "S'utilitzarà la mateixa adreça")}
+                    address={billing}
+                  />
+                ) : (
+                  <>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {savedAddresses.map((address) => (
+                        <AddressSelectableCard
+                          key={address.id}
+                          address={address}
+                          selected={
+                            !useNewShippingAddress &&
+                            String(address.id) === String(selectedShippingAddressId)
+                          }
+                          onClick={() => handleSelectSavedShippingAddress(address)}
+                          t={t}
+                        />
+                      ))}
 
-                    <InputField
-                      label={t("checkout.shipping.address2", "Adreça (línia 2)")}
-                      value={shipping.line_two}
-                      onChange={(e) =>
-                        setShipping((p) => ({ ...p, line_two: e.target.value }))
-                      }
-                      placeholder={t("checkout.placeholders.address2", "Pis 2n, Porta A")}
-                    />
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <InputField
-                        label={t("checkout.shipping.city", "Ciutat")}
-                        required
-                        value={shipping.city}
-                        onChange={(e) =>
-                          setShipping((p) => ({ ...p, city: e.target.value }))
-                        }
-                        error={validationErrors["shipping.city"]}
-                        placeholder={t("checkout.placeholders.city", "Barcelona")}
-                      />
-                      <InputField
-                        label={t("checkout.shipping.postcode", "Codi postal")}
-                        required
-                        value={shipping.postcode}
-                        onChange={(e) =>
-                          setShipping((p) => ({ ...p, postcode: e.target.value }))
-                        }
-                        error={validationErrors["shipping.postcode"]}
-                        placeholder={t("checkout.placeholders.postcode", "08001")}
+                      <NewAddressCard
+                        selected={useNewShippingAddress}
+                        onClick={handleSelectNewShippingAddress}
+                        t={t}
                       />
                     </div>
 
-                    <InputField
-                      label={t("checkout.shipping.state", "Província")}
-                      value={shipping.state}
-                      onChange={(e) =>
-                        setShipping((p) => ({ ...p, state: e.target.value }))
-                      }
-                      placeholder={t("checkout.placeholders.state", "Barcelona")}
-                    />
-                  </div>
+                    {savedAddresses.length > 0 ? (
+                      <p className="text-xs text-muted-foreground">
+                        {t(
+                          "checkout.shipping.helpCards",
+                          "Selecciona una direcció guardada per a l'enviament o tria nova direcció per introduir-ne una de manual."
+                        )}
+                      </p>
+                    ) : null}
+
+                    {!useNewShippingAddress && selectedSavedShippingAddress ? (
+                      <div className="border rounded-2xl p-4 bg-muted/20">
+                        <div className="flex items-center gap-2 mb-2">
+                          <p className="font-medium">
+                            {t("checkout.shipping.selectedAddress", "Adreça d'enviament seleccionada")}
+                          </p>
+                          {selectedSavedShippingAddress.is_default && (
+                            <span className="text-xs rounded-full border px-2 py-0.5 text-muted-foreground">
+                              {t("checkout.addressBook.defaultBadge", "Predeterminada")}
+                            </span>
+                          )}
+                        </div>
+
+                        {selectedSavedShippingAddress.label ? (
+                          <p className="text-sm font-medium mb-2">
+                            {selectedSavedShippingAddress.label}
+                          </p>
+                        ) : null}
+
+                        <div className="text-sm text-muted-foreground space-y-1">
+                          <p>
+                            {selectedSavedShippingAddress.first_name}{" "}
+                            {selectedSavedShippingAddress.last_name}
+                          </p>
+                          <p>{selectedSavedShippingAddress.line_one}</p>
+                          {selectedSavedShippingAddress.line_two ? (
+                            <p>{selectedSavedShippingAddress.line_two}</p>
+                          ) : null}
+                          <p>
+                            {selectedSavedShippingAddress.postcode} ·{" "}
+                            {selectedSavedShippingAddress.city}
+                          </p>
+                          {selectedSavedShippingAddress.state ? (
+                            <p>{selectedSavedShippingAddress.state}</p>
+                          ) : null}
+                          {selectedSavedShippingAddress.contact_phone ? (
+                            <p>{selectedSavedShippingAddress.contact_phone}</p>
+                          ) : null}
+                          {selectedSavedShippingAddress.contact_email ? (
+                            <p>{selectedSavedShippingAddress.contact_email}</p>
+                          ) : null}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="border rounded-2xl p-4 space-y-4">
+                        <InputField
+                          label={t("checkout.shipping.address1", "Adreça")}
+                          required
+                          value={shipping.line_one}
+                          onChange={(e) =>
+                            setShipping((p) => ({ ...p, line_one: e.target.value }))
+                          }
+                          error={validationErrors["shipping.line_one"]}
+                          placeholder={t("checkout.placeholders.address1", "Carrer Major, 1")}
+                        />
+
+                        <InputField
+                          label={t("checkout.shipping.address2", "Adreça (línia 2)")}
+                          value={shipping.line_two}
+                          onChange={(e) =>
+                            setShipping((p) => ({ ...p, line_two: e.target.value }))
+                          }
+                          placeholder={t("checkout.placeholders.address2", "Pis 2n, Porta A")}
+                        />
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <InputField
+                            label={t("checkout.shipping.city", "Ciutat")}
+                            required
+                            value={shipping.city}
+                            onChange={(e) =>
+                              setShipping((p) => ({ ...p, city: e.target.value }))
+                            }
+                            error={validationErrors["shipping.city"]}
+                            placeholder={t("checkout.placeholders.city", "Barcelona")}
+                          />
+                          <InputField
+                            label={t("checkout.shipping.postcode", "Codi postal")}
+                            required
+                            value={shipping.postcode}
+                            onChange={(e) =>
+                              setShipping((p) => ({ ...p, postcode: e.target.value }))
+                            }
+                            error={validationErrors["shipping.postcode"]}
+                            placeholder={t("checkout.placeholders.postcode", "08001")}
+                          />
+                        </div>
+
+                        <InputField
+                          label={t("checkout.shipping.state", "Província")}
+                          value={shipping.state}
+                          onChange={(e) =>
+                            setShipping((p) => ({ ...p, state: e.target.value }))
+                          }
+                          placeholder={t("checkout.placeholders.state", "Barcelona")}
+                        />
+                      </div>
+                    )}
+                  </>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </SectionCard>
 
-            {/* PAGAMENT */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  {t("checkout.payment.title", "Dades de pagament")}
-                </CardTitle>
-              </CardHeader>
-
-              <CardContent className="space-y-4">
+            <SectionCard
+              icon={CreditCard}
+              title={t("checkout.payment.title", "Dades de pagament")}
+              subtitle={t(
+                "checkout.payment.subtitle",
+                "Completa el pagament de manera segura amb Stripe."
+              )}
+            >
+              <div className="space-y-4">
                 {error && <p className="text-destructive text-sm">{error}</p>}
 
                 {!clientSecret ? (
@@ -541,21 +1076,19 @@ export default function CheckoutPage() {
                   </Button>
                 ) : (
                   <>
-                    <div className="rounded-md border p-3 text-sm text-muted-foreground">
+                    <div className="rounded-xl border p-4 text-sm text-muted-foreground">
                       {t(
                         "checkout.payment.intentCreated",
                         "✅ Intent creat. Ja pots completar el pagament."
                       )}
                     </div>
 
-                    {/* ✅ IMPORTANT: locale + key per re-mount quan canvies idioma */}
                     <Elements
                       key={`${clientSecret}-${stripeLocale}`}
                       stripe={stripePromise}
                       options={{
                         clientSecret,
                         locale: stripeLocale,
-                        // appearance opcional, però ajuda a consistència visual
                         appearance: { theme: "stripe" },
                       }}
                     >
@@ -576,6 +1109,8 @@ export default function CheckoutPage() {
                               ...buildPayload(),
                               payment_intent_id: paymentIntentId,
                             })
+
+                            await handleSaveCurrentAddress()
 
                             navigate("/checkout/success", {
                               state: {
@@ -603,27 +1138,26 @@ export default function CheckoutPage() {
                     </Elements>
                   </>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </SectionCard>
           </div>
 
-          {/* Resum */}
           <div className="lg:sticky lg:top-6 h-fit">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  {t("checkout.summary.title", "Resum de la comanda")}
-                </CardTitle>
-              </CardHeader>
+            <Card className="rounded-3xl border shadow-sm">
+              <CardContent className="p-6">
+                <div className="mb-5">
+                  <h3 className="text-lg font-semibold">
+                    {t("checkout.summary.title", "Resum de la comanda")}
+                  </h3>
+                </div>
 
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {items.map((line) => {
                     const p = line.product || {}
                     const price = Number(p.price || 0)
                     const qty = Number(line.qty || 0)
                     return (
-                      <div key={line.key} className="flex justify-between text-sm">
+                      <div key={line.key} className="flex justify-between gap-4 text-sm">
                         <span className="text-muted-foreground">
                           {p.name || t("checkout.summary.productFallback", "Producte")} x{qty}
                         </span>
@@ -633,7 +1167,7 @@ export default function CheckoutPage() {
                   })}
                 </div>
 
-                <div className="border-t pt-3 space-y-2 text-sm">
+                <div className="border-t pt-4 mt-4 space-y-3 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">
                       {t("checkout.summary.subtotal", "Subtotal (IVA inclòs)")}
@@ -655,11 +1189,11 @@ export default function CheckoutPage() {
                 </div>
 
                 {serverTotals ? (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground mt-4">
                     {t("checkout.summary.confirmed", "* Totals confirmats pel servidor.")}
                   </p>
                 ) : (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground mt-4">
                     {t(
                       "checkout.summary.estimated",
                       "* Estimació. El total definitiu es confirmarà al pagar."

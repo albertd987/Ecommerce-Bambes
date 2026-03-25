@@ -75,6 +75,10 @@ export function AuthProvider({ children }) {
     }
   }
 
+  const updateUser = (nextUserData) => {
+    setUser(nextUserData)
+  }
+
   const value = useMemo(
     () => ({
       user,
@@ -82,6 +86,7 @@ export function AuthProvider({ children }) {
       login,
       register,
       logout,
+      updateUser,
       isLoggedIn: !!user,
     }),
     [user, loading]
