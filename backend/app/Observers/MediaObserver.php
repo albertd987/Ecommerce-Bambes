@@ -2,9 +2,10 @@
 
 namespace App\Observers;
 
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use App\Models\ProductColor;
 use App\Jobs\SyncMediaToCloudinary;
 use Illuminate\Support\Facades\Log;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
  * Observer del model Media de Spatie Media Library.
@@ -33,7 +34,10 @@ class MediaObserver
     {
         Log::info("MediaObserver: model_type = {$media->model_type}, collection = {$media->collection_name}");
 
-        if (strtolower($media->model_type) !== 'product' || $media->collection_name !== 'images') {
+        $isProduct      = strtolower($media->model_type) === 'product';
+        $isProductColor = $media->model_type === ProductColor::class;
+
+        if (! ($isProduct || $isProductColor) || $media->collection_name !== 'images') {
             return;
         }
 

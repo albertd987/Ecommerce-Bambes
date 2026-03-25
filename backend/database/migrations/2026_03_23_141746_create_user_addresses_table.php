@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('user_addresses', function (Blueprint $table) {
             $table->id();
 
-            $table->integer('user_id');
+            $table->unsignedBigInteger('user_id');
 
             $table->string('label');
             $table->string('first_name');

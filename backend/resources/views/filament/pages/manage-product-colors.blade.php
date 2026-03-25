@@ -1,4 +1,3 @@
-{{-- backend/resources/views/filament/pages/manage-product-colors.blade.php --}}
 <x-filament-panels::page>
     @if ($this->colors->isEmpty())
         <div class="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 p-12 text-center">
@@ -22,7 +21,7 @@
                                 size="sm"
                                 color="gray"
                                 icon="heroicon-m-pencil"
-                                wire:click="mountAction('editColorModal', {colorId: {{ $color->id }}})"
+                                wire:click="openEditColor({{ $color->id }})"
                             >
                                 Editar
                             </x-filament::button>
@@ -73,6 +72,7 @@
                                             class="h-24 w-24 rounded-lg object-cover border border-gray-200 dark:border-gray-700"
                                         />
                                         <button
+                                            type="button"
                                             wire:click="deleteImage({{ $image->id }})"
                                             wire:confirm="Eliminar aquesta imatge?"
                                             class="absolute -top-2 -right-2 hidden group-hover:flex items-center justify-center
@@ -86,7 +86,7 @@
                                 {{-- Add images button --}}
                                 <button
                                     type="button"
-                                    wire:click="mountAction('addImagesModal', {colorId: {{ $color->id }}})"
+                                    wire:click="openAddImages({{ $color->id }})"
                                     class="h-24 w-24 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600
                                            flex flex-col items-center justify-center gap-1
                                            text-gray-400 hover:border-primary-400 hover:text-primary-500
@@ -102,4 +102,44 @@
             @endforeach
         </div>
     @endif
+
+    {{-- Edit color modal --}}
+    <x-filament::modal id="edit-color" heading="Editar color" width="md">
+        <form wire:submit="saveEditColor">
+            {{ $this->editColorForm }}
+
+            <div class="mt-4 flex justify-end gap-3">
+                <x-filament::button
+                    type="button"
+                    color="gray"
+                    x-on:click="$dispatch('close-modal', { id: 'edit-color' })"
+                >
+                    Cancel·lar
+                </x-filament::button>
+                <x-filament::button type="submit">
+                    Desar canvis
+                </x-filament::button>
+            </div>
+        </form>
+    </x-filament::modal>
+
+    {{-- Add images modal --}}
+    <x-filament::modal id="add-images" heading="Afegir imatges" width="md">
+        <form wire:submit="saveAddImages">
+            {{ $this->addImagesForm }}
+
+            <div class="mt-4 flex justify-end gap-3">
+                <x-filament::button
+                    type="button"
+                    color="gray"
+                    x-on:click="$dispatch('close-modal', { id: 'add-images' })"
+                >
+                    Cancel·lar
+                </x-filament::button>
+                <x-filament::button type="submit">
+                    Afegir imatges
+                </x-filament::button>
+            </div>
+        </form>
+    </x-filament::modal>
 </x-filament-panels::page>

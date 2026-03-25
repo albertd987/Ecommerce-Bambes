@@ -53,21 +53,29 @@ class ProductColorManager
                                      ->where('name', $colorName)
                                      ->firstOrFail();
 
-        // Find variant IDs linked to this color's option value
+        // Find ALL color option values that match this name (there can be duplicates
+        // with different casings created by different code paths).
         $colorOption = $this->getOrCreateOption('color', 'Color');
-        $colorValue  = ProductOptionValue::where('product_option_id', $colorOption->id)
-                           ->get()
-                           ->first(fn($v) => $this->getValueText($v->name) === $colorName);
+        $matchingValueIds = ProductOptionValue::where('product_option_id', $colorOption->id)
+                                ->get()
+                                ->filter(fn($v) => $this->getValueText($v->name) === $colorName)
+                                ->pluck('id');
 
-        if ($colorValue) {
+        if ($matchingValueIds->isNotEmpty()) {
             $junctionTable = $this->getVariantValuesTable();
             $variantIds    = DB::table($junctionTable)
-                               ->where('value_id', $colorValue->id)
-                               ->pluck('variant_id');
+                               ->whereIn('value_id', $matchingValueIds)
+                               ->pluck('variant_id')
+                               ->unique();
 
-            ProductVariant::whereIn('id', $variantIds)
-                          ->where('product_id', $product->id)
-                          ->delete();
+            if ($variantIds->isNotEmpty()) {
+                // Clean up junction table rows first to avoid orphaned records
+                DB::table($junctionTable)->whereIn('variant_id', $variantIds)->delete();
+
+                $product->variants()
+                        ->whereIn('id', $variantIds)
+                        ->delete();
+            }
         }
 
         $productColor->delete();

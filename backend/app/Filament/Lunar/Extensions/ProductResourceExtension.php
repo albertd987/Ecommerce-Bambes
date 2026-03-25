@@ -120,7 +120,7 @@ class ProductResourceExtension extends BaseExtension
                     'has_variants'   => false,
                 ]);
             })
-            ->successRedirectUrl(fn(Model $record): string => ProductResource::getUrl('edit', [
+            ->successRedirectUrl(fn(Model $record): string => ProductResource::getUrl('colors', [
                 'record' => $record,
             ]));
 

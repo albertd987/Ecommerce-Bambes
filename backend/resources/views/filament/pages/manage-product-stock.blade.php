@@ -74,6 +74,52 @@
     {{-- Movement History --}}
     <div class="space-y-4">
         <h3 class="text-lg font-medium">Historial de Moviments</h3>
-        {{ $this->table }}
+
+        <div class="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
+            <table class="w-full text-start">
+                <thead>
+                    <tr class="border-b border-gray-200 dark:border-gray-700">
+                        <th class="px-4 py-3 text-start text-sm font-medium text-gray-600 dark:text-gray-400">Data</th>
+                        <th class="px-4 py-3 text-start text-sm font-medium text-gray-600 dark:text-gray-400">Variant (SKU)</th>
+                        <th class="px-4 py-3 text-start text-sm font-medium text-gray-600 dark:text-gray-400">Quantitat</th>
+                        <th class="px-4 py-3 text-start text-sm font-medium text-gray-600 dark:text-gray-400">Tipus</th>
+                        <th class="px-4 py-3 text-start text-sm font-medium text-gray-600 dark:text-gray-400">Referència</th>
+                        <th class="px-4 py-3 text-start text-sm font-medium text-gray-600 dark:text-gray-400">Usuari</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($this->movements as $movement)
+                        <tr class="border-b border-gray-100 dark:border-gray-800 last:border-0">
+                            <td class="px-4 py-3 text-sm text-gray-500">{{ $movement->created_at }}</td>
+                            <td class="px-4 py-3 text-sm font-mono">{{ $movement->variant_sku }}</td>
+                            <td class="px-4 py-3 text-sm font-semibold">
+                                <span @class([
+                                    'text-green-600 dark:text-green-400' => $movement->quantity_color === 'success',
+                                    'text-red-600 dark:text-red-400' => $movement->quantity_color === 'danger',
+                                    'text-gray-600 dark:text-gray-400' => $movement->quantity_color === 'gray',
+                                ])>
+                                    {{ $movement->quantity_label }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3">
+                                <x-filament::badge :color="$movement->type_color">
+                                    {{ $movement->type_label }}
+                                </x-filament::badge>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-500">{{ $movement->reference }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-500">{{ $movement->user_name }}</td>
+                        </tr>
+                    @endforeach
+
+                    @if ($this->movements->isEmpty())
+                        <tr>
+                            <td colspan="6" class="px-4 py-8 text-center text-sm text-gray-500">
+                                No hi ha moviments de stock registrats.
+                            </td>
+                        </tr>
+                    @endif
+                </tbody>
+            </table>
+        </div>
     </div>
 </x-filament-panels::page>

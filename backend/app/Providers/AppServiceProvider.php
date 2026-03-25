@@ -54,9 +54,12 @@ class AppServiceProvider extends ServiceProvider
             fn () => Blade::render('@livewire(\'chatbot-widget\')')
         );
 
-        // ✅ Personalitza el link de verificació perquè apunti al FRONTEND
+        // Personalitza el link de verificació perquè apunti al FRONTEND
         VerifyEmail::createUrlUsing(function ($notifiable) {
             $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
+
+            // Força APP_URL com a base per evitar que el proxy sobreescrigui el host
+            URL::forceRootUrl(config('app.url'));
 
             $verifyUrl = URL::temporarySignedRoute(
                 'verification.verify',
@@ -66,6 +69,8 @@ class AppServiceProvider extends ServiceProvider
                     'hash' => sha1($notifiable->getEmailForVerification()),
                 ]
             );
+
+            URL::forceRootUrl(null);
 
             return $frontendUrl . '/verify-email?verify_url=' . urlencode($verifyUrl);
         });

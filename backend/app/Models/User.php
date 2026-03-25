@@ -84,21 +84,7 @@ class User extends Authenticatable implements MustVerifyEmail, \Lunar\Base\Lunar
 
     public function sendEmailVerificationNotification()
 {
-    $frontendUrl = config('app.frontend_url', 'http://localhost:5173');
-
-    $verifyUrl = URL::temporarySignedRoute(
-        'verification.verify',
-        now()->addMinutes(60),
-        [
-            'id' => $this->getKey(),
-            'hash' => sha1($this->getEmailForVerification()),
-        ]
-    );
-
-    // En lloc d'enviar el link del backend directament, l'enviem al frontend
-    $spaUrl = $frontendUrl . '/verify-email?verify_url=' . urlencode($verifyUrl);
-
-    $this->notify(new VerifyEmail($spaUrl));
+    $this->notify(new VerifyEmail());
 }
 
 public function favorites()

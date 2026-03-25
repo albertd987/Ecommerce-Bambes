@@ -9,6 +9,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
+use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
 use Filament\Resources\Pages\Page;
@@ -22,6 +23,14 @@ class ManageProductColors extends Page implements HasForms
 
     protected static string $resource = ProductResource::class;
     protected static string $view     = 'filament.pages.manage-product-colors';
+
+    /** ID of the color being edited in the edit modal */
+    public ?int $editingColorId = null;
+    public array $editColorData = [];
+
+    /** ID of the color receiving new images in the add-images modal */
+    public ?int $uploadingColorId = null;
+    public array $uploadData = [];
 
     public function mount(int|string $record): void
     {
@@ -72,20 +81,32 @@ class ManageProductColors extends Page implements HasForms
     }
 
     // -------------------------------------------------------------------------
-    // Header Actions — ALL actions (visible and hidden modal triggers) go here.
-    // In Filament v3, getActions() is deprecated; use getHeaderActions() only.
-    // Hidden actions are not rendered as buttons but can be triggered via
-    // $this->mountAction('name', arguments: [...]) from Livewire methods.
+    // Header actions — only the "add new color" button
     // -------------------------------------------------------------------------
 
     protected function getHeaderActions(): array
     {
         return [
-            // ── Visible button ───────────────────────────────────────────────
             Action::make('addColor')
                 ->label('Afegir color nou')
                 ->icon('heroicon-o-plus')
-                ->form($this->colorForm())
+                ->form([
+                    TextInput::make('name')
+                        ->label('Nom del color')
+                        ->placeholder('Ex: BLANC, NEGRE, BLAU')
+                        ->required()
+                        ->maxLength(100)
+                        ->helperText('Escriu en majúscules. Ex: BLANC, NEGRE, BLAU FOSC'),
+
+                    CheckboxList::make('sizes')
+                        ->label('Tallas disponibles')
+                        ->options(
+                            collect(config('bambes.sizes', []))->mapWithKeys(fn($s) => [$s => $s])->toArray()
+                        )
+                        ->columns(6)
+                        ->required()
+                        ->minItems(1),
+                ])
                 ->action(function (array $data): void {
                     app(ProductColorManager::class)->syncColor(
                         $this->getRecord(),
@@ -94,62 +115,122 @@ class ManageProductColors extends Page implements HasForms
                     );
                     Notification::make()->title('Color afegit correctament')->success()->send();
                 }),
-
-            // ── Hidden modal: edit color (triggered from Blade via editColor()) ──
-            Action::make('editColorModal')
-                ->hidden()
-                ->modalHeading('Editar color')
-                ->form($this->colorForm())
-                ->fillForm(function (array $arguments): array {
-                    $color = ProductColor::where('product_id', $this->getRecord()->id)
-                                         ->findOrFail($arguments['colorId'] ?? 0);
-                    return ['name' => $color->name, 'sizes' => $color->sizes ?? []];
-                })
-                ->action(function (array $data): void {
-                    app(ProductColorManager::class)->syncColor(
-                        $this->getRecord(),
-                        $data['name'],
-                        $data['sizes'] ?? []
-                    );
-                    Notification::make()->title('Color actualitzat')->success()->send();
-                }),
-
-            // ── Hidden modal: add images (triggered from Blade via addImages()) ──
-            Action::make('addImagesModal')
-                ->hidden()
-                ->modalHeading('Afegir imatges')
-                ->form([
-                    FileUpload::make('images')
-                        ->label('Selecciona les imatges')
-                        ->multiple()
-                        ->image()
-                        ->reorderable()
-                        ->maxFiles(10)
-                        ->maxSize(5120)
-                        ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
-                        ->helperText('Màx. 10 imatges, 5 MB cadascuna.'),
-                ])
-                ->action(function (array $data, array $arguments): void {
-                    $color = ProductColor::where('product_id', $this->getRecord()->id)
-                                         ->findOrFail($arguments['colorId']);
-                    foreach ($data['images'] ?? [] as $file) {
-                        if ($file) {
-                            $color->addMedia($file)->toMediaCollection('images');
-                        }
-                    }
-                    Notification::make()->title('Imatges afegides')->success()->send();
-                }),
         ];
     }
 
     // -------------------------------------------------------------------------
-    // Per-color Livewire methods (called from Blade with wire:click)
+    // Named forms rendered directly in the blade modals
+    // -------------------------------------------------------------------------
+
+    protected function getForms(): array
+    {
+        return ['editColorForm', 'addImagesForm'];
+    }
+
+    public function editColorForm(Form $editColorForm): Form
+    {
+        return $editColorForm
+            ->schema([
+                TextInput::make('name')
+                    ->label('Nom del color')
+                    ->disabled()
+                    ->dehydrated(false),
+
+                CheckboxList::make('sizes')
+                    ->label('Tallas disponibles')
+                    ->options(
+                        collect(config('bambes.sizes', []))->mapWithKeys(fn($s) => [$s => $s])->toArray()
+                    )
+                    ->columns(6)
+                    ->required()
+                    ->minItems(1),
+            ])
+            ->statePath('editColorData');
+    }
+
+    public function addImagesForm(Form $addImagesForm): Form
+    {
+        return $addImagesForm
+            ->schema([
+                FileUpload::make('images')
+                    ->label('Selecciona les imatges')
+                    ->multiple()
+                    ->image()
+                    ->reorderable()
+                    ->maxFiles(10)
+                    ->maxSize(20480)
+                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                    ->helperText('Màx. 10 imatges, 5 MB cadascuna.'),
+            ])
+            ->statePath('uploadData');
+    }
+
+    // -------------------------------------------------------------------------
+    // Modal open / save methods (called via wire:click from blade)
+    // -------------------------------------------------------------------------
+
+    public function openEditColor(int $colorId): void
+    {
+        $color = ProductColor::where('product_id', $this->getRecord()->id)
+                              ->findOrFail($colorId);
+
+        $this->editingColorId = $color->id;
+        $this->editColorForm->fill([
+            'name'  => $color->name,
+            'sizes' => $color->sizes ?? [],
+        ]);
+        $this->dispatch('open-modal', id: 'edit-color');
+    }
+
+    public function saveEditColor(): void
+    {
+        $data  = $this->editColorForm->getState();
+        $color = ProductColor::where('product_id', $this->getRecord()->id)
+                              ->findOrFail($this->editingColorId);
+
+        app(ProductColorManager::class)->syncColor(
+            $this->getRecord(),
+            $color->name,
+            $data['sizes'] ?? []
+        );
+
+        Notification::make()->title('Color actualitzat')->success()->send();
+        $this->dispatch('close-modal', id: 'edit-color');
+    }
+
+    public function openAddImages(int $colorId): void
+    {
+        ProductColor::where('product_id', $this->getRecord()->id)
+                    ->findOrFail($colorId);
+
+        $this->uploadingColorId = $colorId;
+        $this->addImagesForm->fill(['images' => []]);
+        $this->dispatch('open-modal', id: 'add-images');
+    }
+
+    public function saveAddImages(): void
+    {
+        $data  = $this->addImagesForm->getState();
+        $color = ProductColor::where('product_id', $this->getRecord()->id)
+                              ->findOrFail($this->uploadingColorId);
+
+        foreach ($data['images'] ?? [] as $file) {
+            if ($file) {
+                $color->addMediaFromDisk($file, 'public')->toMediaCollection('images');
+            }
+        }
+
+        Notification::make()->title('Imatges afegides')->success()->send();
+        $this->dispatch('close-modal', id: 'add-images');
+    }
+
+    // -------------------------------------------------------------------------
+    // Per-image / per-color delete (called via wire:click from blade)
     // -------------------------------------------------------------------------
 
     public function deleteImage(int $mediaId): void
     {
         $media = \Spatie\MediaLibrary\MediaCollections\Models\Media::findOrFail($mediaId);
-        // Security: ensure this media belongs to a ProductColor of this product
         $color = ProductColor::where('product_id', $this->getRecord()->id)->find($media->model_id);
         if ($color && $media->model_type === ProductColor::class) {
             $media->delete();
@@ -164,30 +245,5 @@ class ManageProductColors extends Page implements HasForms
         $color = ProductColor::where('product_id', $this->getRecord()->id)->findOrFail($colorId);
         app(ProductColorManager::class)->removeColor($this->getRecord(), $color->name);
         Notification::make()->title('Color eliminat')->success()->send();
-    }
-
-    // -------------------------------------------------------------------------
-    // Shared form schema
-    // -------------------------------------------------------------------------
-
-    private function colorForm(): array
-    {
-        return [
-            TextInput::make('name')
-                ->label('Nom del color')
-                ->placeholder('Ex: BLANC, NEGRE, BLAU')
-                ->required()
-                ->maxLength(100)
-                ->helperText('Escriu en majúscules. Ex: BLANC, NEGRE, BLAU FOSC'),
-
-            CheckboxList::make('sizes')
-                ->label('Tallas disponibles')
-                ->options(
-                    collect(config('bambes.sizes', []))->mapWithKeys(fn($s) => [$s => $s])->toArray()
-                )
-                ->columns(6)
-                ->required()
-                ->minItems(1),
-        ];
     }
 }

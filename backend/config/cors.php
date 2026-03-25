@@ -5,7 +5,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:5173','http://localhost:3000',], //port 3000 x si canviem el port en algun moment
+    'allowed_origins' => ['http://localhost:5173', 'http://localhost:3000', 'http://51.195.202.7:3000'],
 
     'allowed_origins_patterns' => [],
 

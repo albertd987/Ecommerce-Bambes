@@ -7,27 +7,33 @@ use App\Services\StockService;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Concerns\InteractsWithTable;
-use Filament\Tables\Contracts\HasTable;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Table;
+use Filament\Resources\Pages\Concerns\InteractsWithRecord;
+use Filament\Resources\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
 use Lunar\Admin\Filament\Resources\ProductResource;
-use Lunar\Admin\Support\Pages\BaseEditRecord;
 use Lunar\Models\ProductVariant;
 
-class ManageProductStock extends BaseEditRecord implements HasTable
+class ManageProductStock extends Page implements HasForms
 {
-    use InteractsWithTable;
+    use InteractsWithForms;
+    use InteractsWithRecord;
 
     protected static string $resource = ProductResource::class;
 
     protected static string $view = 'filament.pages.manage-product-stock';
 
     public array $adjustData = [];
+
+    public ?int $selectedVariantId = null;
+
+    public function mount(int|string $record): void
+    {
+        $this->record = $this->resolveRecord($record);
+    }
 
     public function getTitle(): string|Htmlable
     {
@@ -50,25 +56,7 @@ class ManageProductStock extends BaseEditRecord implements HasTable
     }
 
     /**
-     * No form for the main page — we use the custom adjustment modal instead.
-     */
-    public function getDefaultForm(Form $form): Form
-    {
-        return $form->schema([]);
-    }
-
-    protected function getFormActions(): array
-    {
-        return [];
-    }
-
-    public function getRelationManagers(): array
-    {
-        return [];
-    }
-
-    /**
-     * Get variants with their current stock and status for the top section.
+     * Get variants with their current stock and status.
      */
     public function getVariantsProperty(): \Illuminate\Support\Collection
     {
@@ -94,16 +82,62 @@ class ManageProductStock extends BaseEditRecord implements HasTable
     }
 
     /**
+     * Get movement history for all variants of this product.
+     */
+    public function getMovementsProperty(): \Illuminate\Support\Collection
+    {
+        $variantIds = $this->getRecord()->variants()->pluck('id');
+
+        return StockMovement::query()
+            ->whereIn('product_variant_id', $variantIds)
+            ->with(['variant', 'user'])
+            ->orderByDesc('created_at')
+            ->limit(50)
+            ->get()
+            ->map(function (StockMovement $movement) {
+                return (object) [
+                    'created_at' => $movement->created_at->format('d/m/Y H:i'),
+                    'variant_sku' => $movement->variant->sku ?? '-',
+                    'quantity' => $movement->quantity,
+                    'quantity_label' => $movement->quantity > 0 ? "+{$movement->quantity}" : (string) $movement->quantity,
+                    'quantity_color' => $movement->quantity > 0 ? 'success' : ($movement->quantity < 0 ? 'danger' : 'gray'),
+                    'type' => $movement->type,
+                    'type_label' => match ($movement->type) {
+                        'sale' => 'Venda',
+                        'cancellation' => 'Cancel·lació',
+                        'return' => 'Devolució',
+                        'adjustment' => 'Ajust',
+                        'reception' => 'Recepció',
+                        'initial' => 'Inicial',
+                        default => $movement->type,
+                    },
+                    'type_color' => match ($movement->type) {
+                        'sale' => 'danger',
+                        'cancellation' => 'warning',
+                        'return' => 'info',
+                        'adjustment' => 'gray',
+                        'reception' => 'success',
+                        'initial' => 'primary',
+                        default => 'gray',
+                    },
+                    'reference' => $movement->reference ?? '-',
+                    'user_name' => $movement->user->name ?? 'Sistema',
+                ];
+            });
+    }
+
+    /**
      * Open the stock adjustment modal.
      */
     public function adjustStock(int $variantId): void
     {
         $variant = $this->getRecord()->variants()->findOrFail($variantId);
 
+        $this->selectedVariantId = $variant->id;
+
         $this->dispatch('open-modal', id: 'adjust-stock');
 
         $this->adjustForm->fill([
-            'variant_id' => $variant->id,
             'variant_sku' => $variant->sku,
             'current_stock' => $variant->stock,
             'quantity' => null,
@@ -112,23 +146,17 @@ class ManageProductStock extends BaseEditRecord implements HasTable
         ]);
     }
 
-    /**
-     * Define available forms.
-     */
     protected function getForms(): array
     {
         return [
             'adjustForm',
-            'table',
         ];
     }
 
-    public function adjustForm(\Filament\Forms\Form $adjustForm): \Filament\Forms\Form
+    public function adjustForm(Form $adjustForm): Form
     {
         return $adjustForm
             ->schema([
-                TextInput::make('variant_id')
-                    ->hidden(),
                 TextInput::make('variant_sku')
                     ->label('Variant (SKU)')
                     ->disabled()
@@ -168,7 +196,7 @@ class ManageProductStock extends BaseEditRecord implements HasTable
     {
         $data = $this->adjustForm->getState();
 
-        $variant = $this->getRecord()->variants()->findOrFail($data['variant_id']);
+        $variant = $this->getRecord()->variants()->findOrFail($this->selectedVariantId);
 
         $service = app(StockService::class);
 
@@ -192,77 +220,5 @@ class ManageProductStock extends BaseEditRecord implements HasTable
                 ->danger()
                 ->send();
         }
-    }
-
-    /**
-     * Movement history table.
-     */
-    public function table(Table $table): Table
-    {
-        $variantIds = $this->getRecord()->variants()->pluck('id');
-
-        return $table
-            ->query(
-                StockMovement::query()
-                    ->whereIn('product_variant_id', $variantIds)
-                    ->with(['variant', 'user'])
-            )
-            ->defaultSort('created_at', 'desc')
-            ->columns([
-                TextColumn::make('created_at')
-                    ->label('Data')
-                    ->dateTime('d/m/Y H:i')
-                    ->sortable(),
-                TextColumn::make('variant.sku')
-                    ->label('Variant (SKU)')
-                    ->searchable(),
-                TextColumn::make('quantity')
-                    ->label('Quantitat')
-                    ->formatStateUsing(fn (int $state): string => $state > 0 ? "+{$state}" : (string) $state)
-                    ->color(fn (int $state): string => $state > 0 ? 'success' : ($state < 0 ? 'danger' : 'gray')),
-                TextColumn::make('type')
-                    ->label('Tipus')
-                    ->badge()
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'sale' => 'Venda',
-                        'cancellation' => 'Cancel·lació',
-                        'return' => 'Devolució',
-                        'adjustment' => 'Ajust',
-                        'reception' => 'Recepció',
-                        'initial' => 'Inicial',
-                        default => $state,
-                    })
-                    ->color(fn (string $state): string => match ($state) {
-                        'sale' => 'danger',
-                        'cancellation' => 'warning',
-                        'return' => 'info',
-                        'adjustment' => 'gray',
-                        'reception' => 'success',
-                        'initial' => 'primary',
-                        default => 'gray',
-                    }),
-                TextColumn::make('reference')
-                    ->label('Referència')
-                    ->placeholder('-'),
-                TextColumn::make('user.name')
-                    ->label('Usuari')
-                    ->placeholder('Sistema'),
-            ])
-            ->filters([
-                SelectFilter::make('product_variant_id')
-                    ->label('Variant')
-                    ->options(fn () => $this->getRecord()->variants()->pluck('sku', 'id')->toArray()),
-                SelectFilter::make('type')
-                    ->label('Tipus')
-                    ->options([
-                        'sale' => 'Venda',
-                        'cancellation' => 'Cancel·lació',
-                        'return' => 'Devolució',
-                        'adjustment' => 'Ajust',
-                        'reception' => 'Recepció',
-                        'initial' => 'Inicial',
-                    ]),
-            ])
-            ->paginated([10, 25, 50]);
     }
 }
