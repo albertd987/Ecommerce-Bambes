@@ -73,16 +73,28 @@ class SyncMediaToCloudinary implements ShouldQueue
 
             Log::info("Job: File exists! Uploading to Cloudinary...");
 
-            // Comprimir la imatge si supera 8 MB
+            // Enquadrar a quadrat i/o comprimir si cal
             $uploadPath = $localPath;
-            if (filesize($localPath) > 8 * 1024 * 1024) {
-                $manager = new ImageManager(new Driver());
-                $image = $manager->read($localPath);
-                $image->scaleDown(width: 2500, height: 2500);
+            $manager = new ImageManager(new Driver());
+            $image = $manager->read($localPath);
+            $w = $image->width();
+            $h = $image->height();
+            $needsSquare = $w !== $h;
+            $needsCompress = filesize($localPath) > 8 * 1024 * 1024;
+
+            if ($needsSquare || $needsCompress) {
+                if ($needsSquare) {
+                    $side = max($w, $h);
+                    $image->contain($side, $side, 'ffffff');
+                    Log::info("Job: Imatge enquadrada de {$w}x{$h} a {$side}x{$side}");
+                }
+                if ($needsCompress || $needsSquare) {
+                    $image->scaleDown(width: 2500, height: 2500);
+                }
                 $tmpPath = sys_get_temp_dir() . '/' . $this->media->file_name;
                 $image->toJpeg(80)->save($tmpPath);
                 $uploadPath = $tmpPath;
-                Log::info("Job: Imatge comprimida de " . round(filesize($localPath) / 1024 / 1024, 2) . " MB a " . round(filesize($tmpPath) / 1024 / 1024, 2) . " MB");
+                Log::info("Job: Fitxer final: " . round(filesize($tmpPath) / 1024 / 1024, 2) . " MB");
             }
 
             // Pujar a Cloudinary

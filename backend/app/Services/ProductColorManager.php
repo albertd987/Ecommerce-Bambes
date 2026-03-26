@@ -61,21 +61,26 @@ class ProductColorManager
                                 ->filter(fn($v) => $this->getValueText($v->name) === $colorName)
                                 ->pluck('id');
 
+        $junctionTable = $this->getVariantValuesTable();
+        $variantIds = collect();
+
         if ($matchingValueIds->isNotEmpty()) {
-            $junctionTable = $this->getVariantValuesTable();
-            $variantIds    = DB::table($junctionTable)
-                               ->whereIn('value_id', $matchingValueIds)
-                               ->pluck('variant_id')
-                               ->unique();
+            $variantIds = DB::table($junctionTable)
+                           ->whereIn('value_id', $matchingValueIds)
+                           ->pluck('variant_id')
+                           ->unique();
+        }
 
-            if ($variantIds->isNotEmpty()) {
-                // Clean up junction table rows first to avoid orphaned records
-                DB::table($junctionTable)->whereIn('variant_id', $variantIds)->delete();
+        // Fallback: buscar per SKU si la junction table no troba res
+        if ($variantIds->isEmpty()) {
+            $variantIds = $product->variants()
+                ->where('sku', 'like', '%-' . $colorName)
+                ->pluck('id');
+        }
 
-                $product->variants()
-                        ->whereIn('id', $variantIds)
-                        ->delete();
-            }
+        if ($variantIds->isNotEmpty()) {
+            DB::table($junctionTable)->whereIn('variant_id', $variantIds)->delete();
+            $product->variants()->whereIn('id', $variantIds)->delete();
         }
 
         $productColor->delete();
