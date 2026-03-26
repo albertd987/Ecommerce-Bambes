@@ -8,7 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Lunar\Base\Traits\LunarUser;
 use Lunar\Models\Cart;
-use Illuminate\Auth\Notifications\VerifyEmail;
+use App\Notifications\CustomVerifyEmail;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\UserAddress;
@@ -82,11 +82,30 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Cart::class, 'user_id');
     }
 
-    public function sendEmailVerificationNotification()
+//     public function sendEmailVerificationNotification()
+// {
+//     $frontendUrl = config('app.frontend_url', 'http://localhost:5173');
+
+//     $verifyUrl = URL::temporarySignedRoute(
+//         'verification.verify',
+//         now()->addMinutes(60),
+//         [
+//             'id' => $this->getKey(),
+//             'hash' => sha1($this->getEmailForVerification()),
+//         ]
+//     );
+
+//     // En lloc d'enviar el link del backend directament, l'enviem al frontend
+//     $spaUrl = $frontendUrl . '/verify-email?verify_url=' . urlencode($verifyUrl);
+
+//     $this->notify(new VerifyEmail($spaUrl));
+// }
+
+public function sendEmailVerificationNotification()
 {
     $frontendUrl = config('app.frontend_url', 'http://localhost:5173');
 
-    $verifyUrl = URL::temporarySignedRoute(
+    $verifyUrl = \Illuminate\Support\Facades\URL::temporarySignedRoute(
         'verification.verify',
         now()->addMinutes(60),
         [
@@ -95,12 +114,16 @@ class User extends Authenticatable implements MustVerifyEmail
         ]
     );
 
-    // En lloc d'enviar el link del backend directament, l'enviem al frontend
     $spaUrl = $frontendUrl . '/verify-email?verify_url=' . urlencode($verifyUrl);
 
-    $this->notify(new VerifyEmail($spaUrl));
-}
+    $lang = 'ca';
 
+    if (!empty($this->locale) && in_array($this->locale, ['ca', 'en'])) {
+        $lang = $this->locale;
+    }
+
+    $this->notify(new CustomVerifyEmail($spaUrl, $lang));
+}
 public function favorites()
 {
     return $this->hasMany(Favorite::class);

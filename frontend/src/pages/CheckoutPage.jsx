@@ -52,6 +52,11 @@ const EMPTY_SAVE_ADDRESS = {
   is_default: false,
 }
 
+const cityStateRegex = /^[A-Za-zÀ-ÿ\u00f1\u00d1\s'-]{2,}$/
+const postcodeRegex = /^\d{5}$/
+const addressRegex = /^.{5,}$/
+const labelRegex = /^.{2,}$/
+
 const InputField = React.memo(function InputField({
   label,
   value,
@@ -370,53 +375,108 @@ export default function CheckoutPage() {
       )
     }
 
-    if (!billing.line_one.trim()) {
-      errors["billing.line_one"] = t(
-        "checkout.validation.billingAddressRequired",
-        "L'adreça és obligatòria"
-      )
+    if (useNewAddress) {
+      if (!billing.line_one.trim()) {
+        errors["billing.line_one"] = t(
+          "checkout.validation.billingAddressRequired",
+          "L'adreça és obligatòria"
+        )
+      } else if (!addressRegex.test(billing.line_one.trim())) {
+        errors["billing.line_one"] = t(
+          "checkout.validation.addressInvalid",
+          "L'adreça ha de tenir com a mínim 5 caràcters"
+        )
+      }
+
+      if (!billing.city.trim()) {
+        errors["billing.city"] = t(
+          "checkout.validation.billingCityRequired",
+          "La ciutat és obligatòria"
+        )
+      } else if (!cityStateRegex.test(billing.city.trim())) {
+        errors["billing.city"] = t(
+          "checkout.validation.cityInvalid",
+          "La ciutat només pot contenir lletres i espais"
+        )
+      }
+
+      if (!billing.postcode.trim()) {
+        errors["billing.postcode"] = t(
+          "checkout.validation.billingPostcodeRequired",
+          "El codi postal és obligatori"
+        )
+      } else if (!postcodeRegex.test(billing.postcode.trim())) {
+        errors["billing.postcode"] = t(
+          "checkout.validation.postcodeInvalid",
+          "El codi postal ha de tenir 5 dígits"
+        )
+      }
+
+      if (billing.state.trim() && !cityStateRegex.test(billing.state.trim())) {
+        errors["billing.state"] = t(
+          "checkout.validation.stateInvalid",
+          "La província només pot contenir lletres i espais"
+        )
+      }
     }
 
-    if (!billing.city.trim()) {
-      errors["billing.city"] = t(
-        "checkout.validation.billingCityRequired",
-        "La ciutat és obligatòria"
-      )
-    }
-
-    if (!billing.postcode.trim()) {
-      errors["billing.postcode"] = t(
-        "checkout.validation.billingPostcodeRequired",
-        "El codi postal és obligatori"
-      )
-    }
-
-    if (!shippingSameAsBilling) {
+    if (!shippingSameAsBilling && useNewShippingAddress) {
       if (!shipping.line_one.trim()) {
         errors["shipping.line_one"] = t(
           "checkout.validation.shippingAddressRequired",
           "L'adreça d'enviament és obligatòria"
         )
+      } else if (!addressRegex.test(shipping.line_one.trim())) {
+        errors["shipping.line_one"] = t(
+          "checkout.validation.addressInvalid",
+          "L'adreça ha de tenir com a mínim 5 caràcters"
+        )
       }
+
       if (!shipping.city.trim()) {
         errors["shipping.city"] = t(
           "checkout.validation.shippingCityRequired",
           "La ciutat d'enviament és obligatòria"
         )
+      } else if (!cityStateRegex.test(shipping.city.trim())) {
+        errors["shipping.city"] = t(
+          "checkout.validation.cityInvalid",
+          "La ciutat només pot contenir lletres i espais"
+        )
       }
+
       if (!shipping.postcode.trim()) {
         errors["shipping.postcode"] = t(
           "checkout.validation.shippingPostcodeRequired",
           "El codi postal d'enviament és obligatori"
         )
+      } else if (!postcodeRegex.test(shipping.postcode.trim())) {
+        errors["shipping.postcode"] = t(
+          "checkout.validation.postcodeInvalid",
+          "El codi postal ha de tenir 5 dígits"
+        )
+      }
+
+      if (shipping.state.trim() && !cityStateRegex.test(shipping.state.trim())) {
+        errors["shipping.state"] = t(
+          "checkout.validation.stateInvalid",
+          "La província només pot contenir lletres i espais"
+        )
       }
     }
 
-    if (useNewAddress && saveAddress.enabled && !saveAddress.label.trim()) {
-      errors["save_address.label"] = t(
-        "checkout.addressBook.validation.labelRequired",
-        "Posa un nom a la direcció"
-      )
+    if (useNewAddress && saveAddress.enabled) {
+      if (!saveAddress.label.trim()) {
+        errors["save_address.label"] = t(
+          "checkout.addressBook.validation.labelRequired",
+          "Posa un nom a la direcció"
+        )
+      } else if (!labelRegex.test(saveAddress.label.trim())) {
+        errors["save_address.label"] = t(
+          "checkout.addressBook.validation.labelInvalid",
+          "Posa un nom de com a mínim 2 caràcters"
+        )
+      }
     }
 
     setValidationErrors(errors)
@@ -498,6 +558,15 @@ export default function CheckoutPage() {
     setBilling(addressToBilling(address))
     setUseNewAddress(false)
     setSaveAddress(EMPTY_SAVE_ADDRESS)
+    setValidationErrors((prev) => {
+      const next = { ...prev }
+      delete next["billing.line_one"]
+      delete next["billing.city"]
+      delete next["billing.postcode"]
+      delete next["billing.state"]
+      delete next["save_address.label"]
+      return next
+    })
   }
 
   const handleSelectNewAddress = () => {
@@ -510,6 +579,14 @@ export default function CheckoutPage() {
     setSelectedShippingAddressId(String(address.id))
     setShipping(addressToShipping(address))
     setUseNewShippingAddress(false)
+    setValidationErrors((prev) => {
+      const next = { ...prev }
+      delete next["shipping.line_one"]
+      delete next["shipping.city"]
+      delete next["shipping.postcode"]
+      delete next["shipping.state"]
+      return next
+    })
   }
 
   const handleSelectNewShippingAddress = () => {
@@ -520,6 +597,10 @@ export default function CheckoutPage() {
 
   const handleSaveCurrentAddress = async () => {
     if (!useNewAddress || !saveAddress.enabled) return
+
+    if (!labelRegex.test(saveAddress.label.trim())) {
+      return
+    }
 
     try {
       await api.post("/user/addresses", {
@@ -826,6 +907,7 @@ export default function CheckoutPage() {
                           onChange={(e) =>
                             setBilling((p) => ({ ...p, state: e.target.value }))
                           }
+                          error={validationErrors["billing.state"]}
                           placeholder={t("checkout.placeholders.state", "Barcelona")}
                         />
 
@@ -1042,6 +1124,7 @@ export default function CheckoutPage() {
                           onChange={(e) =>
                             setShipping((p) => ({ ...p, state: e.target.value }))
                           }
+                          error={validationErrors["shipping.state"]}
                           placeholder={t("checkout.placeholders.state", "Barcelona")}
                         />
                       </div>

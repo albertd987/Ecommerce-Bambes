@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import Header from "@/components/Header"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/context/auth-context"
@@ -36,6 +36,76 @@ function PasswordField({
   )
 }
 
+function getPasswordStrength(password) {
+  if (!password) {
+    return {
+      score: 0,
+      label: "",
+      colorClass: "bg-muted",
+      checks: {
+        length: false,
+        lowercase: false,
+        uppercase: false,
+        number: false,
+        special: false,
+      },
+    }
+  }
+
+  const checks = {
+    length: /^.{8,}$/.test(password),
+    lowercase: /[a-z]/.test(password),
+    uppercase: /[A-Z]/.test(password),
+    number: /\d/.test(password),
+    special: /[^A-Za-z0-9]/.test(password),
+  }
+
+  const score = Object.values(checks).filter(Boolean).length
+
+  if (score <= 2) {
+    return {
+      score,
+      label: "weak",
+      colorClass: "bg-destructive",
+      checks,
+    }
+  }
+
+  if (score === 3) {
+    return {
+      score,
+      label: "medium",
+      colorClass: "bg-yellow-500",
+      checks,
+    }
+  }
+
+  if (score === 4) {
+    return {
+      score,
+      label: "strong",
+      colorClass: "bg-blue-500",
+      checks,
+    }
+  }
+
+  return {
+    score,
+    label: "veryStrong",
+    colorClass: "bg-green-600",
+    checks,
+  }
+}
+
+function StrengthChecklistItem({ ok, text }) {
+  return (
+    <li className={`text-xs ${ok ? "text-foreground" : "text-muted-foreground"}`}>
+      <span className="mr-2">{ok ? "✓" : "•"}</span>
+      {text}
+    </li>
+  )
+}
+
 export default function ChangePasswordPage() {
   const { t } = useTranslation()
   const { isLoggedIn } = useAuth()
@@ -49,6 +119,8 @@ export default function ChangePasswordPage() {
   const [successMsg, setSuccessMsg] = useState("")
   const [errorMsg, setErrorMsg] = useState("")
   const [fieldErrors, setFieldErrors] = useState({})
+
+  const passwordStrength = useMemo(() => getPasswordStrength(password), [password])
 
   if (!isLoggedIn) {
     return (
@@ -154,6 +226,17 @@ export default function ChangePasswordPage() {
     }
   }
 
+  const strengthLabel =
+    passwordStrength.label === "weak"
+      ? t("changePassword.strength.weak", "Feble")
+      : passwordStrength.label === "medium"
+      ? t("changePassword.strength.medium", "Mitjana")
+      : passwordStrength.label === "strong"
+      ? t("changePassword.strength.strong", "Forta")
+      : passwordStrength.label === "veryStrong"
+      ? t("changePassword.strength.veryStrong", "Molt forta")
+      : ""
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -240,17 +323,83 @@ export default function ChangePasswordPage() {
               />
 
               <div className="grid gap-5 md:grid-cols-2">
-                <PasswordField
-                  label={t("changePassword.fields.new.label", "Nova contrasenya")}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder={t(
-                    "changePassword.fields.new.placeholder",
-                    "Introdueix la teva nova contrasenya"
-                  )}
-                  autoComplete="new-password"
-                  error={fieldErrors?.password?.[0]}
-                />
+                <div>
+                  <PasswordField
+                    label={t("changePassword.fields.new.label", "Nova contrasenya")}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={t(
+                      "changePassword.fields.new.placeholder",
+                      "Introdueix la teva nova contrasenya"
+                    )}
+                    autoComplete="new-password"
+                    error={fieldErrors?.password?.[0]}
+                  />
+
+                  {password ? (
+                    <div className="mt-3 rounded-2xl border bg-muted/20 p-4">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <p className="text-sm font-medium">
+                          {t("changePassword.strength.title", "Força de la contrasenya")}
+                        </p>
+                        <span className="text-xs font-medium text-muted-foreground">
+                          {strengthLabel}
+                        </span>
+                      </div>
+
+                      <div className="mb-4 flex gap-2">
+                        {[1, 2, 3, 4, 5].map((level) => (
+                          <div
+                            key={level}
+                            className={`h-2 flex-1 rounded-full ${
+                              passwordStrength.score >= level
+                                ? passwordStrength.colorClass
+                                : "bg-muted"
+                            }`}
+                          />
+                        ))}
+                      </div>
+
+                      <ul className="space-y-1.5">
+                        <StrengthChecklistItem
+                          ok={passwordStrength.checks.length}
+                          text={t(
+                            "changePassword.rules.length",
+                            "Mínim 8 caràcters"
+                          )}
+                        />
+                        <StrengthChecklistItem
+                          ok={passwordStrength.checks.lowercase}
+                          text={t(
+                            "changePassword.rules.lowercase",
+                            "Conté una lletra minúscula"
+                          )}
+                        />
+                        <StrengthChecklistItem
+                          ok={passwordStrength.checks.uppercase}
+                          text={t(
+                            "changePassword.rules.uppercase",
+                            "Conté una lletra majúscula"
+                          )}
+                        />
+                        <StrengthChecklistItem
+                          ok={passwordStrength.checks.number}
+                          text={t(
+                            "changePassword.rules.number",
+                            "Conté un número"
+                          )}
+                        />
+                        <StrengthChecklistItem
+                          ok={passwordStrength.checks.special}
+                          text={t(
+                            "changePassword.rules.special",
+                            "Conté un caràcter especial"
+                          )}
+                        />
+                      </ul>
+                    </div>
+                  ) : null}
+                </div>
 
                 <PasswordField
                   label={t(

@@ -27,21 +27,113 @@ function InputField({
   placeholder = "",
   required = false,
   type = "text",
+  error = "",
+  success = false,
 }) {
   return (
     <div>
       <label className="mb-1 block text-sm font-medium text-foreground">
         {label} {required && <span className="text-destructive">*</span>}
       </label>
+
       <input
         type={type}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="w-full rounded-xl border bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-foreground"
+        className={`w-full rounded-xl border bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-foreground ${
+          error
+            ? "border-destructive"
+            : success
+            ? "border-green-600"
+            : "border-input"
+        }`}
       />
+
+      {error ? <p className="mt-1 text-xs text-destructive">{error}</p> : null}
     </div>
   )
+}
+
+function validateAddressForm(form, t) {
+  const errors = {}
+
+  const labelRegex = /^.{2,}$/
+  const addressRegex = /^.{5,}$/
+  const cityStateRegex = /^[A-Za-zÀ-ÿ\u00f1\u00d1\s'-]{2,}$/
+  const postcodeRegex = /^\d{5}$/
+
+  if (!form.label.trim()) {
+    errors.label = t("addresses.validation.labelRequired", "El nom de la direcció és obligatori")
+  } else if (!labelRegex.test(form.label.trim())) {
+    errors.label = t("addresses.validation.labelInvalid", "Posa un nom de com a mínim 2 caràcters")
+  }
+
+  if (!form.line_one.trim()) {
+    errors.line_one = t("addresses.validation.lineOneRequired", "L’adreça és obligatòria")
+  } else if (!addressRegex.test(form.line_one.trim())) {
+    errors.line_one = t("addresses.validation.lineOneInvalid", "L’adreça ha de tenir com a mínim 5 caràcters")
+  }
+
+  if (!form.city.trim()) {
+    errors.city = t("addresses.validation.cityRequired", "La ciutat és obligatòria")
+  } else if (!cityStateRegex.test(form.city.trim())) {
+    errors.city = t("addresses.validation.cityInvalid", "La ciutat només pot contenir lletres i espais")
+  }
+
+  if (!form.postcode.trim()) {
+    errors.postcode = t("addresses.validation.postcodeRequired", "El codi postal és obligatori")
+  } else if (!postcodeRegex.test(form.postcode.trim())) {
+    errors.postcode = t("addresses.validation.postcodeInvalid", "El codi postal ha de tenir 5 dígits")
+  }
+
+  if (form.state.trim() && !cityStateRegex.test(form.state.trim())) {
+    errors.state = t("addresses.validation.stateInvalid", "La província només pot contenir lletres i espais")
+  }
+
+  return errors
+}
+
+function getFormStrength(form, errors) {
+  const requiredFields = [
+    form.label.trim(),
+    form.line_one.trim(),
+    form.city.trim(),
+    form.postcode.trim(),
+  ]
+
+  const filledCount = requiredFields.filter(Boolean).length
+  const hasErrors = Object.keys(errors).length > 0
+
+  if (filledCount === 0) {
+    return {
+      label: "",
+      colorClass: "bg-muted",
+      score: 0,
+    }
+  }
+
+  if (filledCount <= 2 || hasErrors) {
+    return {
+      label: "weak",
+      colorClass: "bg-destructive",
+      score: 1,
+    }
+  }
+
+  if (filledCount === 3) {
+    return {
+      label: "medium",
+      colorClass: "bg-yellow-500",
+      score: 2,
+    }
+  }
+
+  return {
+    label: "strong",
+    colorClass: "bg-green-600",
+    score: 3,
+  }
 }
 
 export default function AddressesPage() {
@@ -54,8 +146,19 @@ export default function AddressesPage() {
   const [saving, setSaving] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState(EMPTY_FORM)
+  const [showValidation, setShowValidation] = useState(false)
 
   const isEditing = useMemo(() => editingId !== null, [editingId])
+
+  const validationErrors = useMemo(
+    () => validateAddressForm(form, t),
+    [form, t]
+  )
+
+  const formStrength = useMemo(
+    () => getFormStrength(form, validationErrors),
+    [form, validationErrors]
+  )
 
   const loadAddresses = async () => {
     try {
@@ -80,10 +183,20 @@ export default function AddressesPage() {
   const resetForm = () => {
     setEditingId(null)
     setForm(EMPTY_FORM)
+    setShowValidation(false)
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setShowValidation(true)
+
+    if (Object.keys(validationErrors).length > 0) {
+      toast.error(
+        t("addresses.toasts.validationError", "Revisa els camps del formulari")
+      )
+      return
+    }
+
     setSaving(true)
 
     try {
@@ -124,6 +237,7 @@ export default function AddressesPage() {
       country_code: address.country_code || "ES",
       is_default: !!address.is_default,
     })
+    setShowValidation(false)
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
@@ -142,6 +256,15 @@ export default function AddressesPage() {
       )
     }
   }
+
+  const strengthLabel =
+    formStrength.label === "weak"
+      ? t("addresses.strength.weak", "Feble")
+      : formStrength.label === "medium"
+      ? t("addresses.strength.medium", "Mitjana")
+      : formStrength.label === "strong"
+      ? t("addresses.strength.strong", "Correcta")
+      : ""
 
   if (!isLoggedIn) {
     return (
@@ -262,6 +385,8 @@ export default function AddressesPage() {
                   value={form.label}
                   onChange={(e) => setForm((p) => ({ ...p, label: e.target.value }))}
                   placeholder={t("addresses.placeholders.label", "Casa")}
+                  error={showValidation ? validationErrors.label : ""}
+                  success={showValidation && !validationErrors.label && !!form.label.trim()}
                 />
 
                 <InputField
@@ -269,6 +394,8 @@ export default function AddressesPage() {
                   required
                   value={form.line_one}
                   onChange={(e) => setForm((p) => ({ ...p, line_one: e.target.value }))}
+                  error={showValidation ? validationErrors.line_one : ""}
+                  success={showValidation && !validationErrors.line_one && !!form.line_one.trim()}
                 />
 
                 <InputField
@@ -283,12 +410,16 @@ export default function AddressesPage() {
                     required
                     value={form.city}
                     onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))}
+                    error={showValidation ? validationErrors.city : ""}
+                    success={showValidation && !validationErrors.city && !!form.city.trim()}
                   />
                   <InputField
                     label={t("addresses.fields.postcode", "Codi postal")}
                     required
                     value={form.postcode}
                     onChange={(e) => setForm((p) => ({ ...p, postcode: e.target.value }))}
+                    error={showValidation ? validationErrors.postcode : ""}
+                    success={showValidation && !validationErrors.postcode && !!form.postcode.trim()}
                   />
                 </div>
 
@@ -296,7 +427,50 @@ export default function AddressesPage() {
                   label={t("addresses.fields.state", "Província")}
                   value={form.state}
                   onChange={(e) => setForm((p) => ({ ...p, state: e.target.value }))}
+                  error={showValidation ? validationErrors.state : ""}
+                  success={showValidation && !!form.state.trim() && !validationErrors.state}
                 />
+
+                <div className="rounded-2xl border bg-muted/20 p-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <p className="text-sm font-medium">
+                      {t("addresses.strength.title", "Validació del formulari")}
+                    </p>
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {strengthLabel}
+                    </span>
+                  </div>
+
+                  <div className="mb-4 flex gap-2">
+                    {[1, 2, 3].map((level) => (
+                      <div
+                        key={level}
+                        className={`h-2 flex-1 rounded-full ${
+                          formStrength.score >= level ? formStrength.colorClass : "bg-muted"
+                        }`}
+                      />
+                    ))}
+                  </div>
+
+                  <ul className="space-y-1.5 text-xs">
+                    <li className={!validationErrors.label && form.label ? "text-foreground" : "text-muted-foreground"}>
+                      <span className="mr-2">{!validationErrors.label && form.label ? "✓" : "•"}</span>
+                      {t("addresses.rules.label", "Nom de la direcció vàlid")}
+                    </li>
+                    <li className={!validationErrors.line_one && form.line_one ? "text-foreground" : "text-muted-foreground"}>
+                      <span className="mr-2">{!validationErrors.line_one && form.line_one ? "✓" : "•"}</span>
+                      {t("addresses.rules.address", "Adreça vàlida")}
+                    </li>
+                    <li className={!validationErrors.city && form.city ? "text-foreground" : "text-muted-foreground"}>
+                      <span className="mr-2">{!validationErrors.city && form.city ? "✓" : "•"}</span>
+                      {t("addresses.rules.city", "Ciutat vàlida")}
+                    </li>
+                    <li className={!validationErrors.postcode && form.postcode ? "text-foreground" : "text-muted-foreground"}>
+                      <span className="mr-2">{!validationErrors.postcode && form.postcode ? "✓" : "•"}</span>
+                      {t("addresses.rules.postcode", "Codi postal de 5 dígits")}
+                    </li>
+                  </ul>
+                </div>
 
                 <div>
                   <label className="flex cursor-pointer items-center gap-2 rounded-xl bg-muted/40 px-4 py-3">

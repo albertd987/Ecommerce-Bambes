@@ -94,8 +94,22 @@ Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) 
     // return redirect($frontend . '/verify-email?verified=1');
 })->middleware(['signed'])->name('verification.verify');
 
+// Route::post('/email/verification-notification', function (Request $request) {
+//     $request->user()->sendEmailVerificationNotification();
+
+//     return response()->json(['message' => 'Email reenviat']);
+// })->middleware(['auth:sanctum', 'throttle:6,1']);
+
 Route::post('/email/verification-notification', function (Request $request) {
+    if (! $request->user()) {
+        return response()->json([
+            'message' => 'No autenticat',
+        ], 401);
+    }
+
     $request->user()->sendEmailVerificationNotification();
 
-    return response()->json(['message' => 'Email reenviat']);
-})->middleware(['auth:sanctum', 'throttle:6,1']);
+    return response()->json([
+        'message' => 'Email reenviat',
+    ]);
+})->middleware(['web', 'auth:sanctum', 'throttle:6,1']);
