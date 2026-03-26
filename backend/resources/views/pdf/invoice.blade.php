@@ -85,6 +85,10 @@
             margin-bottom: 10px;
         }
 
+        .left {
+            text-align: left;
+        }
+
         .invoice-badge {
             display: inline-block;
             padding: 6px 12px;
@@ -183,8 +187,12 @@
             margin-top: 6px;
         }
 
-        .products-table th {
+        .products-table th:first-child {
             text-align: left;
+        }
+
+        .products-table th {
+            text-align: right;
             font-size: 11px;
             padding: 9px 8px;
             background: #f9fafb;
@@ -272,12 +280,12 @@
             'product_details' => 'Detall dels productes',
             'product' => 'Producte',
             'quantity' => 'Quantitat',
-            'unit_price' => 'Preu unitari',
-            'amount' => 'Import',
+            'unit_price' => 'Preu unitari (sense IVA)',
+            'amount' => 'Import (sense IVA)',
             'economic_summary' => 'Resum econòmic',
             'subtotal_no_tax' => 'Subtotal (sense IVA)',
             'discount' => 'Descompte',
-            'shipping' => 'Despeses d\'enviament',
+            'shipping' => 'Despeses d\'enviament (sense IVA)',
             'tax' => 'IVA',
             'total' => 'Total',
             'note' => 'Tots els imports estan expressats en euros (€). El total inclou els impostos aplicables.',
@@ -302,12 +310,12 @@
             'product_details' => 'Product details',
             'product' => 'Product',
             'quantity' => 'Quantity',
-            'unit_price' => 'Unit price',
-            'amount' => 'Amount',
+            'unit_price' => 'Unit price (excluding VAT)',
+            'amount' => 'Amount (excluding VAT)',
             'economic_summary' => 'Order summary',
             'subtotal_no_tax' => 'Subtotal (excluding VAT)',
             'discount' => 'Discount',
-            'shipping' => 'Shipping',
+            'shipping' => 'Shipping (excluding VAT)',
             'tax' => 'VAT',
             'total' => 'Total',
             'note' => 'All amounts are expressed in euros (€). The total includes applicable taxes.',
@@ -348,12 +356,20 @@
 
     $invoiceNumber = 'FAC-' . date('Y') . '-' . str_pad((string) $order['id'], 4, '0', STR_PAD_LEFT);
 
-    $subTotal = (int) ($order['totals']['sub_total'] ?? 0);
-    $taxTotal = (int) ($order['totals']['tax_total'] ?? 0);
-    $shippingTotal = (int) ($order['totals']['shipping_total'] ?? 0);
+    $subTotal = (int) ($order['totals']['sub_total'] ?? 0);         // gross
+    $taxTotal = (int) ($order['totals']['tax_total'] ?? 0);         // gross tax
+    $shippingTotal = (int) ($order['totals']['shipping_total'] ?? 0); // gross
     $discountTotal = (int) ($order['totals']['discount_total'] ?? 0);
-    $grandTotal = (int) ($order['totals']['total'] ?? 0);
-    $subTotalWithoutTax = max(0, $subTotal - $taxTotal);
+    $grandTotal = (int) ($order['totals']['total'] ?? 0);           // gross
+
+    $vatRate = 0.21;
+    $vatDivisor = 1 + $vatRate;
+
+    // Càlcul coherent: tot en net a partir dels imports gross
+    $productSubTotalNet = (int) round($subTotal / $vatDivisor);
+    $shippingTotalNet = (int) round($shippingTotal / $vatDivisor);
+    $grandTotalNet = $productSubTotalNet + $shippingTotalNet - $discountTotal;
+    $calculatedTaxTotal = max(0, $grandTotal - $grandTotalNet);
 
     try {
         $date = !empty($order['created_at'])
@@ -493,11 +509,19 @@
             </thead>
             <tbody>
                 @foreach(($order['lines'] ?? []) as $line)
+                    @php
+                        $lineQuantity = (int) ($line['quantity'] ?? 1);
+                        $lineUnitPriceGross = (int) ($line['unit_price'] ?? 0);
+                        $lineTotalGross = (int) ($line['total'] ?? 0);
+
+                        $lineUnitPriceNet = (int) round($lineUnitPriceGross / $vatDivisor);
+                        $lineTotalNet = (int) round($lineTotalGross / $vatDivisor);
+                    @endphp
                     <tr>
                         <td>{{ $line['name'] ?? $txt['product'] }}</td>
-                        <td class="right">{{ $line['quantity'] ?? 1 }}</td>
-                        <td class="right">{{ number_format((($line['unit_price'] ?? 0) / 100), 2) }} €</td>
-                        <td class="right">{{ number_format((($line['total'] ?? 0) / 100), 2) }} €</td>
+                        <td class="right">{{ $lineQuantity }}</td>
+                        <td class="right">{{ number_format(($lineUnitPriceNet / 100), 2) }} €</td>
+                        <td class="right">{{ number_format(($lineTotalNet / 100), 2) }} €</td>
                     </tr>
                 @endforeach
             </tbody>
@@ -511,7 +535,7 @@
             <table class="summary-table">
                 <tr>
                     <td class="summary-label">{{ $txt['subtotal_no_tax'] }}</td>
-                    <td class="right">{{ number_format(($subTotalWithoutTax / 100), 2) }} €</td>
+                    <td class="right">{{ number_format(($productSubTotalNet / 100), 2) }} €</td>
                 </tr>
 
                 @if($discountTotal > 0)
@@ -523,12 +547,12 @@
 
                 <tr>
                     <td class="summary-label">{{ $txt['shipping'] }}</td>
-                    <td class="right">{{ number_format(($shippingTotal / 100), 2) }} €</td>
+                    <td class="right">{{ number_format(($shippingTotalNet / 100), 2) }} €</td>
                 </tr>
 
                 <tr>
                     <td class="summary-label">{{ $txt['tax'] }}</td>
-                    <td class="right">{{ number_format(($taxTotal / 100), 2) }} €</td>
+                    <td class="right">{{ number_format(($calculatedTaxTotal / 100), 2) }} €</td>
                 </tr>
 
                 <tr class="grand-total">
