@@ -62,16 +62,16 @@ export default function AboutPage() {
         <div className="min-h-screen bg-background">
             <Header />
 
-            <main className="max-w-[1200px] mx-auto px-6 py-10 space-y-12">
+            <main className="max-w-[1200px] mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-10 sm:space-y-12">
                 {/* HERO */}
                 <section className="rounded-2xl border bg-background overflow-hidden">
-                    <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-                        <div className="p-8 lg:p-10">
+                    <div className="grid gap-0 lg:grid-cols-[1.2fr_0.8fr]">
+                        <div className="p-6 sm:p-8 lg:p-10">
                             <p className="text-sm text-muted-foreground">
                                 {t("about.kicker", "Sobre nosaltres")}
                             </p>
 
-                            <h1 className="text-3xl lg:text-4xl font-bold mt-2">
+                            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mt-2">
                                 {t(
                                     "about.title",
                                     "Bambes fetes amb cap: ràpides, còmodes i amb estil."
@@ -102,7 +102,7 @@ export default function AboutPage() {
                         </div>
 
                         {/* ✅ Lateral amb imatge (hero image) */}
-                        <div className="relative min-h-[260px] lg:min-h-full bg-muted overflow-hidden">
+                        <div className="relative min-h-[220px] sm:min-h-[260px] lg:min-h-full bg-muted overflow-hidden">
                             <img
                                 src={heroImage}
                                 alt="Hero"
@@ -134,11 +134,11 @@ export default function AboutPage() {
 
                 {/* VALORS */}
                 <section className="space-y-4">
-                    <h2 className="text-2xl font-bold">
+                    <h2 className="text-xl sm:text-2xl font-bold">
                         {t("about.values.title", "El que ens mou")}
                     </h2>
 
-                    <div className="grid gap-4 md:grid-cols-3">
+                    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
                         {values.map((v) => (
                             <Card key={v.title} className="rounded-2xl">
                                 <CardContent className="p-6">
@@ -154,7 +154,7 @@ export default function AboutPage() {
 
                 {/* TEAM (1 sola foto + resum) */}
                 <section className="space-y-4">
-                    <h2 className="text-2xl font-bold">
+                    <h2 className="text-xl sm:text-2xl font-bold">
                         {t("about.team.title", "L’equip")}
                     </h2>
 
@@ -194,7 +194,7 @@ export default function AboutPage() {
                                     </p>
                                 </div>
 
-                                <div className="grid gap-4 md:grid-cols-2">
+                                <div className="grid gap-4 sm:grid-cols-2">
                                     <div className="rounded-xl border p-4">
                                         <p className="font-semibold">
                                             {t("about.team.albert.name", "Albert")}
@@ -239,7 +239,7 @@ export default function AboutPage() {
 
                 {/* MAPA */}
                 <section className="space-y-4">
-                    <h2 className="text-2xl font-bold">{t("about.map.title", "On som")}</h2>
+                    <h2 className="text-xl sm:text-2xl font-bold">{t("about.map.title", "On som")}</h2>
                     <p className="text-muted-foreground">
                         {t(
                             "about.map.subtitle",
@@ -248,7 +248,7 @@ export default function AboutPage() {
                     </p>
 
                     <Card className="rounded-2xl overflow-hidden">
-                        <div className="h-[420px] w-full">
+                        <div className="h-[280px] sm:h-[350px] md:h-[420px] w-full">
                             <MapContainer
                                 center={position}
                                 zoom={17}

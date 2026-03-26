@@ -299,8 +299,8 @@ export default function ProductDetailPage() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="max-w-[1200px] mx-auto px-4 py-6 lg:py-10">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_400px] xl:grid-cols-[minmax(0,1fr)_440px]">
+      <main className="max-w-[1200px] mx-auto px-4 py-4 sm:py-6 lg:py-10">
+        <div className="grid gap-6 md:gap-8 lg:grid-cols-[minmax(0,1fr)_400px] xl:grid-cols-[minmax(0,1fr)_440px]">
           <div className="flex gap-3">
             {allImages.length > 1 && (
               <div className="hidden md:flex flex-col gap-2 w-[76px] shrink-0">
@@ -350,7 +350,7 @@ export default function ProductDetailPage() {
                 <div className="flex items-center justify-center gap-3 mt-3">
                   <button
                     onClick={handlePrevImage}
-                    className="w-9 h-9 rounded-full bg-muted/60 hover:bg-muted flex items-center justify-center transition-colors"
+                    className="w-11 h-11 rounded-full bg-muted/60 hover:bg-muted flex items-center justify-center transition-colors"
                     aria-label={t("productDetail.gallery.prev", "Imatge anterior")}
                     type="button"
                   >
@@ -358,7 +358,7 @@ export default function ProductDetailPage() {
                   </button>
                   <button
                     onClick={handleNextImage}
-                    className="w-9 h-9 rounded-full bg-muted/60 hover:bg-muted flex items-center justify-center transition-colors"
+                    className="w-11 h-11 rounded-full bg-muted/60 hover:bg-muted flex items-center justify-center transition-colors"
                     aria-label={t("productDetail.gallery.next", "Imatge següent")}
                     type="button"
                   >
@@ -368,12 +368,12 @@ export default function ProductDetailPage() {
               )}
 
               {allImages.length > 1 && (
-                <div className="flex md:hidden gap-2 mt-3 overflow-x-auto pb-1">
+                <div className="flex md:hidden gap-2 mt-3 overflow-x-auto pb-2 snap-x snap-mandatory">
                   {allImages.map((img, idx) => (
                     <button
                       key={idx}
                       onClick={() => setSelectedImageIndex(idx)}
-                      className={`w-16 h-16 shrink-0 rounded-md overflow-hidden bg-muted/50 border-2 transition-all ${
+                      className={`w-16 h-16 shrink-0 snap-start rounded-md overflow-hidden bg-muted/50 border-2 transition-all ${
                         selectedImageIndex === idx ? "border-foreground" : "border-transparent"
                       }`}
                       aria-label={t("productDetail.gallery.thumbnailAria", "Seleccionar imatge")}
@@ -394,7 +394,7 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          <div className="lg:pt-0">
+          <div className="pt-0">
             {brandName && (
               <p className="text-sm font-medium text-orange-600 mb-1">{brandName}</p>
             )}
@@ -422,7 +422,7 @@ export default function ProductDetailPage() {
   <button
     key={color}
     onClick={() => setSelectedColor(color)}
-    className={`px-4 py-2 rounded-full border text-sm transition-all ${
+    className={`min-h-[44px] px-4 py-2.5 rounded-full border text-sm transition-all ${
       selectedColor === color
         ? "border-foreground font-medium"
         : "border-border hover:border-muted-foreground"
@@ -445,13 +445,13 @@ export default function ProductDetailPage() {
 
             {variantsData && (variantsData.isNewFormat ? (variantsData.sizesByColor[selectedColor] ?? []) : variantsData.sizes).length > 0 && (
               <div className="mt-6">
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex flex-wrap items-center justify-between gap-y-1 mb-3">
                   <p className="text-base font-medium">
                     {t("productDetail.size.title", "Selecciona la teva talla")}
                   </p>
                   <button
                     type="button"
-                    className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+                    className="min-h-[44px] text-sm text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
                     onClick={() =>
                       toast.message(
                         t("productDetail.sizeGuide.todo", "Guia de talles (pendent)")
@@ -462,7 +462,7 @@ export default function ProductDetailPage() {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-3 gap-[7px]">
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                   {(variantsData.isNewFormat ? (variantsData.sizesByColor[selectedColor] ?? []) : variantsData.sizes).map((size) => {
                     const variant = variantsData?.isNewFormat
                       ? findColorVariant(variantsData.variantMap, selectedColor, size)
@@ -508,7 +508,7 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            <div className="mt-8 space-y-3">
+            <div className="mt-6 sm:mt-8 space-y-3">
               <button
                 onClick={handleAddToCart}
                 disabled={!selectedSize || isOutOfStock || addingToCart}

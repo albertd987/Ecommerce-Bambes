@@ -21,7 +21,7 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
 function SectionCard({ icon: Icon, title, children }) {
   return (
     <Card className="rounded-3xl border shadow-sm">
-      <CardContent className="p-6">
+      <CardContent className="p-4 sm:p-6">
         <div className="mb-4 flex items-start gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted">
             <Icon className="h-5 w-5" />
@@ -246,24 +246,24 @@ export default function CheckoutSuccessPage() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto max-w-5xl px-4 py-10">
-        <div className="mb-8">
+      <main className="container mx-auto max-w-5xl px-4 py-8 sm:py-10">
+        <div className="mb-6 sm:mb-8">
           <div className="flex items-center gap-3">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
-              <CheckCircle2 className="h-7 w-7" />
+            <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-2xl bg-muted">
+              <CheckCircle2 className="h-6 w-6 sm:h-7 sm:w-7" />
             </div>
 
-            <div>
+            <div className="min-w-0">
               <p className="text-sm text-muted-foreground">
                 {t("checkoutSuccess.title")}
               </p>
-              <h1 className="text-3xl font-bold tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight">
                 {t("checkoutSuccess.title")}
               </h1>
             </div>
           </div>
 
-          <p className="mt-4 text-sm text-muted-foreground">{renderMessage()}</p>
+          <p className="mt-3 sm:mt-4 text-sm text-muted-foreground">{renderMessage()}</p>
         </div>
 
         {state?.confirmError && (
@@ -272,11 +272,11 @@ export default function CheckoutSuccessPage() {
           </div>
         )}
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-[1fr_320px]">
           <div className="space-y-6">
             <Card className="rounded-3xl border shadow-sm">
-              <CardContent className="p-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">
                       {t("checkoutSuccess.orderSummary.title")}
@@ -287,7 +287,7 @@ export default function CheckoutSuccessPage() {
                   </div>
 
                   {reference ? (
-                    <div className="rounded-2xl bg-muted/40 px-4 py-3 text-sm">
+                    <div className="rounded-2xl bg-muted/40 px-3 py-2 sm:px-4 sm:py-3 text-sm break-all sm:break-normal">
                       <span className="text-muted-foreground">
                         {t("checkoutSuccess.orderSummary.referenceLabel")}{" "}
                       </span>
@@ -304,7 +304,7 @@ export default function CheckoutSuccessPage() {
                   {lines.map((l) => (
                     <div
                       key={l.id || l.identifier}
-                      className="flex items-center justify-between gap-4 rounded-2xl bg-muted/30 px-4 py-3 text-sm"
+                      className="flex items-start justify-between gap-2 sm:gap-4 rounded-2xl bg-muted/30 px-3 sm:px-4 py-3 text-sm"
                     >
                       <span className="min-w-0">
                         {l.name}{" "}
@@ -385,7 +385,7 @@ export default function CheckoutSuccessPage() {
             )}
           </div>
 
-          <div className="space-y-6 lg:sticky lg:top-6 h-fit">
+          <div className="space-y-6 lg:sticky lg:top-6 h-fit order-first lg:order-none">
             <SectionCard icon={ShoppingBag} title={t("checkoutSuccess.totals.title")}>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
@@ -424,7 +424,7 @@ export default function CheckoutSuccessPage() {
             </SectionCard>
 
             <Card className="rounded-3xl border shadow-sm">
-              <CardContent className="p-6 space-y-3">
+              <CardContent className="p-4 sm:p-6 space-y-3">
                 <Link to="/">
                   <Button className="w-full">{t("checkoutSuccess.actions.backToShop")}</Button>
                 </Link>

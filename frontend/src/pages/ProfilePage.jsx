@@ -21,7 +21,7 @@ function ProfileActionCard({ icon, title, description, to, actionLabel }) {
 
           <div className="mt-4">
             <Link to={to}>
-              <Button variant="outline">{actionLabel}</Button>
+              <Button variant="outline" className="min-h-[44px]">{actionLabel}</Button>
             </Link>
           </div>
         </div>
@@ -47,12 +47,12 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto max-w-5xl px-4 py-10">
-        <div className="mb-8">
+      <main className="container mx-auto max-w-5xl px-4 py-6 sm:py-10">
+        <div className="mb-6 sm:mb-8">
           <p className="text-sm text-muted-foreground">
             {t("profile.title", "El meu perfil")}
           </p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight">
+          <h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight">
             {user?.name || t("profile.title", "El meu perfil")}
           </h1>
         </div>
@@ -80,12 +80,12 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                <Link to="/profile/edit">
-                  <Button>{t("profile.actions.edit", "Editar")}</Button>
+                <Link to="/profile/edit" className="w-full sm:w-auto">
+                  <Button className="w-full sm:w-auto min-h-[44px]">{t("profile.actions.edit", "Editar")}</Button>
                 </Link>
               </div>
 
-              <div className="mt-6 grid gap-3 md:grid-cols-3">
+              <div className="mt-6 grid gap-3 sm:grid-cols-3">
                 <InfoRow
                   label={t("profile.fields.name", "Nom")}
                   value={user?.name}
@@ -103,7 +103,7 @@ export default function ProfilePage() {
 
             {/* TARGETES D'ACCIONS */}
             <section>
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <ProfileActionCard
                   icon={Shield}
                   title={t("profile.sections.security", "Seguretat")}

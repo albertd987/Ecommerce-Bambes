@@ -41,7 +41,7 @@ function CollapsibleSection({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center justify-between w-full text-left cursor-pointer group"
+        className="flex items-center justify-between w-full min-h-[44px] text-left cursor-pointer group"
       >
         <div className="flex items-center min-w-0">
           <span className="text-[15px] font-medium text-foreground truncate">
@@ -70,7 +70,7 @@ function CheckboxOption({ label, checked, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="w-full flex items-center justify-between rounded-md px-2 py-2 hover:bg-muted transition-colors"
+      className="w-full flex items-center justify-between rounded-md px-2 py-2.5 min-h-[44px] hover:bg-muted transition-colors"
     >
       <span className="text-sm text-foreground">{label}</span>
 
@@ -94,7 +94,7 @@ function FilterChip({ label, onRemove }) {
     <button
       type="button"
       onClick={onRemove}
-      className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-sm hover:bg-muted transition-colors"
+      className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-2 min-h-[44px] text-sm hover:bg-muted transition-colors"
       title="Treure filtre"
     >
       <span className="max-w-[220px] truncate">{label}</span>
@@ -128,13 +128,13 @@ function Pagination({ page, lastPage, onPage, loading, t }) {
 
   const pages = getPages()
 
-  const btnBase = "h-9 min-w-[36px] px-3 rounded-md border text-sm transition-colors"
+  const btnBase = "h-11 min-w-[44px] px-3 rounded-md border text-sm transition-colors"
   const btn = btnBase + " hover:bg-muted"
   const btnActive = btnBase + " bg-foreground text-background border-foreground hover:opacity-90"
   const btnDisabled = btnBase + " opacity-50 cursor-not-allowed"
 
   return (
-    <div className="flex items-center justify-between gap-4 mt-10">
+    <div className="flex flex-col items-center gap-3 mt-10 sm:flex-row sm:justify-between sm:gap-4">
       <div className="flex items-center gap-2">
         <button
           type="button"
@@ -203,6 +203,7 @@ function Pagination({ page, lastPage, onPage, loading, t }) {
 
 function FilterSidebar({
   visible,
+  onClose,
   draftFilters,
   setDraftFilters,
   appliedFilters,
@@ -212,12 +213,6 @@ function FilterSidebar({
   filtersLoading,
   t,
 }) {
-  if (!visible) {
-    return (
-      <div className="shrink-0 self-stretch transition-all duration-300 w-0 opacity-0 mr-0" />
-    )
-  }
-
   const brands = filterOptions?.brands ?? []
   const types = filterOptions?.types ?? []
   const sizes = filterOptions?.sizes ?? []
@@ -271,166 +266,210 @@ function FilterSidebar({
   const sizesSummary = useMemo(() => mkMultiSummary(appliedFilters.sizes), [appliedFilters.sizes])
   const colorsSummary = useMemo(() => mkMultiSummary(appliedFilters.colors), [appliedFilters.colors])
 
-  return (
-    <div className="shrink-0 self-stretch transition-all duration-300 w-[280px] opacity-100 mr-10">
-      <aside className="w-[280px] sticky top-20 flex flex-col border border-border rounded-lg bg-background">
-        <div className="px-4">
-          <CollapsibleSection
-            title={t("home.filters.brand")}
-            count={counts.brands}
-            summary={brandsSummary}
-            defaultOpen={false}
-          >
-            {filtersLoading ? (
-              <p className="text-sm text-muted-foreground">{t("home.filters.loadingBrands")}</p>
-            ) : (
-              <div className="space-y-1">
-                <CheckboxOption
-                  label={t("home.filters.allFeminine")}
-                  checked={(draftFilters.brands?.length ?? 0) === 0}
-                  onClick={() => clearArrayDraft("brands")}
-                />
-                {brands.map((b) => (
-                  <CheckboxOption
-                    key={b}
-                    label={b}
-                    checked={(draftFilters.brands ?? []).includes(b)}
-                    onClick={() => toggleInArray("brands", b)}
-                  />
-                ))}
-              </div>
-            )}
-          </CollapsibleSection>
+  const sidebarContent = (
+    <aside className="flex flex-col h-full bg-background">
+      {/* Mobile drawer header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border md:hidden">
+        <span className="text-base font-semibold text-foreground">{t("home.actions.showFilters")}</span>
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex items-center justify-center h-10 w-10 rounded-md hover:bg-muted transition-colors"
+          aria-label={t("home.actions.hideFilters")}
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
 
-          <CollapsibleSection
-            title={t("home.filters.type")}
-            count={counts.types}
-            summary={typesSummary}
-            defaultOpen={false}
-          >
-            {filtersLoading ? (
-              <p className="text-sm text-muted-foreground">{t("home.filters.loadingTypes")}</p>
-            ) : (
-              <div className="space-y-1">
-                <CheckboxOption
-                  label={t("home.filters.allMasculine")}
-                  checked={(draftFilters.types?.length ?? 0) === 0}
-                  onClick={() => clearArrayDraft("types")}
-                />
-                {types.map((tt) => (
-                  <CheckboxOption
-                    key={tt}
-                    label={tt}
-                    checked={(draftFilters.types ?? []).includes(tt)}
-                    onClick={() => toggleInArray("types", tt)}
-                  />
-                ))}
-              </div>
-            )}
-          </CollapsibleSection>
-
-          <CollapsibleSection
-            title={t("home.filters.size")}
-            count={counts.sizes}
-            summary={sizesSummary}
-            defaultOpen={false}
-          >
-            {filtersLoading ? (
-              <p className="text-sm text-muted-foreground">{t("home.filters.loadingSizes")}</p>
-            ) : (
-              <div className="space-y-1">
-                <CheckboxOption
-                  label={t("home.filters.allFeminine")}
-                  checked={(draftFilters.sizes?.length ?? 0) === 0}
-                  onClick={() => clearArrayDraft("sizes")}
-                />
-                {sizes.map((s) => (
-                  <CheckboxOption
-                    key={s}
-                    label={s}
-                    checked={(draftFilters.sizes ?? []).includes(s)}
-                    onClick={() => toggleInArray("sizes", s)}
-                  />
-                ))}
-              </div>
-            )}
-          </CollapsibleSection>
-
-          <CollapsibleSection
-            title={t("home.filters.color")}
-            count={counts.colors}
-            summary={colorsSummary}
-            defaultOpen={false}
-          >
-            {filtersLoading ? (
-              <p className="text-sm text-muted-foreground">{t("home.filters.loadingColors")}</p>
-            ) : (
-              <div className="space-y-1">
-                <CheckboxOption
-                  label={t("home.filters.allMasculine")}
-                  checked={(draftFilters.colors?.length ?? 0) === 0}
-                  onClick={() => clearArrayDraft("colors")}
-                />
-                {colors.map((c) => (
-                  <CheckboxOption
-                    key={c}
-                    label={c}
-                    checked={(draftFilters.colors ?? []).includes(c)}
-                    onClick={() => toggleInArray("colors", c)}
-                  />
-                ))}
-              </div>
-            )}
-          </CollapsibleSection>
-
-          <CollapsibleSection
-            title={t("home.filters.price")}
-            count={counts.price}
-            summary={priceSummary}
-            defaultOpen={false}
-          >
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                value={draftFilters.min_price}
-                onChange={(e) =>
-                  setDraftFilters((p) => ({ ...p, min_price: e.target.value }))
-                }
-                placeholder={t("home.filters.min")}
-                className="w-full rounded-md border px-3 py-2 bg-background text-sm"
-                inputMode="decimal"
+      <div className="flex-1 overflow-y-auto px-4">
+        <CollapsibleSection
+          title={t("home.filters.brand")}
+          count={counts.brands}
+          summary={brandsSummary}
+          defaultOpen={false}
+        >
+          {filtersLoading ? (
+            <p className="text-sm text-muted-foreground">{t("home.filters.loadingBrands")}</p>
+          ) : (
+            <div className="space-y-1">
+              <CheckboxOption
+                label={t("home.filters.allFeminine")}
+                checked={(draftFilters.brands?.length ?? 0) === 0}
+                onClick={() => clearArrayDraft("brands")}
               />
-              <input
-                value={draftFilters.max_price}
-                onChange={(e) =>
-                  setDraftFilters((p) => ({ ...p, max_price: e.target.value }))
-                }
-                placeholder={t("home.filters.max")}
-                className="w-full rounded-md border px-3 py-2 bg-background text-sm"
-                inputMode="decimal"
-              />
+              {brands.map((b) => (
+                <CheckboxOption
+                  key={b}
+                  label={b}
+                  checked={(draftFilters.brands ?? []).includes(b)}
+                  onClick={() => toggleInArray("brands", b)}
+                />
+              ))}
             </div>
-          </CollapsibleSection>
-        </div>
+          )}
+        </CollapsibleSection>
 
-        <div className="mt-auto border-t border-border bg-background p-4">
-          <button
-            onClick={onApply}
-            type="button"
-            className="w-full inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
-          >
-            {t("home.actions.apply")}
-          </button>
+        <CollapsibleSection
+          title={t("home.filters.type")}
+          count={counts.types}
+          summary={typesSummary}
+          defaultOpen={false}
+        >
+          {filtersLoading ? (
+            <p className="text-sm text-muted-foreground">{t("home.filters.loadingTypes")}</p>
+          ) : (
+            <div className="space-y-1">
+              <CheckboxOption
+                label={t("home.filters.allMasculine")}
+                checked={(draftFilters.types?.length ?? 0) === 0}
+                onClick={() => clearArrayDraft("types")}
+              />
+              {types.map((tt) => (
+                <CheckboxOption
+                  key={tt}
+                  label={tt}
+                  checked={(draftFilters.types ?? []).includes(tt)}
+                  onClick={() => toggleInArray("types", tt)}
+                />
+              ))}
+            </div>
+          )}
+        </CollapsibleSection>
 
-          <button
-            onClick={onClearAll}
-            type="button"
-            className="mt-2 w-full inline-flex items-center justify-center rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted"
-          >
-            {t("home.actions.clear")}
-          </button>
+        <CollapsibleSection
+          title={t("home.filters.size")}
+          count={counts.sizes}
+          summary={sizesSummary}
+          defaultOpen={false}
+        >
+          {filtersLoading ? (
+            <p className="text-sm text-muted-foreground">{t("home.filters.loadingSizes")}</p>
+          ) : (
+            <div className="space-y-1">
+              <CheckboxOption
+                label={t("home.filters.allFeminine")}
+                checked={(draftFilters.sizes?.length ?? 0) === 0}
+                onClick={() => clearArrayDraft("sizes")}
+              />
+              {sizes.map((s) => (
+                <CheckboxOption
+                  key={s}
+                  label={s}
+                  checked={(draftFilters.sizes ?? []).includes(s)}
+                  onClick={() => toggleInArray("sizes", s)}
+                />
+              ))}
+            </div>
+          )}
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          title={t("home.filters.color")}
+          count={counts.colors}
+          summary={colorsSummary}
+          defaultOpen={false}
+        >
+          {filtersLoading ? (
+            <p className="text-sm text-muted-foreground">{t("home.filters.loadingColors")}</p>
+          ) : (
+            <div className="space-y-1">
+              <CheckboxOption
+                label={t("home.filters.allMasculine")}
+                checked={(draftFilters.colors?.length ?? 0) === 0}
+                onClick={() => clearArrayDraft("colors")}
+              />
+              {colors.map((c) => (
+                <CheckboxOption
+                  key={c}
+                  label={c}
+                  checked={(draftFilters.colors ?? []).includes(c)}
+                  onClick={() => toggleInArray("colors", c)}
+                />
+              ))}
+            </div>
+          )}
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          title={t("home.filters.price")}
+          count={counts.price}
+          summary={priceSummary}
+          defaultOpen={false}
+        >
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              value={draftFilters.min_price}
+              onChange={(e) =>
+                setDraftFilters((p) => ({ ...p, min_price: e.target.value }))
+              }
+              placeholder={t("home.filters.min")}
+              className="w-full rounded-md border px-3 py-2.5 bg-background text-sm"
+              inputMode="decimal"
+            />
+            <input
+              value={draftFilters.max_price}
+              onChange={(e) =>
+                setDraftFilters((p) => ({ ...p, max_price: e.target.value }))
+              }
+              placeholder={t("home.filters.max")}
+              className="w-full rounded-md border px-3 py-2.5 bg-background text-sm"
+              inputMode="decimal"
+            />
+          </div>
+        </CollapsibleSection>
+      </div>
+
+      <div className="border-t border-border bg-background p-4">
+        <button
+          onClick={onApply}
+          type="button"
+          className="w-full inline-flex items-center justify-center rounded-md bg-primary px-3 py-3 text-sm font-medium text-primary-foreground hover:opacity-90"
+        >
+          {t("home.actions.apply")}
+        </button>
+
+        <button
+          onClick={onClearAll}
+          type="button"
+          className="mt-2 w-full inline-flex items-center justify-center rounded-md border px-3 py-3 text-sm font-medium hover:bg-muted"
+        >
+          {t("home.actions.clear")}
+        </button>
+      </div>
+    </aside>
+  )
+
+  return (
+    <>
+      {/* Mobile overlay */}
+      {visible && (
+        <div className="md:hidden fixed inset-0 z-40 flex">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={onClose}
+            aria-hidden="true"
+          />
+          {/* Drawer panel */}
+          <div className="relative z-10 w-[300px] max-w-[85vw] h-full shadow-xl border-r border-border">
+            {sidebarContent}
+          </div>
         </div>
-      </aside>
-    </div>
+      )}
+
+      {/* Desktop sidebar */}
+      <div
+        className={`hidden md:block shrink-0 self-stretch transition-all duration-300 ${
+          visible ? "w-[280px] opacity-100 mr-10" : "w-0 opacity-0 mr-0"
+        }`}
+      >
+        {visible && (
+          <div className="w-[280px] sticky top-20 border border-border rounded-lg overflow-hidden">
+            {sidebarContent}
+          </div>
+        )}
+      </div>
+    </>
   )
 }
 
@@ -444,7 +483,7 @@ export default function HomePage() {
   const [meta, setMeta] = useState({ current_page: 1, last_page: 1, total: 0, per_page: 12 })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [showFilters, setShowFilters] = useState(true)
+  const [showFilters, setShowFilters] = useState(false)
 
   const [filterOptions, setFilterOptions] = useState({
     brands: [],
@@ -717,7 +756,7 @@ export default function HomePage() {
     <>
       <Header />
 
-      <main className="max-w-[1320px] mx-auto px-6 py-6">
+      <main className="max-w-[1320px] mx-auto px-4 sm:px-6 py-4 sm:py-6">
         <div className="mb-1">
           <span className="text-sm text-muted-foreground">{t("home.breadcrumb.category")}</span>
           <span className="text-sm text-muted-foreground mx-1.5">/</span>
@@ -726,9 +765,9 @@ export default function HomePage() {
           </span>
         </div>
 
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">
               {t("home.title", { total: totalAll })}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
@@ -744,20 +783,20 @@ export default function HomePage() {
             )}
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 flex-wrap">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 text-[15px] text-foreground hover:text-muted-foreground transition-colors cursor-pointer"
+              className="flex items-center gap-2 min-h-[44px] px-3 rounded-md border border-border text-[15px] text-foreground hover:bg-muted transition-colors cursor-pointer"
               type="button"
             >
-              {showFilters ? t("home.actions.hideFilters") : t("home.actions.showFilters")}
               <SlidersHorizontal className="h-4 w-4" />
+              <span>{showFilters ? t("home.actions.hideFilters") : t("home.actions.showFilters")}</span>
             </button>
 
             <div className="flex items-center gap-2">
-              <span className="text-[15px] text-foreground">{t("home.sort.label")}</span>
+              <span className="hidden sm:inline text-[15px] text-foreground">{t("home.sort.label")}</span>
               <select
-                className="rounded-md border px-2 py-1 bg-background text-sm"
+                className="rounded-md border px-2 py-2.5 bg-background text-sm min-h-[44px]"
                 value={appliedFilters.sort}
                 onChange={(e) =>
                   setAppliedFilters((p) => ({
@@ -776,9 +815,9 @@ export default function HomePage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-[15px] text-foreground">{t("home.perPage.label")}</span>
+              <span className="hidden sm:inline text-[15px] text-foreground">{t("home.perPage.label")}</span>
               <select
-                className="rounded-md border px-2 py-1 bg-background text-sm"
+                className="rounded-md border px-2 py-2.5 bg-background text-sm min-h-[44px]"
                 value={appliedFilters.per_page}
                 onChange={(e) =>
                   setAppliedFilters((p) => ({
@@ -799,6 +838,7 @@ export default function HomePage() {
         <div className="flex">
           <FilterSidebar
             visible={showFilters}
+            onClose={() => setShowFilters(false)}
             draftFilters={draftFilters}
             setDraftFilters={setDraftFilters}
             appliedFilters={appliedFilters}
@@ -821,7 +861,7 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={clearAll}
-                  className="text-sm text-muted-foreground hover:text-foreground underline whitespace-nowrap"
+                  className="text-sm text-muted-foreground hover:text-foreground underline whitespace-nowrap min-h-[44px] px-2"
                 >
                   {t("home.actions.clearAll")}
                 </button>
@@ -835,10 +875,10 @@ export default function HomePage() {
             ) : (
               <>
                 <div
-                  className={`grid gap-x-5 gap-y-10 ${
+                  className={`grid gap-x-3 gap-y-6 sm:gap-x-5 sm:gap-y-10 ${
                     showFilters
-                      ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3"
-                      : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                      ? "grid-cols-2 sm:grid-cols-2 xl:grid-cols-3"
+                      : "grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                   } ${loading ? "opacity-60 pointer-events-none" : ""}`}
                 >
                   {products.map((product) => (

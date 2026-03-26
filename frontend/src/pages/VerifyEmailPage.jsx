@@ -81,7 +81,7 @@ export default function VerifyEmailPage() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto px-4 py-10 max-w-3xl space-y-4">
+      <main className="container mx-auto px-4 py-8 sm:py-10 w-full max-w-sm sm:max-w-xl md:max-w-3xl space-y-4">
         <h2 className="text-2xl font-bold">
           {t("verifyEmail.title", "Verifica el teu correu")}
         </h2>
@@ -107,19 +107,19 @@ export default function VerifyEmailPage() {
           </p>
         )}
 
-        <div className="flex gap-3">
-          <Button onClick={resend} variant="outline" disabled={loading}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <Button onClick={resend} variant="outline" disabled={loading} className="min-h-[44px] w-full sm:w-auto">
             {t("verifyEmail.resend", "Reenviar email")}
           </Button>
 
-          <Button onClick={doVerify} disabled={loading || !verifyUrl}>
+          <Button onClick={doVerify} disabled={loading || !verifyUrl} className="min-h-[44px] w-full sm:w-auto">
             {loading
               ? t("verifyEmail.verifying", "Verificant...")
               : t("verifyEmail.alreadyVerified", "Ja he verificat")}
           </Button>
 
-          <Link to="/profile">
-            <Button variant="ghost">
+          <Link to="/profile" className="w-full sm:w-auto">
+            <Button variant="ghost" className="min-h-[44px] w-full sm:w-auto">
               {t("verifyEmail.backToProfile", "Tornar al perfil")}
             </Button>
           </Link>

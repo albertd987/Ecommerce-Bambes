@@ -168,7 +168,7 @@ function NewAddressCard({ selected, onClick, t }) {
     <button
       type="button"
       onClick={onClick}
-      className={`w-full h-full min-h-[160px] rounded-2xl border p-4 transition-all flex flex-col items-center justify-center text-center ${
+      className={`w-full h-full min-h-[120px] sm:min-h-[160px] rounded-2xl border p-4 transition-all flex flex-col items-center justify-center text-center ${
         selected
           ? "border-foreground ring-2 ring-foreground/20 bg-muted/20"
           : "border-dashed border-border hover:border-foreground/40 hover:bg-muted/10"
@@ -606,7 +606,7 @@ export default function CheckoutPage() {
         <div className="mb-6">
           <Card className="rounded-3xl border shadow-sm">
             <CardContent className="p-6 md:p-8">
-              <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div className="flex items-start gap-4">
                   <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
                     <Package className="h-7 w-7" />
@@ -625,8 +625,8 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 rounded-2xl bg-muted/50 px-4 py-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-background">
+                <div className="flex items-center gap-3 rounded-2xl bg-muted/50 px-4 py-3 md:self-center md:shrink-0">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background">
                     <User className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
@@ -643,7 +643,7 @@ export default function CheckoutPage() {
           </Card>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-[1fr_380px]">
           <div className="space-y-6">
             <SectionCard
               icon={User}
@@ -654,7 +654,7 @@ export default function CheckoutPage() {
               )}
             >
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <InputField
                     label={t("checkout.contact.firstName", "Nom")}
                     required
@@ -797,7 +797,7 @@ export default function CheckoutPage() {
                           placeholder={t("checkout.placeholders.address2", "Pis 2n, Porta A")}
                         />
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <InputField
                             label={t("checkout.billing.city", "Ciutat")}
                             required
@@ -1013,7 +1013,7 @@ export default function CheckoutPage() {
                           placeholder={t("checkout.placeholders.address2", "Pis 2n, Porta A")}
                         />
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <InputField
                             label={t("checkout.shipping.city", "Ciutat")}
                             required
@@ -1142,9 +1142,9 @@ export default function CheckoutPage() {
             </SectionCard>
           </div>
 
-          <div className="lg:sticky lg:top-6 h-fit">
+          <div className="lg:sticky lg:top-6 h-fit order-first lg:order-none">
             <Card className="rounded-3xl border shadow-sm">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="mb-5">
                   <h3 className="text-lg font-semibold">
                     {t("checkout.summary.title", "Resum de la comanda")}

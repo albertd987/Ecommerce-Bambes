@@ -107,27 +107,27 @@ export default function OrdersPage() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto max-w-5xl px-4 py-10">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <main className="container mx-auto max-w-5xl px-4 py-6 sm:py-10">
+        <div className="mb-6 sm:mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm text-muted-foreground">
               {t("profile.sections.orders", "Comandes")}
             </p>
-            <h1 className="mt-1 text-3xl font-bold tracking-tight">
+            <h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight">
               {t("orders.title", "Les meves comandes")}
             </h1>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={loadOrders} disabled={loading}>
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            <Button variant="outline" className="w-full sm:w-auto min-h-[44px]" onClick={loadOrders} disabled={loading}>
               <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
               {loading
                 ? t("orders.actions.refreshing", "Actualitzant...")
                 : t("orders.actions.refresh", "Actualitzar")}
             </Button>
 
-            <Link to="/profile">
-              <Button variant="outline">
+            <Link to="/profile" className="w-full sm:w-auto">
+              <Button variant="outline" className="w-full sm:w-auto min-h-[44px]">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 {t("orders.actions.backToProfile", "Tornar al perfil")}
               </Button>
@@ -198,7 +198,7 @@ export default function OrdersPage() {
                     className="rounded-3xl border shadow-sm transition-all hover:shadow-md"
                   >
                     <CardContent className="p-6">
-                      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-3">
                             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted">
@@ -221,7 +221,7 @@ export default function OrdersPage() {
                             </p>
                           )}
 
-                          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
                             <OrderInfoPill
                               label={t("orders.fields.status", "Estat")}
                               value={o?.status || "—"}
@@ -237,9 +237,10 @@ export default function OrdersPage() {
                           </div>
                         </div>
 
-                        <div className="flex shrink-0 flex-col gap-2 sm:flex-row lg:flex-col">
+                        <div className="flex shrink-0 flex-col gap-2">
                           <Button
                             variant="outline"
+                            className="w-full min-h-[44px]"
                             onClick={async () => {
                               try {
                                 await downloadInvoice(o.id)
@@ -259,8 +260,8 @@ export default function OrdersPage() {
                             {t("orders.actions.downloadInvoice", "Download invoice")}
                           </Button>
 
-                          <Link to={`/orders/${o.id}`}>
-                            <Button variant="outline" className="w-full">
+                          <Link to={`/orders/${o.id}`} className="w-full">
+                            <Button variant="outline" className="w-full min-h-[44px]">
                               {t("orders.actions.viewDetail", "View details")}
                             </Button>
                           </Link>

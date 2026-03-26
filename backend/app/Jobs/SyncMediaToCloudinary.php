@@ -10,6 +10,8 @@ use Illuminate\Queue\SerializesModels;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Cloudinary\Cloudinary;
 use Illuminate\Support\Facades\Log;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 
 /**
  * Job asincron per pujar fitxers multimedia locals a Cloudinary.
@@ -71,12 +73,29 @@ class SyncMediaToCloudinary implements ShouldQueue
 
             Log::info("Job: File exists! Uploading to Cloudinary...");
 
+            // Comprimir la imatge si supera 8 MB
+            $uploadPath = $localPath;
+            if (filesize($localPath) > 8 * 1024 * 1024) {
+                $manager = new ImageManager(new Driver());
+                $image = $manager->read($localPath);
+                $image->scaleDown(width: 2500, height: 2500);
+                $tmpPath = sys_get_temp_dir() . '/' . $this->media->file_name;
+                $image->toJpeg(80)->save($tmpPath);
+                $uploadPath = $tmpPath;
+                Log::info("Job: Imatge comprimida de " . round(filesize($localPath) / 1024 / 1024, 2) . " MB a " . round(filesize($tmpPath) / 1024 / 1024, 2) . " MB");
+            }
+
             // Pujar a Cloudinary
-            $result = $cloudinary->uploadApi()->upload($localPath, [
+            $result = $cloudinary->uploadApi()->upload($uploadPath, [
                 'folder' => 'shoes-photos',
                 'public_id' => pathinfo($this->media->file_name, PATHINFO_FILENAME),
                 'overwrite' => false,
             ]);
+
+            // Netejar fitxer temporal si s'ha creat
+            if (isset($tmpPath) && file_exists($tmpPath)) {
+                unlink($tmpPath);
+            }
 
             // Desar el public_id de Cloudinary
             $this->media->setCustomProperty('cloudinary_public_id', $result['public_id']);

@@ -149,7 +149,7 @@ export default function CartPage() {
             </CardFooter>
           </Card>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
+          <div className="grid gap-6 grid-cols-1 lg:grid-cols-[1fr_380px]">
             <div className="space-y-4">
               {items.map((line) => {
                 const p = line.product || {}
@@ -189,9 +189,9 @@ export default function CartPage() {
                     key={line.key}
                     className="rounded-3xl border shadow-sm transition-all hover:shadow-md"
                   >
-                    <CardContent className="p-5">
-                      <div className="flex gap-4">
-                        <div className="h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-muted">
+                    <CardContent className="p-4 sm:p-5">
+                      <div className="flex gap-3 sm:gap-4">
+                        <div className="h-20 w-20 sm:h-24 sm:w-24 shrink-0 overflow-hidden rounded-2xl bg-muted">
                           <img
                             src={imgSrc}
                             alt={p.name || t("cart.productFallback", "Producte")}
@@ -227,18 +227,19 @@ export default function CartPage() {
                             </div>
 
                             <div className="shrink-0 text-left sm:text-right">
-                              <p className="text-lg font-bold">{price.toFixed(2)}€</p>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-base sm:text-lg font-bold">{price.toFixed(2)}€</p>
+                              <p className="text-xs sm:text-sm text-muted-foreground">
                                 {t("cart.lineTotal", "Total")}: {lineTotal.toFixed(2)}€
                               </p>
                             </div>
                           </div>
 
-                          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                            <div className="inline-flex w-fit items-center rounded-2xl border bg-background p-1">
+                          <div className="mt-4 flex flex-row items-center justify-between gap-3">
+                            <div className="inline-flex items-center rounded-2xl border bg-background p-1">
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                className="h-9 w-9 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                                 onClick={() => updateQty(line.key, qty - 1)}
                                 aria-label={t("cart.qty.decrease", "Disminuir quantitat")}
                                 disabled={qty <= 1}
@@ -246,13 +247,14 @@ export default function CartPage() {
                                 <Minus className="h-4 w-4" />
                               </Button>
 
-                              <span className="min-w-10 text-center text-sm font-medium">
+                              <span className="min-w-8 sm:min-w-10 text-center text-sm font-medium">
                                 {qty}
                               </span>
 
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                className="h-9 w-9 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                                 onClick={() => updateQty(line.key, qty + 1)}
                                 aria-label={t("cart.qty.increase", "Augmentar quantitat")}
                               >
@@ -260,9 +262,14 @@ export default function CartPage() {
                               </Button>
                             </div>
 
-                            <Button variant="destructive" onClick={() => removeItem(line.key)}>
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              {t("cart.remove", "Eliminar")}
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="min-h-[44px] px-3 sm:px-4"
+                              onClick={() => removeItem(line.key)}
+                            >
+                              <Trash2 className="h-4 w-4 sm:mr-2" />
+                              <span className="hidden sm:inline">{t("cart.remove", "Eliminar")}</span>
                             </Button>
                           </div>
                         </div>

@@ -28,8 +28,35 @@ export default function UserMenu() {
     closeTimer.current = setTimeout(() => {
       setOpen(false)
       closeTimer.current = null
-    }, 120) // <- ajusta si vols més “tolerància”
+    }, 120) // <- ajusta si vols més "tolerància"
   }
+
+  // Toggle on tap (touch devices don't fire mouseenter reliably)
+  const handleToggle = () => {
+    if (open) {
+      setOpen(false)
+    } else {
+      handleOpen()
+    }
+  }
+
+  // Close on outside click
+  const containerRef = useRef(null)
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false)
+      }
+    }
+    if (open) {
+      document.addEventListener("mousedown", handleOutsideClick)
+      document.addEventListener("touchstart", handleOutsideClick)
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick)
+      document.removeEventListener("touchstart", handleOutsideClick)
+    }
+  }, [open])
 
   // Neteja del timer al desmontar
   useEffect(() => {
@@ -39,12 +66,13 @@ export default function UserMenu() {
   }, [])
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       {/* Trigger */}
       <button
         type="button"
         className="relative inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-muted transition-colors"
         aria-label={t("userMenu.aria.user", "Usuari")}
+        onClick={handleToggle}
         onMouseEnter={handleOpen}
         onMouseLeave={handleClose}
         onFocus={handleOpen}
@@ -53,10 +81,10 @@ export default function UserMenu() {
         <User className="h-5 w-5" />
       </button>
 
-      {/* Dropdown */}
+      {/* Dropdown – anchored right; clamped so it never overflows on small screens */}
       {open && (
         <div
-          className="absolute right-0 mt-2 w-56 rounded-md border bg-background shadow-md z-50"
+          className="absolute right-0 mt-2 w-56 max-w-[calc(100vw-2rem)] rounded-md border bg-background shadow-md z-50"
           onMouseEnter={handleOpen}
           onMouseLeave={handleClose}
         >
@@ -75,7 +103,7 @@ export default function UserMenu() {
 
               <Link
                 to="/profile"
-                className="block px-2 py-2 text-sm rounded-md hover:bg-muted"
+                className="flex items-center min-h-[44px] px-2 py-2 text-sm rounded-md hover:bg-muted"
                 onClick={() => setOpen(false)}
               >
                 {t("userMenu.myProfile", "El meu perfil")}
@@ -83,7 +111,7 @@ export default function UserMenu() {
 
               <Link
                 to="/orders"
-                className="block px-2 py-2 text-sm rounded-md hover:bg-muted"
+                className="flex items-center min-h-[44px] px-2 py-2 text-sm rounded-md hover:bg-muted"
                 onClick={() => setOpen(false)}
               >
                 {t("userMenu.myOrders", "Les meves comandes")}
@@ -93,7 +121,7 @@ export default function UserMenu() {
 
               <button
                 type="button"
-                className="w-full text-left px-2 py-2 text-sm rounded-md hover:bg-muted text-destructive"
+                className="flex items-center w-full min-h-[44px] text-left px-2 py-2 text-sm rounded-md hover:bg-muted text-destructive"
                 onClick={() => {
                   setOpen(false)
                   logout()
@@ -118,7 +146,7 @@ export default function UserMenu() {
 
               <Link
                 to="/login"
-                className="block px-2 py-2 text-sm rounded-md hover:bg-muted"
+                className="flex items-center min-h-[44px] px-2 py-2 text-sm rounded-md hover:bg-muted"
                 onClick={() => setOpen(false)}
               >
                 {t("userMenu.login", "Iniciar sessió")}
@@ -126,7 +154,7 @@ export default function UserMenu() {
 
               <Link
                 to="/register"
-                className="block px-2 py-2 text-sm rounded-md hover:bg-muted"
+                className="flex items-center min-h-[44px] px-2 py-2 text-sm rounded-md hover:bg-muted"
                 onClick={() => setOpen(false)}
               >
                 {t("userMenu.register", "Crear compte")}

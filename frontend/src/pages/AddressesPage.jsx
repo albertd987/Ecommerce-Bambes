@@ -170,18 +170,18 @@ export default function AddressesPage() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto max-w-6xl px-4 py-10">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <main className="container mx-auto max-w-6xl px-4 py-6 sm:py-10">
+        <div className="mb-6 sm:mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm text-muted-foreground">
               {t("profile.sections.addresses", "Direccions")}
             </p>
-            <h1 className="mt-1 text-3xl font-bold tracking-tight">
+            <h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight">
               {t("addresses.title", "Les meves direccions")}
             </h1>
           </div>
 
-          <Button variant="outline" onClick={() => navigate("/profile")}>
+          <Button variant="outline" className="w-full sm:w-auto min-h-[44px]" onClick={() => navigate("/profile")}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             {t("addresses.backToProfile", "Tornar al perfil")}
           </Button>
@@ -227,7 +227,7 @@ export default function AddressesPage() {
           </Card>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
+        <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
           <Card className="rounded-3xl border shadow-sm">
             <CardContent className="p-6">
               <div className="mb-6 flex items-start gap-4">
@@ -277,7 +277,7 @@ export default function AddressesPage() {
                   onChange={(e) => setForm((p) => ({ ...p, line_two: e.target.value }))}
                 />
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 xs:grid-cols-2 sm:grid-cols-2">
                   <InputField
                     label={t("addresses.fields.city", "Ciutat")}
                     required
@@ -314,7 +314,7 @@ export default function AddressesPage() {
                 </div>
 
                 <div className="flex flex-col gap-3 pt-2 sm:flex-row">
-                  <Button type="submit" disabled={saving}>
+                  <Button type="submit" disabled={saving} className="w-full sm:w-auto min-h-[44px]">
                     {saving
                       ? t("addresses.actions.saving", "Desant...")
                       : isEditing
@@ -323,7 +323,7 @@ export default function AddressesPage() {
                   </Button>
 
                   {isEditing && (
-                    <Button type="button" variant="outline" onClick={resetForm}>
+                    <Button type="button" variant="outline" className="w-full sm:w-auto min-h-[44px]" onClick={resetForm}>
                       {t("addresses.actions.cancel", "Cancel·lar")}
                     </Button>
                   )}
@@ -385,11 +385,11 @@ export default function AddressesPage() {
                         </div>
                       </div>
 
-                      <div className="flex shrink-0 gap-2">
-                        <Button variant="outline" onClick={() => handleEdit(address)}>
+                      <div className="flex shrink-0 gap-2 sm:flex-row flex-row">
+                        <Button variant="outline" className="flex-1 sm:flex-none min-h-[44px]" onClick={() => handleEdit(address)}>
                           {t("addresses.actions.edit", "Editar")}
                         </Button>
-                        <Button variant="destructive" onClick={() => handleDelete(address.id)}>
+                        <Button variant="destructive" className="flex-1 sm:flex-none min-h-[44px]" onClick={() => handleDelete(address.id)}>
                           {t("addresses.actions.delete", "Eliminar")}
                         </Button>
                       </div>

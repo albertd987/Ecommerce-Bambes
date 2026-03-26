@@ -58,7 +58,7 @@ export default function FavoritesPage() {
             </h1>
           </div>
 
-          <Button variant="outline" onClick={() => navigate("/profile")}>
+          <Button variant="outline" className="min-h-[44px] w-full sm:w-auto" onClick={() => navigate("/profile")}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             {t("favorites.backToProfile", "Tornar al perfil")}
           </Button>
@@ -121,7 +121,7 @@ export default function FavoritesPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid gap-4 sm:gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {favorites.map((product) => {
               const productId = product?.id
               const productName =
@@ -144,7 +144,7 @@ export default function FavoritesPage() {
                   key={productId}
                   className="group rounded-3xl border shadow-sm transition-all hover:shadow-md"
                 >
-                  <CardContent className="p-4">
+                  <CardContent className="p-3 sm:p-4">
                     <div
                       className="cursor-pointer"
                       onClick={() => navigate(`/products/${productId}`)}
@@ -178,9 +178,9 @@ export default function FavoritesPage() {
                       </div>
                     </div>
 
-                    <div className="mt-4 flex gap-2">
+                    <div className="mt-3 sm:mt-4 flex gap-2">
                       <Button
-                        className="flex-1"
+                        className="flex-1 min-h-[44px] text-xs sm:text-sm"
                         onClick={() => navigate(`/products/${productId}`)}
                       >
                         {t("favorites.viewProduct", "Veure producte")}
@@ -189,6 +189,7 @@ export default function FavoritesPage() {
                       <Button
                         variant="outline"
                         size="icon"
+                        className="min-h-[44px] min-w-[44px] shrink-0"
                         onClick={async () => {
                           try {
                             await toggleFavorite(productId)

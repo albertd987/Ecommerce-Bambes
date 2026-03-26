@@ -164,27 +164,27 @@ export default function OrderDetailPage() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto max-w-5xl px-4 py-10">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <main className="container mx-auto max-w-5xl px-4 py-6 sm:py-10">
+        <div className="mb-6 sm:mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm text-muted-foreground">
               {t("orderDetail.title", "Detall de comanda")}
             </p>
-            <h1 className="mt-1 text-3xl font-bold tracking-tight">
+            <h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight">
               {t("orderDetail.title", "Detall de comanda")}
             </h1>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={loadOrder} disabled={loading}>
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            <Button variant="outline" className="w-full sm:w-auto min-h-[44px]" onClick={loadOrder} disabled={loading}>
               <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
               {loading
                 ? t("orderDetail.actions.refreshing", "Actualitzant...")
                 : t("orderDetail.actions.refresh", "Actualitzar")}
             </Button>
 
-            <Link to="/orders">
-              <Button variant="outline">
+            <Link to="/orders" className="w-full sm:w-auto">
+              <Button variant="outline" className="w-full sm:w-auto min-h-[44px]">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 {t("orderDetail.actions.backToOrders", "Tornar a comandes")}
               </Button>
@@ -223,7 +223,7 @@ export default function OrderDetailPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+          <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
             <div className="space-y-6">
               <Card className="rounded-3xl border shadow-sm">
                 <CardContent className="p-6 md:p-8">
@@ -302,9 +302,9 @@ export default function OrderDetailPage() {
                     {lines.map((l) => (
                       <div
                         key={l.id || l.identifier}
-                        className="flex items-center justify-between gap-4 rounded-2xl bg-muted/30 px-4 py-3 text-sm"
+                        className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-2xl bg-muted/30 px-4 py-3 text-sm"
                       >
-                        <span className="min-w-0">
+                        <span className="min-w-0 break-words">
                           {l.name}{" "}
                           <span className="text-muted-foreground">x{l.quantity}</span>
                         </span>
@@ -402,7 +402,7 @@ export default function OrderDetailPage() {
               )}
             </div>
 
-            <div className="h-fit space-y-6 lg:sticky lg:top-6">
+            <div className="h-fit space-y-6 xl:sticky xl:top-6">
               <SectionCard
                 icon={FileText}
                 title={t("orderDetail.sections.totals", "Totals")}

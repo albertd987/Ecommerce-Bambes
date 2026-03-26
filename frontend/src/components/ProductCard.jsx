@@ -7,6 +7,7 @@ export default function ProductCard({ product }) {
         <img
           src={product.thumbnail || 'https://via.placeholder.com/400x400/e5e7eb/6b7280?text=No+Image'}
           alt={product.name}
+          loading="lazy"
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
         {product.stock_status === 'out_of_stock' && (
@@ -20,7 +21,7 @@ export default function ProductCard({ product }) {
         {product.brand && (
           <p className="text-xs text-orange-600 font-medium">{product.brand}</p>
         )}
-        <h3 className="font-medium text-[13px] leading-tight text-foreground">
+        <h3 className="font-medium text-[13px] leading-tight text-foreground line-clamp-2">
           {product.name}
         </h3>
         {product.description && (

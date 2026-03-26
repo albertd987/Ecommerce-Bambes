@@ -36,7 +36,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto px-4 py-10 max-w-lg">
+      <main className="container mx-auto px-4 py-8 sm:py-10 w-full max-w-sm sm:max-w-lg">
         <Card>
           <CardHeader>
             <CardTitle>

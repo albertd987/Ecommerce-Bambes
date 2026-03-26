@@ -114,26 +114,26 @@ export default function ProfileEditPage() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto max-w-4xl px-4 py-10">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <main className="container mx-auto max-w-4xl px-4 py-6 sm:py-10">
+        <div className="mb-6 sm:mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm text-muted-foreground">
               {t("profile.title", "El meu perfil")}
             </p>
-            <h1 className="mt-1 text-3xl font-bold tracking-tight">
+            <h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight">
               {t("profileEdit.title", "Editar perfil")}
             </h1>
           </div>
 
-          <Button variant="outline" onClick={() => navigate("/profile")}>
+          <Button variant="outline" className="w-full sm:w-auto min-h-[44px]" onClick={() => navigate("/profile")}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             {t("profileEdit.actions.back", "Tornar al perfil")}
           </Button>
         </div>
 
         <Card className="rounded-3xl border shadow-sm">
-          <CardContent className="p-6 md:p-8">
-            <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+          <CardContent className="p-5 sm:p-6 md:p-8">
+            <div className="mb-6 sm:mb-8 flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
               <div className="flex items-start gap-4">
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
                   <PencilLine className="h-7 w-7" />
@@ -166,7 +166,7 @@ export default function ProfileEditPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="grid gap-5 md:grid-cols-2">
+              <div className="grid gap-5 sm:grid-cols-2">
                 <InputField
                   label={t("profile.fields.name", "Nom")}
                   value={form.name}
@@ -197,7 +197,7 @@ export default function ProfileEditPage() {
               />
 
               <div className="flex flex-col gap-3 pt-4 sm:flex-row">
-                <Button type="submit" disabled={loading}>
+                <Button type="submit" disabled={loading} className="w-full sm:w-auto min-h-[44px]">
                   {loading
                     ? t("profileEdit.actions.saving", "Desant...")
                     : t("profileEdit.actions.save", "Guardar canvis")}
@@ -206,6 +206,7 @@ export default function ProfileEditPage() {
                 <Button
                   type="button"
                   variant="outline"
+                  className="w-full sm:w-auto min-h-[44px]"
                   onClick={() => navigate("/profile")}
                 >
                   {t("profileEdit.actions.cancel", "Cancel·lar")}

@@ -158,9 +158,9 @@ class ManageProductColors extends Page implements HasForms
                     ->image()
                     ->reorderable()
                     ->maxFiles(10)
-                    ->maxSize(20480)
+                    ->maxSize(30720)
                     ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
-                    ->helperText('Màx. 10 imatges, 5 MB cadascuna.'),
+                    ->helperText('Màx. 10 imatges, 30 MB cadascuna.'),
             ])
             ->statePath('uploadData');
     }

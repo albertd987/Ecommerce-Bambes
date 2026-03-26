@@ -158,7 +158,7 @@ export default function ChangePasswordPage() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto max-w-4xl px-4 py-10">
+      <main className="container mx-auto max-w-4xl px-4 py-8 sm:py-10">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm text-muted-foreground">
@@ -169,7 +169,7 @@ export default function ChangePasswordPage() {
             </h1>
           </div>
 
-          <Button variant="outline" onClick={() => navigate("/profile")}>
+          <Button variant="outline" className="min-h-[44px] w-full sm:w-auto" onClick={() => navigate("/profile")}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             {t("changePassword.backToProfile", "Tornar al perfil")}
           </Button>
@@ -269,7 +269,7 @@ export default function ChangePasswordPage() {
               </div>
 
               <div className="flex flex-col gap-3 pt-4 sm:flex-row">
-                <Button type="submit" disabled={loading}>
+                <Button type="submit" disabled={loading} className="min-h-[44px] w-full sm:w-auto">
                   {loading
                     ? t("changePassword.actions.changing", "Canviant...")
                     : t("changePassword.actions.submit", "Canviar contrasenya")}
@@ -278,6 +278,7 @@ export default function ChangePasswordPage() {
                 <Button
                   type="button"
                   variant="outline"
+                  className="min-h-[44px] w-full sm:w-auto"
                   onClick={() => navigate("/profile")}
                 >
                   {t("profileEdit.actions.cancel", "Cancel·lar")}

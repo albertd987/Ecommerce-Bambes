@@ -1,4 +1,4 @@
-import { ShoppingCart, Heart, Search, X } from "lucide-react"
+import { ShoppingCart, Heart, Search, X, Menu } from "lucide-react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
 import { useCart } from "@/context/cart-context"
 import { useFavorites } from "@/context/favorites-context"
@@ -19,11 +19,17 @@ export default function Header() {
 
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchValue, setSearchValue] = useState("")
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
     setSearchValue(params.get("q") || "")
   }, [location.search])
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false)
+  }, [location.pathname])
 
   const switchTo = (next) => {
     if (next === lang) return
@@ -55,30 +61,42 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4 gap-4">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4 gap-2 md:gap-4">
+
+        {/* Left: hamburger (mobile) + logo */}
         <div className="flex items-center gap-2 shrink-0">
+          {/* Hamburger – only on mobile */}
+          <button
+            type="button"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-muted transition-colors md:hidden"
+            aria-label={mobileMenuOpen ? t("nav.closeMenu", "Tancar menú") : t("nav.openMenu", "Obrir menú")}
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+          >
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+
           <h1 className="text-xl font-bold">{t("app.name")}</h1>
         </div>
 
+        {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-6">
           <Link to="/" className={navLinkClass}>
             {t("nav.products")}
           </Link>
-
-
 
           <Link to="/about" className={navLinkClass}>
             {t("nav.about")}
           </Link>
         </nav>
 
-        <div className="flex items-center gap-3">
-          {/* Cerca */}
+        {/* Right: icons */}
+        <div className="flex items-center gap-1 md:gap-3">
+          {/* Search */}
           <div className="relative flex items-center">
             {searchOpen ? (
-              <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
-                <div className="flex items-center rounded-md border bg-background px-3 h-10 w-[220px]">
-                  <Search className="h-4 w-4 text-muted-foreground mr-2" />
+              <form onSubmit={handleSearchSubmit} className="flex items-center gap-1 md:gap-2">
+                <div className="flex items-center rounded-md border bg-background px-3 h-10 w-[calc(100vw-8rem)] sm:w-[260px] md:w-[220px]">
+                  <Search className="h-4 w-4 text-muted-foreground mr-2 shrink-0" />
                   <input
                     autoFocus
                     type="text"
@@ -112,12 +130,12 @@ export default function Header() {
             )}
           </div>
 
-          {/* Selector idioma */}
-          <div className="inline-flex items-center rounded-md border bg-background p-1">
+          {/* Language switcher – hide on mobile when search is open to save space */}
+          <div className={`inline-flex items-center rounded-md border bg-background p-1 ${searchOpen ? "hidden sm:inline-flex" : "inline-flex"}`}>
             <button
               type="button"
               onClick={() => switchTo("ca")}
-              className={`px-2 py-1 text-xs font-medium rounded ${
+              className={`px-1.5 py-1 text-xs font-medium rounded md:px-2 ${
                 lang.startsWith("ca")
                   ? "bg-foreground text-background"
                   : "text-muted-foreground hover:text-foreground"
@@ -130,7 +148,7 @@ export default function Header() {
             <button
               type="button"
               onClick={() => switchTo("en")}
-              className={`px-2 py-1 text-xs font-medium rounded ${
+              className={`px-1.5 py-1 text-xs font-medium rounded md:px-2 ${
                 lang.startsWith("en")
                   ? "bg-foreground text-background"
                   : "text-muted-foreground hover:text-foreground"
@@ -141,10 +159,10 @@ export default function Header() {
             </button>
           </div>
 
-          {/* FAVORITS */}
+          {/* Favorites – hide on mobile when search is open */}
           <Link
             to="/favorites"
-            className="relative inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-muted transition-colors"
+            className={`relative inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-muted transition-colors ${searchOpen ? "hidden sm:inline-flex" : "inline-flex"}`}
             aria-label={t("favorites.title", "Els meus favorits")}
           >
             <Heart className="h-5 w-5" />
@@ -155,10 +173,10 @@ export default function Header() {
             )}
           </Link>
 
-          {/* USUARI */}
+          {/* User */}
           <UserMenu />
 
-          {/* CISTELLA */}
+          {/* Cart */}
           <Link
             to="/cart"
             className="relative inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-muted transition-colors"
@@ -171,6 +189,26 @@ export default function Header() {
           </Link>
         </div>
       </div>
+
+      {/* Mobile nav drawer */}
+      {mobileMenuOpen && (
+        <nav className="md:hidden border-t bg-background px-4 py-3 flex flex-col gap-1">
+          <Link
+            to="/"
+            className="block rounded-md px-3 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            {t("nav.products")}
+          </Link>
+          <Link
+            to="/about"
+            className="block rounded-md px-3 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            {t("nav.about")}
+          </Link>
+        </nav>
+      )}
     </header>
   )
 }
