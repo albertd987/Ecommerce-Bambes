@@ -18,7 +18,9 @@ export function AuthProvider({ children }) {
         setUser(response.data)
       }
     } catch (error) {
-      console.error('Error verificant autenticació:', error)
+      if (error.response?.status !== 401) {
+        console.error('Error verificant autenticació:', error)
+      }
       setUser(null)
     } finally {
       setLoading(false)
