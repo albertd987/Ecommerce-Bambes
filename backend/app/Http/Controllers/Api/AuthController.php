@@ -256,10 +256,21 @@ public function updateProfile(Request $request)
         'phone' => ['nullable', 'string', 'max:50'],
     ]);
 
+    $emailChanged = $data['email'] !== $user->email;
+
     $user->name = $data['name'];
     $user->email = $data['email'];
     $user->phone = $data['phone'] ?? null;
+
+    if ($emailChanged) {
+        $user->email_verified_at = null;
+    }
+
     $user->save();
+
+    if ($emailChanged) {
+        $user->sendEmailVerificationNotification();
+    }
 
     return response()->json([
         'message' => 'Dades personals actualitzades correctament.',
