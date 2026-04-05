@@ -59,9 +59,25 @@ PROMPT;
     public function chat(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'message' => ['required', 'string'],
-            'history' => ['nullable', 'array'],
+            'message' => ['required', 'string', 'max:2000'],
+            'history' => ['nullable', 'array', 'max:50'],
+            'history.*.role' => ['required', 'string', 'in:user,model'],
+            'history.*.parts' => ['required', 'array', 'min:1', 'max:10'],
+            'history.*.parts.*.text' => ['nullable', 'string', 'max:4000'],
         ]);
+
+        // Defence in depth: strip any keys other than role + parts[*].text so
+        // forged functionCall/functionResponse parts never reach Gemini.
+        $history = collect($validated['history'] ?? [])->map(function ($turn) {
+            return [
+                'role' => $turn['role'],
+                'parts' => collect($turn['parts'])
+                    ->filter(fn ($part) => isset($part['text']) && is_string($part['text']))
+                    ->map(fn ($part) => ['text' => $part['text']])
+                    ->values()
+                    ->all(),
+            ];
+        })->filter(fn ($turn) => !empty($turn['parts']))->values()->all();
 
         try {
             $service = new ChatbotService(
@@ -70,7 +86,7 @@ PROMPT;
             );
             $result = $service->chat(
                 $validated['message'],
-                $validated['history'] ?? []
+                $history
             );
 
             return response()->json([
