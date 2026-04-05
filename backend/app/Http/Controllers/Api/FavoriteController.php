@@ -14,7 +14,7 @@ class FavoriteController extends Controller
         $favorites = Favorite::where('user_id', $request->user()->id)
             ->with([
                 'product.brand',
-                'product.thumbnail',
+                'product.thumbnailMedia',
                 'product.variants.prices',
             ])
             ->get()
@@ -40,6 +40,8 @@ class FavoriteController extends Controller
     public function toggle(Request $request, Product $product)
     {
         $user = $request->user();
+
+        abort_if($product->status !== 'published', 404);
 
         $favorite = Favorite::where('user_id', $user->id)
             ->where('product_id', $product->id)
@@ -127,29 +129,18 @@ class FavoriteController extends Controller
 
     private function extractThumbnailUrl(Product $product): ?string
     {
-        $thumb = $product->thumbnail ?? null;
+        $media = $product->thumbnailMedia ?? null;
 
-        if (!$thumb) {
+        if (!$media) {
             return null;
         }
 
-        if (method_exists($thumb, 'getUrl')) {
-            try {
-                $url = $thumb->getUrl();
-                if (is_string($url) && trim($url) !== '') {
-                    return $url;
-                }
-            } catch (\Throwable $e) {
-            }
+        try {
+            $url = $media->getUrl();
+            return is_string($url) && trim($url) !== '' ? $url : null;
+        } catch (\Throwable $e) {
+            return null;
         }
-
-        foreach (['url', 'src', 'path', 'original_url'] as $field) {
-            if (!empty($thumb->{$field}) && is_string($thumb->{$field})) {
-                return $thumb->{$field};
-            }
-        }
-
-        return null;
     }
 
   private function extractPrice(Product $product): float
