@@ -142,15 +142,14 @@ class CartController extends Controller
                     'tax_included' => true,
                 ]
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Cart index error', [
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'error' => 'Error al obtenir el carret',
-                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -230,17 +229,14 @@ class CartController extends Controller
                     'cart_token' => $cart->meta['token'] ?? null,
                 ]
             ]);
-        } catch (\Exception $e) {
-            Log::error('Error en afegir al carret', [
+        } catch (\Throwable $e) {
+            Log::error('Cart add error', [
                 'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'error' => 'Error al afegir al carret',
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
             ], 500);
         }
     }
@@ -283,10 +279,14 @@ class CartController extends Controller
                     'total' => round($subTotal, 2),
                 ]
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            Log::error('Cart updateLine error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return response()->json([
                 'error' => 'Error al actualitzar',
-                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -313,10 +313,14 @@ class CartController extends Controller
             return response()->json([
                 'message' => 'Producte eliminat del carret'
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            Log::error('Cart removeLine error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return response()->json([
                 'error' => 'Error al eliminar',
-                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -342,10 +346,14 @@ class CartController extends Controller
             return response()->json([
                 'message' => 'Carret buidat'
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            Log::error('Cart clear error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return response()->json([
                 'error' => 'Error al buidar el carret',
-                'message' => $e->getMessage()
             ], 500);
         }
     }

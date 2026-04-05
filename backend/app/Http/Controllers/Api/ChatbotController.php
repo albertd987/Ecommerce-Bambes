@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\ChatbotService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Controlador del chatbot de la botiga (frontend públic).
@@ -78,8 +79,12 @@ PROMPT;
                 'highlight' => $result['highlight'] ?? null,
             ]);
         } catch (\Throwable $e) {
+            Log::error('Chatbot endpoint error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
             return response()->json([
-                'error' => 'Error intern del servidor: ' . $e->getMessage(),
+                'error' => 'Error intern del servidor',
             ], 500);
         }
     }

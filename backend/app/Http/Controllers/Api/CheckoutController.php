@@ -69,9 +69,11 @@ class CheckoutController extends Controller
         try {
             $lines = $this->resolveVariantLines($data['lines']);
         } catch (\Throwable $e) {
+            Log::warning('Checkout resolveVariantLines error', [
+                'message' => $e->getMessage(),
+            ]);
             return response()->json([
                 'error' => 'Línies invàlides',
-                'message' => $e->getMessage(),
             ], 422);
         }
 
@@ -121,9 +123,12 @@ class CheckoutController extends Controller
                 'resolved_lines' => $lines,
             ]);
         } catch (\Throwable $e) {
-            return response()->json([
-                'error' => 'Stripe error',
+            Log::error('Stripe createIntent error', [
                 'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'error' => 'Error iniciant el pagament',
             ], 500);
         }
     }
@@ -328,7 +333,6 @@ class CheckoutController extends Controller
         ]);
         return response()->json([
             'message' => 'Error creant la comanda',
-            'error' => $e->getMessage(),
         ], 500);
     }
 }
