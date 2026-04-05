@@ -66,20 +66,22 @@ PROMPT;
             'history.*.parts.*.text' => ['nullable', 'string', 'max:4000'],
         ]);
 
-        // Defence in depth: strip any keys other than role + parts[*].text so
-        // forged functionCall/functionResponse parts never reach Gemini.
-        $history = collect($validated['history'] ?? [])->map(function ($turn) {
-            return [
-                'role' => $turn['role'],
-                'parts' => collect($turn['parts'])
-                    ->filter(fn ($part) => isset($part['text']) && is_string($part['text']))
-                    ->map(fn ($part) => ['text' => $part['text']])
-                    ->values()
-                    ->all(),
-            ];
-        })->filter(fn ($turn) => !empty($turn['parts']))->values()->all();
-
         try {
+            // Defence in depth: strip any keys other than role + parts[*].text so
+            // forged functionCall/functionResponse parts never reach Gemini.
+            // Read raw input (not $validated) so we can safely sanitise entries
+            // even when the validator trimmed them out.
+            $history = collect($request->input('history', []))->map(function ($turn) {
+                return [
+                    'role' => $turn['role'] ?? 'user',
+                    'parts' => collect($turn['parts'] ?? [])
+                        ->filter(fn ($part) => is_array($part) && isset($part['text']) && is_string($part['text']))
+                        ->map(fn ($part) => ['text' => $part['text']])
+                        ->values()
+                        ->all(),
+                ];
+            })->filter(fn ($turn) => !empty($turn['parts']))->values()->all();
+
             $service = new ChatbotService(
                 systemPrompt: self::SYSTEM_PROMPT,
                 allowedTools: ['highlight_element'],
