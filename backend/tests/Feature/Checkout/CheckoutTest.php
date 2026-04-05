@@ -129,6 +129,7 @@ class CheckoutTest extends TestCase
             'id'              => 'pi_test_456',
             'status'          => 'succeeded',
             'amount_received' => $expectedTotal,
+            'currency'        => 'eur',
         ];
 
         $mock = \Mockery::mock('alias:\Stripe\PaymentIntent');
@@ -171,6 +172,7 @@ class CheckoutTest extends TestCase
             'id'              => 'pi_test_pending',
             'status'          => 'requires_payment_method',
             'amount_received' => 0,
+            'currency'        => 'eur',
         ];
 
         $mock = \Mockery::mock('alias:\Stripe\PaymentIntent');
@@ -203,6 +205,7 @@ class CheckoutTest extends TestCase
             'id'              => 'pi_test_mismatch',
             'status'          => 'succeeded',
             'amount_received' => 1, // Wrong amount
+            'currency'        => 'eur',
         ];
 
         $mock = \Mockery::mock('alias:\Stripe\PaymentIntent');
@@ -235,6 +238,7 @@ class CheckoutTest extends TestCase
             'id'              => 'pi_test_dupe',
             'status'          => 'succeeded',
             'amount_received' => $total,
+            'currency'        => 'eur',
         ];
 
         $mock = \Mockery::mock('alias:\Stripe\PaymentIntent');

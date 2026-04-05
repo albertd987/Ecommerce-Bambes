@@ -66,6 +66,16 @@ class CheckoutController extends Controller
             'lines.*.product_id' => ['nullable', 'integer'],
         ], $this->customerValidationRules()));
 
+        $currency = \Lunar\Models\Currency::where('default', true)->first();
+        $channel  = \Lunar\Models\Channel::getDefault();
+
+        if (!$currency || !$channel) {
+            Log::error('Checkout createIntent: missing default currency or channel');
+            return response()->json([
+                'message' => 'Configuració de botiga incompleta',
+            ], 500);
+        }
+
         try {
             $lines = $this->resolveVariantLines($data['lines']);
         } catch (\Throwable $e) {
@@ -77,7 +87,7 @@ class CheckoutController extends Controller
             ], 422);
         }
 
-        $subtotal = $this->calculateAmountFromDb($lines);
+        $subtotal = $this->calculateAmountFromDb($lines, $currency->id);
 
         if ($subtotal <= 0) {
             return response()->json([
@@ -101,7 +111,7 @@ class CheckoutController extends Controller
 
             $intent = \Stripe\PaymentIntent::create([
                 'amount' => (int) $total,
-                'currency' => 'eur',
+                'currency' => strtolower($currency->code),
                 'automatic_payment_methods' => ['enabled' => true],
                 'metadata' => [
                     'source' => 'bambes',
@@ -153,9 +163,21 @@ class CheckoutController extends Controller
         'lang' => ['nullable', 'string'],
     ], $this->customerValidationRules()));
 
+    $currency = \Lunar\Models\Currency::where('default', true)->first();
+    $channel  = \Lunar\Models\Channel::getDefault();
+
+    if (!$currency || !$channel) {
+        Log::error('Checkout confirm: missing default currency or channel');
+        return response()->json([
+            'message' => 'Configuració de botiga incompleta',
+        ], 500);
+    }
+
+    $currencyCode = $currency->code;
+
     $lines = $this->resolveVariantLines($data['lines']);
 
-    $subtotal = $this->calculateAmountFromDb($lines);
+    $subtotal = $this->calculateAmountFromDb($lines, $currency->id);
     $shippingTotal = self::SHIPPING_FLAT_RATE;
     $gross = $subtotal + $shippingTotal;
     $taxTotal = (int) round($gross - ($gross / (1 + self::TAX_RATE)));
@@ -180,6 +202,16 @@ class CheckoutController extends Controller
         ], 422);
     }
 
+    if (strtolower($pi->currency) !== strtolower($currencyCode)) {
+        Log::warning('Checkout confirm: currency mismatch', [
+            'pi_currency' => $pi->currency,
+            'expected' => $currencyCode,
+        ]);
+        return response()->json([
+            'message' => 'Moneda del pagament no vàlida',
+        ], 422);
+    }
+
     $existing = Order::query()->where('reference', $pi->id)->first();
     if ($existing) {
         return response()->json([
@@ -188,7 +220,25 @@ class CheckoutController extends Controller
         ]);
     }
 
-    $currencyCode = DB::table('lunar_currencies')->where('id', 1)->value('code') ?? 'EUR';
+    // Re-validar stock ABANS de crear la comanda. Si ha desaparegut entre
+    // createIntent i confirm, retorna el pagament i aborta.
+    $stockCheck = $this->validateStock($lines);
+    if ($stockCheck !== true) {
+        try {
+            \Stripe\Refund::create(['payment_intent' => $pi->id]);
+        } catch (\Throwable $refundException) {
+            Log::critical('Stock gone AND refund failed', [
+                'pi_id' => $pi->id,
+                'user_id' => $user->id,
+                'refund_error' => $refundException->getMessage(),
+            ]);
+        }
+
+        return response()->json([
+            'error' => 'Stock insuficient — pagament retornat',
+            'details' => $stockCheck['details'] ?? [],
+        ], 409);
+    }
 
     $customer = $data['customer'];
     $billing = $data['billing'];
@@ -201,7 +251,7 @@ class CheckoutController extends Controller
     try {
         $orderId = DB::table('lunar_orders')->insertGetId([
             'user_id' => $user->id,
-            'channel_id' => 1,
+            'channel_id' => $channel->id,
             'status' => 'paid',
             'reference' => $pi->id,
 
@@ -261,7 +311,7 @@ class CheckoutController extends Controller
             $variantId = (int) $l['variant_id'];
             $qty = (int) $l['qty'];
 
-            $unitPrice = $this->getUnitPriceFromDb($variantId);
+            $unitPrice = $this->getUnitPriceFromDb($variantId, $currency->id);
 
             $variant = ProductVariant::with('product')->find($variantId);
             $desc = $variant?->product?->translateAttribute('name')
@@ -292,6 +342,7 @@ class CheckoutController extends Controller
 
         DB::commit();
 
+        $pdfPath = null;
         try {
             $formattedOrder = $this->formatOrderFromDb($orderId);
 
@@ -311,15 +362,15 @@ class CheckoutController extends Controller
                     new OrderConfirmationMail($formattedOrder, $pdfPath, $lang)
                 );
             }
-
-            if ($pdfPath && file_exists($pdfPath)) {
-                @unlink($pdfPath);
-            }
         } catch (\Throwable $mailException) {
             Log::error('Order confirmation email error: ' . $mailException->getMessage(), [
                 'order_id' => $orderId,
                 'trace' => $mailException->getTraceAsString(),
             ]);
+        } finally {
+            if ($pdfPath && file_exists($pdfPath)) {
+                @unlink($pdfPath);
+            }
         }
 
         return response()->json([
@@ -373,14 +424,14 @@ class CheckoutController extends Controller
         return $out;
     }
 
-    private function calculateAmountFromDb(array $lines): int
+    private function calculateAmountFromDb(array $lines, int $currencyId): int
     {
         $variantIds = collect($lines)->pluck('variant_id')->unique()->values();
 
         $prices = DB::table('lunar_prices')
             ->where('priceable_type', 'product_variant')
             ->whereIn('priceable_id', $variantIds)
-            ->where('currency_id', 1)
+            ->where('currency_id', $currencyId)
             ->where('min_quantity', 1)
             ->pluck('price', 'priceable_id');
 
@@ -441,12 +492,12 @@ class CheckoutController extends Controller
         return true;
     }
 
-    private function getUnitPriceFromDb(int $variantId): int
+    private function getUnitPriceFromDb(int $variantId, int $currencyId): int
     {
         $price = DB::table('lunar_prices')
             ->where('priceable_type', 'product_variant')
             ->where('priceable_id', $variantId)
-            ->where('currency_id', 1)
+            ->where('currency_id', $currencyId)
             ->where('min_quantity', 1)
             ->value('price');
 
