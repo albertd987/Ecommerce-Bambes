@@ -12,10 +12,14 @@ use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 use App\Http\Controllers\Api\FavoriteController;
 use App\Http\Controllers\Api\UserAddressController;
+use App\Http\Controllers\Api\ChatbotController;
 
 // ==========================================
 // RUTES PÚBLIQUES
 // ==========================================
+
+// Chatbot de la botiga
+Route::post('/chatbot', [ChatbotController::class, 'chat']);
 
 // Productes
 Route::get('/products', [ProductController::class, 'index']);

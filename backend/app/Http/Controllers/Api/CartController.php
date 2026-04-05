@@ -90,7 +90,7 @@ class CartController extends Controller
                 'lines',
                 'lines.purchasable',
                 'lines.purchasable.product',
-                'lines.purchasable.product.thumbnail',
+                'lines.purchasable.product.thumbnailMedia',
                 'lines.purchasable.product.brand',
             ]);
 
@@ -122,7 +122,7 @@ class CartController extends Controller
                             'product' => [
                                 'id' => $line->purchasable->product->id,
                                 'name' => $line->purchasable->product->translateAttribute('name'),
-                                'thumbnail' => $line->purchasable->product->thumbnail?->getUrl('medium'),
+                                'thumbnail' => $line->purchasable->product->thumbnailMedia?->getUrl(),
                                 'brand' => $line->purchasable->product->brand?->name ?? null,
                             ],
                             'variant' => [

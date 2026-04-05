@@ -90,7 +90,7 @@ class ProductController extends Controller
                 'variants.prices',
                 'variants.values', // size/color
                 'collections',     // type
-                'thumbnail',
+                'thumbnailMedia',
                 'brand',
             ])
                 ->where('status', 'published')
@@ -137,7 +137,7 @@ class ProductController extends Controller
                     'price' => $priceCents / 100,
                     'price_cents' => $priceCents,
 
-                    'thumbnail' => $product->thumbnail?->getUrl() ?? null,
+                    'thumbnail' => $product->thumbnailMedia?->getUrl() ?? null,
                     'first_variant_id' => $firstVariant?->id,
 
                     'size' => $sizeValue,
@@ -257,8 +257,7 @@ class ProductController extends Controller
         $product = Product::with([
             'variants.prices',
             'variants.values',
-            'thumbnail',
-            'images',
+            'thumbnailMedia',
         ])->findOrFail($id);
 
         $firstVariant = $product->variants->first();
@@ -278,8 +277,8 @@ class ProductController extends Controller
                 'description' => $product->translateAttribute('description'),
                 'brand'       => $product->brand?->name ?? 'Sense marca',
                 'price'       => $priceValue / 100,
-                'thumbnail'   => $product->thumbnail?->getUrl(),
-                'images'      => $product->images->map(fn($img) => $img->getUrl()),
+                'thumbnail'   => $product->thumbnailMedia?->getUrl(),
+                'images'      => [],
                 'colors'      => $colors,   // NEW — per-color images + sizes
                 'variants'    => $product->variants->map(function ($variant) use ($sizeOptionId, $colorOptionId, $getValueEn) {
                     $sizeVal  = $variant->values->first(fn($v) => $v->product_option_id === $sizeOptionId);

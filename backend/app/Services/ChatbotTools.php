@@ -133,6 +133,25 @@ class ChatbotTools
                     ],
                 ],
             ],
+            [
+                'name' => 'highlight_element',
+                'description' => 'Ressalta visualment un element de la interfície de la botiga per guiar l\'usuari.',
+                'parameters' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'target' => [
+                            'type' => 'string',
+                            'enum' => [
+                                'cart', 'search', 'favorites', 'user-menu',
+                                'nav-products', 'nav-about',
+                                'filter-size', 'filter-color', 'filter-brand',
+                            ],
+                            'description' => 'Identificador de l\'element a ressaltar.'
+                        ]
+                    ],
+                    'required' => ['target']
+                ]
+            ],
         ];
     }
 
@@ -156,6 +175,7 @@ class ChatbotTools
             'get_recent_orders' => self::getRecentOrders($args),
             'get_customer_count' => self::getCustomerCount($args),
             'get_revenue_by_brand' => self::getRevenueByBrand($args),
+            'highlight_element' => ['highlighted' => true, 'target' => $args['target'] ?? ''],
             default => ['error' => "Funcio '$name' no reconeguda."],
         };
 
@@ -229,18 +249,18 @@ class ChatbotTools
 
         $stats = $query->selectRaw('
             COUNT(*) as total_orders,
-            COALESCE(SUM(sub_total), 0) as subtotal,
-            COALESCE(SUM(tax_total), 0) as tax,
-            COALESCE(SUM(discount_total), 0) as discounts,
-            COALESCE(SUM(total), 0) as total
+            COALESCE(SUM(sub_total), 0) as sum_subtotal,
+            COALESCE(SUM(tax_total), 0) as sum_tax,
+            COALESCE(SUM(discount_total), 0) as sum_discounts,
+            COALESCE(SUM(total), 0) as sum_total
         ')->first();
 
         return [
             'total_orders' => (int) $stats->total_orders,
-            'subtotal_eur' => round($stats->subtotal / 100, 2),
-            'tax_eur' => round($stats->tax / 100, 2),
-            'discounts_eur' => round($stats->discounts / 100, 2),
-            'total_eur' => round($stats->total / 100, 2),
+            'subtotal_eur' => round($stats->sum_subtotal / 100, 2),
+            'tax_eur' => round($stats->sum_tax / 100, 2),
+            'discounts_eur' => round($stats->sum_discounts / 100, 2),
+            'total_eur' => round($stats->sum_total / 100, 2),
             'period' => $period ?? 'all_time',
         ];
     }

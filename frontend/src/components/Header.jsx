@@ -80,11 +80,11 @@ export default function Header() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-6">
-          <Link to="/" className={navLinkClass}>
+          <Link to="/" className={navLinkClass} data-highlight="nav-products">
             {t("nav.products")}
           </Link>
 
-          <Link to="/about" className={navLinkClass}>
+          <Link to="/about" className={navLinkClass} data-highlight="nav-about">
             {t("nav.about")}
           </Link>
         </nav>
@@ -124,6 +124,7 @@ export default function Header() {
                 onClick={() => setSearchOpen(true)}
                 className="relative inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-muted transition-colors"
                 aria-label={t("home.filters.search", "Cerca")}
+                data-highlight="search"
               >
                 <Search className="h-5 w-5" />
               </button>
@@ -164,6 +165,7 @@ export default function Header() {
             to="/favorites"
             className={`relative inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-muted transition-colors ${searchOpen ? "hidden sm:inline-flex" : "inline-flex"}`}
             aria-label={t("favorites.title", "Els meus favorits")}
+            data-highlight="favorites"
           >
             <Heart className="h-5 w-5" />
             {favoritesCount > 0 && (
@@ -174,13 +176,16 @@ export default function Header() {
           </Link>
 
           {/* User */}
-          <UserMenu />
+          <div data-highlight="user-menu">
+            <UserMenu />
+          </div>
 
           {/* Cart */}
           <Link
             to="/cart"
             className="relative inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-muted transition-colors"
             aria-label={t("cart.title", "Carret")}
+            data-highlight="cart"
           >
             <ShoppingCart className="h-5 w-5" />
             <span className="absolute -top-1 -right-1 h-5 min-w-5 px-1 rounded-full bg-primary text-xs text-primary-foreground flex items-center justify-center">

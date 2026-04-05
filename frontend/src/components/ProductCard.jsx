@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 
 export default function ProductCard({ product }) {
   return (
-    <Link to={`/products/${product.id}`} className="group block">
+    <Link to={`/products/${product.id}`} className="group block" data-highlight={"product-" + product.id}>
       <div className="relative aspect-square overflow-hidden bg-[#f5f5f5] rounded-lg mb-2">
         <img
           src={product.thumbnail || 'https://via.placeholder.com/400x400/e5e7eb/6b7280?text=No+Image'}

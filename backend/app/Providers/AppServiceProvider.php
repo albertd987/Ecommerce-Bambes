@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Filament\Lunar\Extensions\ProductResourceColorsExtension;
 use App\Filament\Lunar\Extensions\ProductResourceExtension;
+use App\Filament\Lunar\Extensions\ProductResourcePriceExtension;
 use App\Filament\Lunar\Extensions\ProductResourceStockExtension;
 use App\Models\Product;
 use App\Observers\MediaObserver;
@@ -15,6 +16,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Lunar\Admin\Filament\Resources\ProductResource as LunarProductResource;
+use Lunar\Admin\Filament\Resources\ProductResource\Pages\EditProduct as LunarEditProduct;
 use Lunar\Admin\Filament\Resources\ProductResource\Pages\ListProducts as LunarListProducts;
 use Lunar\Admin\Support\Facades\LunarPanel;
 use Lunar\Facades\ModelManifest;
@@ -37,6 +39,7 @@ class AppServiceProvider extends ServiceProvider
                 ProductResourceStockExtension::class,
                 ProductResourceColorsExtension::class,
             ],
+            LunarEditProduct::class     => ProductResourcePriceExtension::class,
         ]);
 
         // Registrar App\Models\Product al manifest de Lunar perquè
@@ -51,7 +54,7 @@ class AppServiceProvider extends ServiceProvider
 
         FilamentView::registerRenderHook(
             PanelsRenderHook::BODY_END,
-            fn () => Blade::render('@livewire(\'chatbot-widget\')')
+            fn () => auth()->check() ? Blade::render('@livewire(\'chatbot-widget\')') : ''
         );
 
         // Personalitza el link de verificació perquè apunti al FRONTEND

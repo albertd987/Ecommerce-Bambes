@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Lunar\FieldTypes\TranslatedText;
 use App\Models\Product;
@@ -309,13 +310,25 @@ class SimpleProductCreator
         $isFirstImage = $product->thumbnail_id === null;
 
         foreach ($images as $image) {
-            if (!$image || !$image->isValid()) {
+            if (!$image) {
                 continue;
             }
 
-            $media = $product
-                ->addMedia($image)
-                ->toMediaCollection('images');
+            if (is_string($image)) {
+                if (!\Storage::disk('public')->exists($image)) {
+                    continue;
+                }
+                $media = $product
+                    ->addMediaFromDisk($image, 'public')
+                    ->toMediaCollection('images');
+            } else {
+                if (!$image->isValid()) {
+                    continue;
+                }
+                $media = $product
+                    ->addMedia($image)
+                    ->toMediaCollection('images');
+            }
 
             if ($isFirstImage) {
                 $product->update(['thumbnail_id' => $media->id]);

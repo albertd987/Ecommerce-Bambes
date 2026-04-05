@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Lunar\Models\Product as LunarProduct;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
@@ -40,6 +41,17 @@ class Product extends LunarProduct
         'thumbnail_id',
     ];
 
+
+    /**
+     * Relació directa al media de miniatura via thumbnail_id.
+     * Lunar defineix thumbnail() com a morphOne filtrant per model_type,
+     * però les imatges ara estan a ProductColor. Aquesta relació usa
+     * belongsTo directament sense cap filtre de model_type.
+     */
+    public function thumbnailMedia(): BelongsTo
+    {
+        return $this->belongsTo(Media::class, 'thumbnail_id');
+    }
 
     /**
      * Registra les conversions de mida d'imatge per al producte.

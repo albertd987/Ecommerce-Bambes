@@ -47,15 +47,21 @@ class ChatbotService
     private string $systemPrompt;
 
     /**
+     * Element de la interfície a ressaltar, establert per highlight_element.
+     */
+    private ?string $highlightTarget = null;
+
+    /**
      * Inicialitza el servei amb la configuracio del fitxer config/chatbot.php.
      *
+     * @param  string|null  $systemPrompt  Prompt de sistema personalitzat. Si null, usa config('chatbot.system_prompt').
      * @return void
      */
-    public function __construct()
+    public function __construct(?string $systemPrompt = null)
     {
         $this->apiKey = config('chatbot.api_key');
         $this->model = config('chatbot.model');
-        $this->systemPrompt = config('chatbot.system_prompt');
+        $this->systemPrompt = $systemPrompt ?? config('chatbot.system_prompt');
     }
 
     /**
@@ -88,6 +94,7 @@ class ChatbotService
                 return [
                     'response' => $this->formatApiError($response['error']),
                     'history' => $history,
+                    'highlight' => null,
                 ];
             }
 
@@ -97,6 +104,7 @@ class ChatbotService
                 return [
                     'response' => "No he pogut generar una resposta. Torna-ho a intentar.",
                     'history' => $history,
+                    'highlight' => null,
                 ];
             }
 
@@ -107,16 +115,27 @@ class ChatbotService
 
             if ($functionCall) {
                 // Afegir la resposta del model a l'historial
+                // Normalitzem args a objecte per evitar que PHP serialitzi {} com []
+                $normalizedParts = array_map(function ($part) {
+                    if (isset($part['functionCall']['args']) && is_array($part['functionCall']['args']) && empty($part['functionCall']['args'])) {
+                        $part['functionCall']['args'] = new \stdClass();
+                    }
+                    return $part;
+                }, $parts);
+
                 $history[] = [
                     'role' => 'model',
-                    'parts' => $parts,
+                    'parts' => $normalizedParts,
                 ];
 
                 // Executar l'eina i afegir el resultat a l'historial
-                $toolResult = ChatbotTools::execute(
-                    $functionCall['name'],
-                    $functionCall['args'] ?? []
-                );
+                $toolArgs = $functionCall['args'] ?? [];
+                $toolResult = ChatbotTools::execute($functionCall['name'], $toolArgs);
+
+                // Si l'eina és highlight_element, desar el target per retornar-lo
+                if ($functionCall['name'] === 'highlight_element') {
+                    $this->highlightTarget = $toolArgs['target'] ?? '';
+                }
 
                 $history[] = [
                     'role' => 'user',
@@ -145,12 +164,14 @@ class ChatbotService
             return [
                 'response' => $textResponse,
                 'history' => $history,
+                'highlight' => $this->highlightTarget,
             ];
         }
 
         return [
             'response' => "He hagut de limitar les consultes per evitar un bucle. Pots reformular la pregunta?",
             'history' => $history,
+            'highlight' => $this->highlightTarget,
         ];
     }
 

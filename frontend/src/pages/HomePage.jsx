@@ -282,6 +282,7 @@ function FilterSidebar({
       </div>
 
       <div className="flex-1 overflow-y-auto px-4">
+        <div data-highlight="filter-brand">
         <CollapsibleSection
           title={t("home.filters.brand")}
           count={counts.brands}
@@ -308,6 +309,7 @@ function FilterSidebar({
             </div>
           )}
         </CollapsibleSection>
+        </div>
 
         <CollapsibleSection
           title={t("home.filters.type")}
@@ -336,6 +338,7 @@ function FilterSidebar({
           )}
         </CollapsibleSection>
 
+        <div data-highlight="filter-size">
         <CollapsibleSection
           title={t("home.filters.size")}
           count={counts.sizes}
@@ -362,7 +365,9 @@ function FilterSidebar({
             </div>
           )}
         </CollapsibleSection>
+        </div>
 
+        <div data-highlight="filter-color">
         <CollapsibleSection
           title={t("home.filters.color")}
           count={counts.colors}
@@ -389,6 +394,7 @@ function FilterSidebar({
             </div>
           )}
         </CollapsibleSection>
+        </div>
 
         <CollapsibleSection
           title={t("home.filters.price")}

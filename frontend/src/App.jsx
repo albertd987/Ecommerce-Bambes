@@ -16,6 +16,7 @@ import AboutPage from "@/pages/AboutPage"
 import FavoritesPage from "@/pages/FavoritesPage"
 import AddressesPage from "@/pages/AddressesPage"
 import ProfileEditPage from "@/pages/ProfileEditPage"
+import ChatbotWidget from './components/ChatbotWidget'
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
         <Route path="/profile/edit" element={<ProfileEditPage />} />
       </Routes>
       <Toaster position="bottom-right" richColors theme="light" />
+      <ChatbotWidget />
     </BrowserRouter>
   )
 }
