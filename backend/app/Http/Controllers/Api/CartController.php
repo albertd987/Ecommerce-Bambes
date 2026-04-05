@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Lunar\Facades\CartSession;
 use Lunar\Models\ProductVariant;
 use Lunar\Models\Cart;
@@ -166,69 +167,84 @@ class CartController extends Controller
         ]);
 
         try {
-            $variant = ProductVariant::findOrFail($request->variant_id);
+            return DB::transaction(function () use ($request) {
+                // Lock the variant row so concurrent adds of the same variant can't
+                // each see stock = N and race past the check.
+                $variant = ProductVariant::lockForUpdate()->find($request->variant_id);
 
-            if ($variant->stock < $request->quantity) {
-                return response()->json([
-                    'error' => 'Stock insuficient',
-                    'available_stock' => $variant->stock
-                ], 400);
-            }
+                // Resolve the existing cart (if any) BEFORE the stock check so we can
+                // compute cumulative quantity already in the cart for this variant.
+                $cart = null;
 
-            // Cercar carret existent per token o crear-ne un de nou
-            $cart = null;
+                if ($request->cart_token) {
+                    $cart = Cart::where('meta->token', $request->cart_token)->first();
+                    if ($cart) {
+                        CartSession::use($cart);
+                    }
+                }
 
-            if ($request->cart_token) {
-                $cart = Cart::where('meta->token', $request->cart_token)->first();
+                if (!$cart) {
+                    $cart = CartSession::current();
+                }
+
+                $currentQty = 0;
                 if ($cart) {
+                    $currentQty = (int) $cart->lines()
+                        ->where('purchasable_type', 'product_variant')
+                        ->where('purchasable_id', $variant->id)
+                        ->sum('quantity');
+                }
+
+                $requestedQty = (int) $request->quantity;
+                $totalQty = $currentQty + $requestedQty;
+
+                if ($variant->stock < $totalQty) {
+                    return response()->json([
+                        'error' => 'Stock insuficient',
+                        'available_stock' => max(0, $variant->stock - $currentQty),
+                    ], 400);
+                }
+
+                if (!$cart) {
+                    $currency = \Lunar\Models\Currency::where('default', true)->first();
+
+                    if (!$currency) {
+                        return response()->json(['error' => 'No hi ha cap moneda configurada'], 500);
+                    }
+
+                    $cartToken = \Illuminate\Support\Str::uuid();
+
+                    $cart = Cart::create([
+                        'currency_id' => $currency->id,
+                        'channel_id' => \Lunar\Models\Channel::getDefault()?->id,
+                        'meta' => ['token' => $cartToken],
+                    ]);
+
                     CartSession::use($cart);
                 }
-            }
 
-            if (!$cart) {
-                $cart = CartSession::current();
-            }
-
-            if (!$cart) {
-                $currency = \Lunar\Models\Currency::where('default', true)->first();
-
-                if (!$currency) {
-                    return response()->json(['error' => 'No hi ha cap moneda configurada'], 500);
+                // Associar el carret amb l'usuari autenticat (per restaurar-lo en re-login)
+                if (auth()->check() && !$cart->user_id) {
+                    $cart->update(['user_id' => auth()->id()]);
                 }
 
-                $cartToken = \Illuminate\Support\Str::uuid();
-
-                $cart = Cart::create([
-                    'currency_id' => $currency->id,
-                    'channel_id' => \Lunar\Models\Channel::getDefault()?->id,
-                    'meta' => ['token' => $cartToken],
+                CartSession::addLines([
+                    [
+                        'purchasable' => $variant,
+                        'quantity' => $requestedQty,
+                    ],
                 ]);
 
-                CartSession::use($cart);
-            }
+                $cart = CartSession::current();
 
-            // Associar el carret amb l'usuari autenticat (per restaurar-lo en re-login)
-            if (auth()->check() && !$cart->user_id) {
-                $cart->update(['user_id' => auth()->id()]);
-            }
-
-            // Afegir línia al carret
-            CartSession::addLines([
-                [
-                    'purchasable' => $variant,
-                    'quantity' => $request->quantity,
-                ]
-            ]);
-
-            $cart = CartSession::current();
-
-            return response()->json([
-                'message' => 'Producte afegit al carret',
-                'data' => [
-                    'cart_id' => $cart->id,
-                    'cart_token' => $cart->meta['token'] ?? null,
-                ]
-            ]);
+                return response()->json([
+                    'message' => 'Producte afegit al carret',
+                    'data' => [
+                        'cart_id' => $cart->id,
+                        'cart_token' => $cart->meta['token'] ?? null,
+                    ],
+                ]);
+            });
         } catch (\Throwable $e) {
             Log::error('Cart add error', [
                 'message' => $e->getMessage(),
