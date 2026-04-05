@@ -29,11 +29,13 @@ class ChatbotTools
      * Cada eina te un nom, una descripcio i un esquema de parametres
      * que Gemini utilitza per decidir quina funcio cridar i amb quins arguments.
      *
+     * @param  array|null  $only  Llista blanca de noms d'eines a retornar.
+     *                            Si és null, retorna totes les eines (backoffice).
      * @return array Llista de declaracions de funcions per a l'API de Gemini.
      */
-    public static function getToolDefinitions(): array
+    public static function getToolDefinitions(?array $only = null): array
     {
-        return [
+        $all = [
             [
                 'name' => 'get_top_selling_products',
                 'description' => 'Obte els productes mes venuts en un periode determinat. Retorna nom del producte, unitats venudes i ingressos generats.',
@@ -153,6 +155,15 @@ class ChatbotTools
                 ]
             ],
         ];
+
+        if ($only === null) {
+            return $all;
+        }
+
+        return array_values(array_filter(
+            $all,
+            fn ($tool) => in_array($tool['name'], $only, true)
+        ));
     }
 
     /**

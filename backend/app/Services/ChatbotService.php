@@ -52,16 +52,24 @@ class ChatbotService
     private ?string $highlightTarget = null;
 
     /**
+     * Llista blanca d'eines que es poden exposar a Gemini i executar.
+     * Null = totes les eines (backoffice). Array = només aquests noms (públic).
+     */
+    private ?array $allowedTools;
+
+    /**
      * Inicialitza el servei amb la configuracio del fitxer config/chatbot.php.
      *
      * @param  string|null  $systemPrompt  Prompt de sistema personalitzat. Si null, usa config('chatbot.system_prompt').
+     * @param  array|null   $allowedTools  Llista blanca d'eines. Null = totes (backoffice).
      * @return void
      */
-    public function __construct(?string $systemPrompt = null)
+    public function __construct(?string $systemPrompt = null, ?array $allowedTools = null)
     {
         $this->apiKey = config('chatbot.api_key');
         $this->model = config('chatbot.model');
         $this->systemPrompt = $systemPrompt ?? config('chatbot.system_prompt');
+        $this->allowedTools = $allowedTools;
     }
 
     /**
@@ -114,6 +122,19 @@ class ChatbotService
             $functionCall = $this->extractFunctionCall($parts);
 
             if ($functionCall) {
+                // Safety: refusa executar eines fora de la whitelist encara que Gemini al·lucini
+                if ($this->allowedTools !== null && !in_array($functionCall['name'], $this->allowedTools, true)) {
+                    Log::warning('Gemini tried to call a non-whitelisted tool', [
+                        'tool' => $functionCall['name'],
+                        'allowed' => $this->allowedTools,
+                    ]);
+                    return [
+                        'response' => "No puc executar aquesta acció.",
+                        'history' => $history,
+                        'highlight' => null,
+                    ];
+                }
+
                 // Afegir la resposta del model a l'historial
                 // Normalitzem args a objecte per evitar que PHP serialitzi {} com []
                 $normalizedParts = array_map(function ($part) {
@@ -213,7 +234,7 @@ class ChatbotService
      */
     private function formatToolsForGemini(): array
     {
-        $definitions = ChatbotTools::getToolDefinitions();
+        $definitions = ChatbotTools::getToolDefinitions($this->allowedTools);
 
         return [
             [

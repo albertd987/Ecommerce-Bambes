@@ -63,7 +63,10 @@ PROMPT;
         ]);
 
         try {
-            $service = new ChatbotService(self::SYSTEM_PROMPT);
+            $service = new ChatbotService(
+                systemPrompt: self::SYSTEM_PROMPT,
+                allowedTools: ['highlight_element'],
+            );
             $result = $service->chat(
                 $validated['message'],
                 $validated['history'] ?? []
