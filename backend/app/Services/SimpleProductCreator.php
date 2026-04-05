@@ -351,7 +351,7 @@ class SimpleProductCreator
         $counter   = 1;
 
         while (
-            Product::where('slug', $candidate)
+            Product::withoutGlobalScopes()->where('slug', $candidate)
                 ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
                 ->exists()
         ) {
