@@ -18,8 +18,10 @@ use App\Http\Controllers\Api\ChatbotController;
 // RUTES PÚBLIQUES
 // ==========================================
 
-// Chatbot de la botiga
-Route::post('/chatbot', [ChatbotController::class, 'chat']);
+// Chatbot de la botiga — 20 peticions/minut per IP (cada crida pot fer fins a 5 a Gemini)
+Route::middleware('throttle:20,1')->group(function () {
+    Route::post('/chatbot', [ChatbotController::class, 'chat']);
+});
 
 // Productes
 Route::get('/products', [ProductController::class, 'index']);
@@ -35,8 +37,8 @@ Route::middleware(['web'])->prefix('/cart')->group(function () {
     Route::delete('/', [CartController::class, 'clear']);
 });
 
-// Autenticació
-Route::middleware(['web'])->group(function () {
+// Autenticació — 5 peticions/minut per IP (protecció contra brute force + email spam)
+Route::middleware(['web', 'throttle:5,1'])->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
 });
