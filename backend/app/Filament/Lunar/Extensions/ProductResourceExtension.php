@@ -5,8 +5,6 @@ namespace App\Filament\Lunar\Extensions;
 use App\Services\SimpleProductCreator;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\CheckboxList;
-use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -68,45 +66,25 @@ class ProductResourceExtension extends BaseExtension
                     ->placeholder('Descriu breument el producte...')
                     ->rows(2),
 
-                Grid::make(2)->schema([
-                    Select::make('brand_id')
-                        ->label('Marca')
-                        ->options($brandOptions)
-                        ->searchable()
-                        ->placeholder('Sense marca')
-                        ->createOptionForm([
-                            TextInput::make('name')
-                                ->label('Nom de la nova marca')
-                                ->required()
-                                ->maxLength(100),
-                        ])
-                        ->createOptionUsing(function (array $data) {
-                            return Brand::create(['name' => trim($data['name'])])->id;
-                        }),
-
-                    TextInput::make('stock')
-                        ->label('Stock inicial')
-                        ->numeric()
-                        ->default(0)
-                        ->minValue(0)
-                        ->suffix('unitats'),
-                ]),
+                Select::make('brand_id')
+                    ->label('Marca')
+                    ->options($brandOptions)
+                    ->searchable()
+                    ->placeholder('Sense marca')
+                    ->createOptionForm([
+                        TextInput::make('name')
+                            ->label('Nom de la nova marca')
+                            ->required()
+                            ->maxLength(100),
+                    ])
+                    ->createOptionUsing(function (array $data) {
+                        return Brand::create(['name' => trim($data['name'])])->id;
+                    }),
 
                 CheckboxList::make('collection_ids')
                     ->label('Categories')
                     ->options($collectionOptions)
                     ->columns(2),
-
-                FileUpload::make('images')
-                    ->label('Imatges (opcional)')
-                    ->multiple()
-                    ->image()
-                    ->reorderable()
-                    ->maxFiles(10)
-                    ->maxSize(5120)
-                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
-                    ->helperText('La primera imatge serà la miniatura. Màx. 10 imatges, 5 MB cadascuna.')
-                    ->directory('tmp-products'),
             ])
             ->using(function (array $data, string $model): Model {
                 return app(SimpleProductCreator::class)->create([
@@ -115,14 +93,12 @@ class ProductResourceExtension extends BaseExtension
                     'brand_id'       => $data['brand_id'] ?? null,
                     'price'          => (float) $data['price'],
                     'collection_ids' => $data['collection_ids'] ?? [],
-                    'images'         => $data['images'] ?? [],
-                    'stock'          => (int) ($data['stock'] ?? 0),
                     'has_variants'   => false,
                 ]);
             })
             ->successRedirectUrl(fn(Model $record): string => ProductResource::getUrl('colors', [
                 'record' => $record,
-            ]));
+            ], panel: 'lunar'));
 
         return [$createAction];
     }
