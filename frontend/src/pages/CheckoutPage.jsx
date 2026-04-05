@@ -299,7 +299,7 @@ export default function CheckoutPage() {
 
   const lines = useMemo(() => {
     return (items ?? []).map((l) => ({
-      product_id: l?.product?.id,
+      variant_id: l?.variantId,
       qty: Number(l?.qty ?? 1),
     }))
   }, [items])
@@ -446,11 +446,11 @@ export default function CheckoutPage() {
       return
     }
 
-    if (lines.some((l) => !l.product_id)) {
+    if (lines.some((l) => !l.variant_id)) {
       setError(
         t(
-          "checkout.errors.missingProductId",
-          "Hi ha productes al carret sense product_id."
+          "checkout.errors.missingVariantId",
+          "Hi ha productes al carret sense variant."
         )
       )
       return

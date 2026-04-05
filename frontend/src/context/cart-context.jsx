@@ -158,6 +158,7 @@ export function CartProvider({ children }) {
       return {
         key: `line:${line.id}`,
         lineId: line.id,
+        variantId: line.variant?.id ?? null,
         raw: line,
         product: {
           id: line.product?.id,
@@ -301,6 +302,7 @@ export function CartProvider({ children }) {
   const itemsFlat = useMemo(
     () => items.map(l => ({
       key: l.key,
+      variantId: l.variantId,
       ...l.product,
       qty: l.qty,
     })),
