@@ -59,6 +59,12 @@ export const resendVerification = async () => {
 api.interceptors.request.use((config) => {
   const lang = i18n.language || localStorage.getItem("lang") || "ca"
   config.headers["Accept-Language"] = lang
+
+  const cartToken = localStorage.getItem("cart_token")
+  if (cartToken) {
+    config.headers["X-Cart-Token"] = cartToken
+  }
+
   return config
 })
 

@@ -96,11 +96,7 @@ export function CartProvider({ children }) {
   // Obtenir carret del servidor
   const fetchCart = async () => {
     try {
-      const cartToken = localStorage.getItem('cart_token')
-
-      const response = await api.get("/cart", {
-        params: cartToken ? { cart_token: cartToken } : {}
-      })
+      const response = await api.get("/cart")
 
       const cartData = response.data?.data ?? response.data
       setCart(cartData)
@@ -195,12 +191,10 @@ export function CartProvider({ children }) {
     setLoading(true)
     try {
       const variantId = productRaw.variant_id || productRaw.id
-      const cartToken = localStorage.getItem('cart_token')
 
       const response = await api.post('/cart/add', {
         variant_id: variantId,
         quantity: Math.max(1, Number(qty) || 1),
-        cart_token: cartToken,
       })
 
       // Desar el token que retorna el backend
@@ -232,11 +226,7 @@ export function CartProvider({ children }) {
       const item = items.find(i => i.key === key)
       if (!item) return { success: false }
 
-      const cartToken = localStorage.getItem('cart_token')
-
-      await api.delete(`/cart/lines/${item.lineId}`, {
-        params: cartToken ? { cart_token: cartToken } : {}
-      })
+      await api.delete(`/cart/lines/${item.lineId}`)
 
       await fetchCart()
       return { success: true }
@@ -256,11 +246,9 @@ export function CartProvider({ children }) {
       if (!item) return { success: false }
 
       const nextQty = Math.max(1, Number(qty) || 1)
-      const cartToken = localStorage.getItem('cart_token')
 
       await api.put(`/cart/lines/${item.lineId}`, {
         quantity: nextQty,
-        cart_token: cartToken,
       })
 
       await fetchCart()
@@ -280,11 +268,7 @@ export function CartProvider({ children }) {
   const clearCart = async () => {
     setLoading(true)
     try {
-      const cartToken = localStorage.getItem('cart_token')
-
-      await api.delete('/cart', {
-        params: cartToken ? { cart_token: cartToken } : {}
-      })
+      await api.delete('/cart')
 
       setCart(null)
       localStorage.removeItem('cart_token') // Eliminar token en buidar

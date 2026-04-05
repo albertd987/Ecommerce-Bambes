@@ -35,8 +35,10 @@ class CartController extends Controller
      */
     private function getCartByTokenOrSession(Request $request)
     {
-        // 1. Token explícit del frontend
-        $cartToken = $request->input('cart_token') ?? $request->query('cart_token');
+        // 1. Token explícit del frontend (header preferit, body/query com a fallback)
+        $cartToken = $request->header('X-Cart-Token')
+            ?? $request->input('cart_token')
+            ?? $request->query('cart_token');
 
         if ($cartToken) {
             $cart = Cart::where('meta->token', $cartToken)->first();
@@ -176,8 +178,10 @@ class CartController extends Controller
                 // compute cumulative quantity already in the cart for this variant.
                 $cart = null;
 
-                if ($request->cart_token) {
-                    $cart = Cart::where('meta->token', $request->cart_token)->first();
+                $cartToken = $request->header('X-Cart-Token') ?? $request->input('cart_token');
+
+                if ($cartToken) {
+                    $cart = Cart::where('meta->token', $cartToken)->first();
                     if ($cart) {
                         CartSession::use($cart);
                     }
