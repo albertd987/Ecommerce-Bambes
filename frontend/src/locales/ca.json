@@ -337,7 +337,7 @@
       "missingStripeKey": "Falta VITE_STRIPE_PUBLISHABLE_KEY. Revisa el teu .env del frontend.",
       "reviewRequiredFields": "Revisa els camps obligatoris.",
       "cartEmpty": "El carret està buit.",
-      "missingProductId": "Hi ha productes al carret sense product_id.",
+      "missingVariantId": "Hi ha productes al carret sense variant.",
       "noClientSecret": "El servidor no ha retornat client_secret."
     }
   },

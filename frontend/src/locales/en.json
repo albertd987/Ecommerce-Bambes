@@ -337,7 +337,7 @@
       "missingStripeKey": "Missing VITE_STRIPE_PUBLISHABLE_KEY. Check your frontend .env.",
       "reviewRequiredFields": "Please review the required fields.",
       "cartEmpty": "Your cart is empty.",
-      "missingProductId": "Some cart items are missing product_id.",
+      "missingVariantId": "Some cart items are missing a variant.",
       "noClientSecret": "The server did not return client_secret."
     }
   },
