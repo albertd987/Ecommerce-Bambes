@@ -444,8 +444,36 @@
       "email": "you@example.com",
       "password": "Minimum 8 characters",
       "passwordConfirm": "Repeat your password"
-    }
+    },
+    "strength": {
+  "title": "Password strength",
+  "weak": "Weak",
+  "medium": "Medium",
+  "strong": "Strong",
+  "veryStrong": "Very strong"
+},
+"rules": {
+  "length": "At least 8 characters",
+  "lowercase": "Contains a lowercase letter",
+  "uppercase": "Contains an uppercase letter",
+  "number": "Contains a number",
+  "special": "Contains a special character"
+},
+"errors": {
+  "confirmMismatch": "Confirmation does not match."
+},
+"confirmation": {
+  "match": "Passwords match",
+  "noMatch": "Passwords do not match"
+},
+"capsLock": {
+  "warning": "Caps Lock is on"
+}
   },
+  "capsLock": {
+  "warning": "Caps Lock is on"
+},
+
   "verifyEmail": {
     "title": "Verify your email",
     "signedInAs": "Signed in as",

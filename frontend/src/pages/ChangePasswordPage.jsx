@@ -6,7 +6,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { changePassword } from "@/services/api"
 import { useTranslation } from "react-i18next"
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowLeft, KeyRound, Shield } from "lucide-react"
+import { AlertTriangle, ArrowLeft, KeyRound, Shield } from "lucide-react"
 
 function PasswordField({
   label,
@@ -15,15 +15,23 @@ function PasswordField({
   placeholder,
   error,
   autoComplete,
+  onKeyUp,
+  onKeyDown,
+  capsLockOn = false,
 }) {
+  const { t } = useTranslation()
+
   return (
     <div>
       <label className="mb-1 block text-sm font-medium text-foreground">
         {label}
       </label>
+
       <input
         value={value}
         onChange={onChange}
+        onKeyUp={onKeyUp}
+        onKeyDown={onKeyDown}
         type="password"
         autoComplete={autoComplete}
         placeholder={placeholder}
@@ -31,6 +39,14 @@ function PasswordField({
           error ? "border-destructive" : ""
         }`}
       />
+
+      {capsLockOn ? (
+        <div className="mt-2 flex items-center gap-2 rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-3 py-2 text-xs text-yellow-700">
+          <AlertTriangle className="h-4 w-4" />
+          <span>{t("capsLock.warning", "Majúscules activades")}</span>
+        </div>
+      ) : null}
+
       {error ? <p className="mt-1 text-xs text-destructive">{error}</p> : null}
     </div>
   )
@@ -120,7 +136,21 @@ export default function ChangePasswordPage() {
   const [errorMsg, setErrorMsg] = useState("")
   const [fieldErrors, setFieldErrors] = useState({})
 
+  const [capsLock, setCapsLock] = useState({
+    current: false,
+    next: false,
+    confirm: false,
+  })
+
   const passwordStrength = useMemo(() => getPasswordStrength(password), [password])
+
+  const handleCapsLock = (field) => (e) => {
+    const isOn = e.getModifierState && e.getModifierState("CapsLock")
+    setCapsLock((prev) => ({
+      ...prev,
+      [field]: !!isOn,
+    }))
+  }
 
   if (!isLoggedIn) {
     return (
@@ -136,7 +166,7 @@ export default function ChangePasswordPage() {
                 )}
               </p>
               <Link to="/login">
-                <Button>{t("auth.login.title", "Iniciar sessió")}</Button>
+                <Button>{t("auth.login", "Iniciar sessió")}</Button>
               </Link>
             </CardContent>
           </Card>
@@ -202,6 +232,11 @@ export default function ChangePasswordPage() {
       setCurrentPassword("")
       setPassword("")
       setPasswordConfirmation("")
+      setCapsLock({
+        current: false,
+        next: false,
+        confirm: false,
+      })
     } catch (err) {
       const status = err?.response?.status
       const data = err?.response?.data
@@ -320,6 +355,9 @@ export default function ChangePasswordPage() {
                 )}
                 autoComplete="current-password"
                 error={fieldErrors?.current_password?.[0]}
+                onKeyUp={handleCapsLock("current")}
+                onKeyDown={handleCapsLock("current")}
+                capsLockOn={capsLock.current}
               />
 
               <div className="grid gap-5 md:grid-cols-2">
@@ -334,6 +372,9 @@ export default function ChangePasswordPage() {
                     )}
                     autoComplete="new-password"
                     error={fieldErrors?.password?.[0]}
+                    onKeyUp={handleCapsLock("next")}
+                    onKeyDown={handleCapsLock("next")}
+                    capsLockOn={capsLock.next}
                   />
 
                   {password ? (
@@ -414,6 +455,9 @@ export default function ChangePasswordPage() {
                   )}
                   autoComplete="new-password"
                   error={fieldErrors?.password_confirmation?.[0]}
+                  onKeyUp={handleCapsLock("confirm")}
+                  onKeyDown={handleCapsLock("confirm")}
+                  capsLockOn={capsLock.confirm}
                 />
               </div>
 

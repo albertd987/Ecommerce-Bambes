@@ -444,8 +444,38 @@
       "email": "tu@exemple.com",
       "password": "Mínim 8 caràcters",
       "passwordConfirm": "Repeteix la contrasenya"
-    }
+    },
+    "strength": {
+  "title": "Força de la contrasenya",
+  "weak": "Feble",
+  "medium": "Mitjana",
+  "strong": "Forta",
+  "veryStrong": "Molt forta"
+},
+"rules": {
+  "length": "Mínim 8 caràcters",
+  "lowercase": "Conté una lletra minúscula",
+  "uppercase": "Conté una lletra majúscula",
+  "number": "Conté un número",
+  "special": "Conté un caràcter especial"
+},
+"errors": {
+  "confirmMismatch": "La confirmació no coincideix."
+},
+"confirmation": {
+  "match": "Les contrasenyes coincideixen",
+  "noMatch": "Les contrasenyes no coincideixen"
+},
+"capsLock": {
+  "warning": "Majúscules activades"
+}
   },
+
+  "capsLock": {
+  "warning": "Majúscules activades"
+},
+
+
   "verifyEmail": {
     "title": "Verifica el teu correu",
     "signedInAs": "Sessió iniciada com",
