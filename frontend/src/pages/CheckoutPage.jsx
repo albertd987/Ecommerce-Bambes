@@ -785,7 +785,7 @@ export default function CheckoutPage() {
 
             <SectionCard
               icon={MapPin}
-              title={t("checkout.addressBook.title", "Direccions")}
+              title={t("checkout.addressBook.title", "Adreça de facturació")}
               subtitle={t(
                 "checkout.addressBook.subtitle",
                 "Selecciona una direcció guardada o crea'n una de nova."

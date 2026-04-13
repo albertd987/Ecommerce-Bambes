@@ -262,7 +262,7 @@
       "state": "Província"
     },
     "addressBook": {
-      "title": "Direccions",
+      "title": "Adreça de facturació",
       "subtitle": "Selecciona una direcció guardada o crea'n una de nova.",
       "loading": "Carregant direccions...",
       "defaultBadge": "Predeterminada",

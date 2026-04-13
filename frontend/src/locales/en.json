@@ -262,7 +262,7 @@
       "state": "State / Province"
     },
     "addressBook": {
-      "title": "Addresses",
+      "title": "Billing address",
       "subtitle": "Select a saved address or create a new one.",
       "loading": "Loading addresses...",
       "defaultBadge": "Default",
