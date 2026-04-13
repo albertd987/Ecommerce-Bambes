@@ -12,7 +12,9 @@ use App\Notifications\CustomVerifyEmail;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\UserAddress;
-
+use Illuminate\Notifications\Notifications\ResetPassword;
+use Illuminate\Auth\Notifications\ResetPassword as ResetPasswordNotification;
+use App\Notifications\CustomResetPasswordNotification;
 /**
  * Model d'usuari de l'aplicació ecommerce.
  *
@@ -132,6 +134,12 @@ public function favorites()
 public function addresses(): HasMany
 {
     return $this->hasMany(UserAddress::class)->orderByDesc('is_default')->orderBy('label');
+}
+
+public function sendPasswordResetNotification($token)
+{
+    $lang = app()->getLocale();
+    $this->notify(new CustomResetPasswordNotification($token, $lang));
 }
 
 }

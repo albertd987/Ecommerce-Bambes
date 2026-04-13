@@ -12,6 +12,8 @@ use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 use App\Http\Controllers\Api\FavoriteController;
 use App\Http\Controllers\Api\UserAddressController;
+use App\Http\Controllers\Api\ForgotPasswordController;
+
 
 // ==========================================
 // RUTES PÚBLIQUES
@@ -35,6 +37,9 @@ Route::middleware(['web'])->prefix('/cart')->group(function () {
 Route::middleware(['web'])->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
+
+    Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail']);
+    Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword']);
 });
 
 // ==========================================
