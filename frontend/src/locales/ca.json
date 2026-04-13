@@ -157,6 +157,7 @@
     "orders": {
       "description": "Consulta les teves comandes realitzades.",
       "view": "Veure comandes"
+
     },
     "favorites": {
       "description": "Consulta els productes que has guardat com a favorits.",
@@ -419,6 +420,7 @@
   "login": {
     "title": "Iniciar sessió",
     "email": "Correu electrònic",
+    "forgotPassword": "Has oblidat la contrasenya?",
     "password": "Contrasenya",
     "submit": "Entrar",
     "loading": "Carregant...",
@@ -429,6 +431,49 @@
       "password": "Contrasenya"
     }
   },
+  "forgotPassword": {
+  "title": "Recuperar contrasenya",
+  "description": "Escriu el teu correu i t’enviarem un enllaç per restablir la contrasenya.",
+  "email": "Correu electrònic",
+  "placeholder": "tu@exemple.com",
+  "submit": "Enviar enllaç",
+  "loading": "Enviant...",
+  "success": "Si el correu existeix, t’hem enviat un enllaç per restablir la contrasenya.",
+  "error": "No s’ha pogut enviar el correu.",
+  "backToLogin": "Tornar a iniciar sessió"
+},
+"resetPassword": {
+  "title": "Nova contrasenya",
+  "email": "Correu electrònic",
+  "password": "Nova contrasenya",
+  "passwordConfirm": "Confirma la contrasenya",
+  "submit": "Restablir contrasenya",
+  "loading": "Desant...",
+  "success": "Contrasenya restablerta correctament.",
+  "backToLogin": "Tornar a iniciar sessió",
+  "placeholders": {
+    "password": "Mínim 8 caràcters",
+    "passwordConfirm": "Repeteix la contrasenya"
+  },
+  "errors": {
+    "missingToken": "Falta el token de recuperació.",
+    "generic": "No s’ha pogut restablir la contrasenya."
+  },
+  "strength": {
+    "title": "Força de la contrasenya",
+    "weak": "Feble",
+    "medium": "Mitjana",
+    "strong": "Forta",
+    "veryStrong": "Molt forta"
+  },
+  "rules": {
+    "length": "Mínim 8 caràcters",
+    "lowercase": "Conté una lletra minúscula",
+    "uppercase": "Conté una lletra majúscula",
+    "number": "Conté un número",
+    "special": "Conté un caràcter especial"
+  }
+},
   "register": {
     "title": "Crear compte",
     "fullName": "Nom complet",
@@ -574,6 +619,13 @@
   },
   "orders": {
     "title": "Les meves comandes",
+    "statusValues": {
+      "paid": "Pagada",
+      "pending": "Pendent",
+      "processing": "En procés",
+      "cancelled": "Cancel·lada",
+      "completed": "Completada"
+    },
     "subtitle": "Consulta l’historial de compres i descarrega les teves factures.",
     "actions": {
       "refresh": "Actualitzar",
@@ -739,4 +791,5 @@
     "noImage": "Sense imatge",
     "unnamedProduct": "Producte"
   }
+  
 }

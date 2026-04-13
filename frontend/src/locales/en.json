@@ -419,6 +419,7 @@
   "login": {
     "title": "Sign in",
     "email": "Email",
+    "forgotPassword": "Forgot your password?",
     "password": "Password",
     "submit": "Sign in",
     "loading": "Loading...",
@@ -429,6 +430,49 @@
       "password": "Password"
     }
   },
+  "forgotPassword": {
+  "title": "Recover password",
+  "description": "Enter your email and we will send you a link to reset your password.",
+  "email": "Email",
+  "placeholder": "you@example.com",
+  "submit": "Send link",
+  "loading": "Sending...",
+  "success": "If the email exists, we have sent you a password reset link.",
+  "error": "Could not send the email.",
+  "backToLogin": "Back to sign in"
+},
+"resetPassword": {
+  "title": "New password",
+  "email": "Email",
+  "password": "New password",
+  "passwordConfirm": "Confirm password",
+  "submit": "Reset password",
+  "loading": "Saving...",
+  "success": "Password reset successfully.",
+  "backToLogin": "Back to sign in",
+  "placeholders": {
+    "password": "Minimum 8 characters",
+    "passwordConfirm": "Repeat the password"
+  },
+  "errors": {
+    "missingToken": "Missing reset token.",
+    "generic": "Could not reset the password."
+  },
+  "strength": {
+    "title": "Password strength",
+    "weak": "Weak",
+    "medium": "Medium",
+    "strong": "Strong",
+    "veryStrong": "Very strong"
+  },
+  "rules": {
+    "length": "At least 8 characters",
+    "lowercase": "Contains a lowercase letter",
+    "uppercase": "Contains an uppercase letter",
+    "number": "Contains a number",
+    "special": "Contains a special character"
+  }
+},
   "register": {
     "title": "Create account",
     "fullName": "Full name",
@@ -572,6 +616,13 @@
   },
   "orders": {
     "title": "My orders",
+    "statusValues": {
+      "paid": "Paid",
+      "pending": "Pending",
+      "processing": "Processing",
+      "cancelled": "Cancelled",
+      "completed": "Completed"
+    },
     "subtitle": "Check your purchase history and download your invoices.",
     "actions": {
       "refresh": "Refresh",

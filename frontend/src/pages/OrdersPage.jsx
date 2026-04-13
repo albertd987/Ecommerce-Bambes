@@ -26,6 +26,7 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState([])
   const didRunRef = useRef(false)
 
+
   const toCents = (value) => {
     if (value === null || value === undefined) return null
 
@@ -53,6 +54,14 @@ export default function OrdersPage() {
     const cents = toCents(maybeCents)
     if (cents === null) return "—"
     return (Number(cents) / 100).toFixed(2) + "€"
+  }
+
+  const translateOrderStatus = (status) => {
+    if (!status) return "—"
+
+    const normalized = String(status).toLowerCase()
+
+    return t(`orders.statusValues.${normalized}`, status)
   }
 
   const loadOrders = async () => {
@@ -224,7 +233,7 @@ export default function OrdersPage() {
                           <div className="mt-4 grid gap-3 sm:grid-cols-3">
                             <OrderInfoPill
                               label={t("orders.fields.status", "Estat")}
-                              value={o?.status || "—"}
+                              value={translateOrderStatus(o?.status)}
                             />
                             <OrderInfoPill
                               label={t("orders.fields.lines", "Línies")}

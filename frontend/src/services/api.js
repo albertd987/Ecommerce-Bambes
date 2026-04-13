@@ -110,5 +110,14 @@ export const getFavorites = () => api.get("/favorites")
 export const toggleFavorite = (productId) =>
   api.post(`/favorites/${productId}`)
 
+export async function forgotPassword(email) {
+  const response = await api.post("/forgot-password", { email })
+  return response.data
+}
+
+export async function resetPassword(payload) {
+  const response = await api.post("/reset-password", payload)
+  return response.data
+}
 
 export default api

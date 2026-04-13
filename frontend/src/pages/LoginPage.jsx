@@ -100,6 +100,12 @@ export default function LoginPage() {
                   {t("login.register", "Registra't")}
                 </Link>
               </p>
+
+              <p className="text-sm text-muted-foreground">
+                <Link to="/forgot-password" className="underline">
+                  {t("login.forgotPassword", "Has oblidat la contrasenya?")}
+                </Link>
+              </p>
             </form>
           </CardContent>
         </Card>

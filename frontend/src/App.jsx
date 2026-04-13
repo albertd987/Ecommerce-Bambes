@@ -16,6 +16,9 @@ import AboutPage from "@/pages/AboutPage"
 import FavoritesPage from "@/pages/FavoritesPage"
 import AddressesPage from "@/pages/AddressesPage"
 import ProfileEditPage from "@/pages/ProfileEditPage"
+import ForgotPasswordPage from "@/pages/ForgotPasswordPage"
+import ResetPasswordPage from "@/pages/ResetPasswordPage"
+
 
 function App() {
   return (
@@ -37,6 +40,8 @@ function App() {
         <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/addresses" element={<AddressesPage />} />
         <Route path="/profile/edit" element={<ProfileEditPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+<Route path="/reset-password" element={<ResetPasswordPage />} />
       </Routes>
       <Toaster position="bottom-right" richColors theme="light" />
     </BrowserRouter>
