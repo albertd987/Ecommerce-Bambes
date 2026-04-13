@@ -20,17 +20,16 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
 
 function SectionCard({ icon: Icon, title, children }) {
   return (
-    <Card className="rounded-3xl border shadow-sm">
+    <Card className="rounded-3xl border border-border bg-white shadow-sm">
       <CardContent className="p-6">
         <div className="mb-4 flex items-start gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted">
-            <Icon className="h-5 w-5" />
+            <Icon className="h-5 w-5 text-foreground" />
           </div>
           <div>
             <h3 className="font-semibold text-foreground">{title}</h3>
           </div>
         </div>
-
         {children}
       </CardContent>
     </Card>
@@ -41,7 +40,6 @@ export default function CheckoutSuccessPage() {
   const { t } = useTranslation()
   const location = useLocation()
   const state = location.state
-
   const { clearCart } = useCart()
 
   const [status, setStatus] = useState(state?.paymentStatus || "loading")
@@ -53,25 +51,32 @@ export default function CheckoutSuccessPage() {
 
   const toCents = (value) => {
     if (value === null || value === undefined) return null
+
     if (typeof value === "number") return Number.isNaN(value) ? null : value
+
     if (typeof value === "string") {
       const n = Number(value)
       if (!Number.isNaN(n)) return n
+
       const cleaned = value.replace(/[^\d,.-]/g, "").replace(",", ".")
       const f = Number(cleaned)
       if (!Number.isNaN(f)) return Math.round(f * 100)
+
       return null
     }
+
     if (typeof value === "object") {
       if ("value" in value) {
         const n = Number(value.value)
         return Number.isNaN(n) ? null : n
       }
+
       if ("amount" in value) {
         const n = Number(value.amount)
         return Number.isNaN(n) ? null : n
       }
     }
+
     return null
   }
 
@@ -85,7 +90,9 @@ export default function CheckoutSuccessPage() {
     if (status === "loading") return t("checkoutSuccess.status.loading")
     if (status === "succeeded") return t("checkoutSuccess.status.succeeded")
     if (status === "processing") return t("checkoutSuccess.status.processing")
-    if (status === "requires_payment_method") return t("checkoutSuccess.status.failed")
+    if (status === "requires_payment_method") {
+      return t("checkoutSuccess.status.failed")
+    }
     if (status === "unknown") return t("checkoutSuccess.status.unknown")
     if (status === "error") {
       return t("checkoutSuccess.status.error", { error: error || "" })
@@ -113,7 +120,9 @@ export default function CheckoutSuccessPage() {
     const res = await api.get("/orders", { params: { per_page: 50 } })
     const list = res.data?.data || []
     const match = list.find((o) => o?.reference === reference)
+
     if (!match?.id) return null
+
     return await loadOrderById(match.id)
   }
 
@@ -158,7 +167,9 @@ export default function CheckoutSuccessPage() {
           return
         }
 
-        const { paymentIntent, error } = await stripe.retrievePaymentIntent(clientSecret)
+        const { paymentIntent, error } =
+          await stripe.retrievePaymentIntent(clientSecret)
+
         if (error) throw new Error(error.message)
 
         const nextStatus = paymentIntent?.status || "unknown"
@@ -166,6 +177,7 @@ export default function CheckoutSuccessPage() {
 
         if (nextStatus === "succeeded" && paymentIntent?.id) {
           const found = await findOrderByReference(paymentIntent.id)
+
           if (found) {
             setOrder(found)
             await maybeClear(nextStatus)
@@ -174,6 +186,7 @@ export default function CheckoutSuccessPage() {
 
           const rawLines = localStorage.getItem("pending_checkout_lines")
           const rawCustomer = localStorage.getItem("pending_checkout_customer")
+
           const pendingLines = rawLines ? JSON.parse(rawLines) : null
           const pendingPayload = rawCustomer ? JSON.parse(rawCustomer) : null
 
@@ -183,8 +196,10 @@ export default function CheckoutSuccessPage() {
                 ...pendingPayload,
                 payment_intent_id: paymentIntent.id,
               })
+
               const createdOrder = res.data?.data
               if (createdOrder) setOrder(createdOrder)
+
               localStorage.removeItem("pending_checkout_lines")
               localStorage.removeItem("pending_checkout_customer")
             } catch (e) {
@@ -228,17 +243,26 @@ export default function CheckoutSuccessPage() {
   const lineTotal = (l) => {
     if (l?.total !== undefined && l?.total !== null) return l.total
     if (l?.sub_total !== undefined && l?.sub_total !== null) return l.sub_total
+
     if (l?.unit_price !== undefined && l?.unit_price !== null) {
       const up = toCents(l.unit_price)
       const q = Number(l.quantity || 1)
       if (up !== null && !Number.isNaN(q)) return up * q
     }
+
     return null
   }
 
   const formatAddress = (addr) => {
     if (!addr) return null
-    const parts = [addr.line_one, addr.line_two, addr.city, addr.state, addr.postcode].filter(Boolean)
+    const parts = [
+      addr.line_one,
+      addr.line_two,
+      addr.city,
+      addr.state,
+      addr.postcode,
+    ].filter(Boolean)
+
     return parts.join(", ")
   }
 
@@ -248,22 +272,27 @@ export default function CheckoutSuccessPage() {
 
       <main className="container mx-auto max-w-5xl px-4 py-10">
         <div className="mb-8">
-          <div className="flex items-center gap-3">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
-              <CheckCircle2 className="h-7 w-7" />
-            </div>
+          <div className="overflow-hidden rounded-3xl border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 shadow-sm">
+            <div className="px-6 py-7 sm:px-8">
+              <div className="flex items-start gap-4">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/80 shadow-sm ring-1 ring-green-200">
+                  <CheckCircle2 className="h-9 w-9 text-green-600" />
+                </div>
 
-            <div>
-              <p className="text-sm text-muted-foreground">
-                {t("checkoutSuccess.title")}
-              </p>
-              <h1 className="text-3xl font-bold tracking-tight">
-                {t("checkoutSuccess.title")}
-              </h1>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-green-700">
+                    {t("checkoutSuccess.title")}
+                  </p>
+                  <h1 className="mt-1 text-3xl font-bold tracking-tight text-foreground">
+                    {t("checkoutSuccess.title")}
+                  </h1>
+                  <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+                    {renderMessage()}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
-
-          <p className="mt-4 text-sm text-muted-foreground">{renderMessage()}</p>
         </div>
 
         {state?.confirmError && (
@@ -274,14 +303,14 @@ export default function CheckoutSuccessPage() {
 
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
           <div className="space-y-6">
-            <Card className="rounded-3xl border shadow-sm">
+            <Card className="rounded-3xl border border-border bg-white shadow-sm">
               <CardContent className="p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">
                       {t("checkoutSuccess.orderSummary.title")}
                     </p>
-                    <h2 className="mt-1 text-xl font-semibold">
+                    <h2 className="mt-1 text-xl font-semibold text-foreground">
                       {t("checkoutSuccess.orderSummary.idLabel")} {orderId}
                     </h2>
                   </div>
@@ -291,14 +320,19 @@ export default function CheckoutSuccessPage() {
                       <span className="text-muted-foreground">
                         {t("checkoutSuccess.orderSummary.referenceLabel")}{" "}
                       </span>
-                      <span className="font-medium text-foreground">{reference}</span>
+                      <span className="font-medium text-foreground">
+                        {reference}
+                      </span>
                     </div>
                   ) : null}
                 </div>
               </CardContent>
             </Card>
 
-            <SectionCard icon={Package} title={t("checkoutSuccess.products.title")}>
+            <SectionCard
+              icon={Package}
+              title={t("checkoutSuccess.products.title")}
+            >
               {lines.length ? (
                 <div className="space-y-3">
                   {lines.map((l) => (
@@ -306,11 +340,15 @@ export default function CheckoutSuccessPage() {
                       key={l.id || l.identifier}
                       className="flex items-center justify-between gap-4 rounded-2xl bg-muted/30 px-4 py-3 text-sm"
                     >
-                      <span className="min-w-0">
+                      <span className="min-w-0 text-foreground">
                         {l.name}{" "}
-                        <span className="text-muted-foreground">x{l.quantity}</span>
+                        <span className="text-muted-foreground">
+                          x{l.quantity}
+                        </span>
                       </span>
-                      <span className="shrink-0 font-medium">{money(lineTotal(l))}</span>
+                      <span className="shrink-0 font-medium text-foreground">
+                        {money(lineTotal(l))}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -321,14 +359,17 @@ export default function CheckoutSuccessPage() {
               )}
             </SectionCard>
 
-            <SectionCard icon={User} title={t("checkoutSuccess.customer.title")}>
+            <SectionCard
+              icon={User}
+              title={t("checkoutSuccess.customer.title")}
+            >
               {customer ? (
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="rounded-2xl bg-muted/30 px-4 py-3">
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">
                       {t("checkoutSuccess.customer.name")}
                     </p>
-                    <p className="mt-1 font-medium">
+                    <p className="mt-1 font-medium text-foreground">
                       {customer.first_name} {customer.last_name}
                     </p>
                   </div>
@@ -337,7 +378,9 @@ export default function CheckoutSuccessPage() {
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">
                       {t("checkoutSuccess.customer.email")}
                     </p>
-                    <p className="mt-1 font-medium">{customer.email}</p>
+                    <p className="mt-1 font-medium text-foreground">
+                      {customer.email}
+                    </p>
                   </div>
 
                   {customer.phone ? (
@@ -345,7 +388,9 @@ export default function CheckoutSuccessPage() {
                       <p className="text-xs uppercase tracking-wide text-muted-foreground">
                         {t("checkoutSuccess.customer.phone")}
                       </p>
-                      <p className="mt-1 font-medium">{customer.phone}</p>
+                      <p className="mt-1 font-medium text-foreground">
+                        {customer.phone}
+                      </p>
                     </div>
                   ) : null}
                 </div>
@@ -357,11 +402,14 @@ export default function CheckoutSuccessPage() {
             </SectionCard>
 
             {(billingAddress || shippingAddress) && (
-              <SectionCard icon={MapPin} title={t("checkoutSuccess.addresses.title")}>
+              <SectionCard
+                icon={MapPin}
+                title={t("checkoutSuccess.addresses.title")}
+              >
                 <div className="grid gap-4 sm:grid-cols-2">
                   {billingAddress && (
                     <div className="rounded-2xl bg-muted/30 px-4 py-3">
-                      <p className="text-sm font-medium mb-2">
+                      <p className="mb-2 text-sm font-medium text-foreground">
                         {t("checkoutSuccess.addresses.billing")}
                       </p>
                       <p className="text-sm text-muted-foreground">
@@ -372,7 +420,7 @@ export default function CheckoutSuccessPage() {
 
                   {shippingAddress && (
                     <div className="rounded-2xl bg-muted/30 px-4 py-3">
-                      <p className="text-sm font-medium mb-2">
+                      <p className="mb-2 text-sm font-medium text-foreground">
                         {t("checkoutSuccess.addresses.shipping")}
                       </p>
                       <p className="text-sm text-muted-foreground">
@@ -385,48 +433,57 @@ export default function CheckoutSuccessPage() {
             )}
           </div>
 
-          <div className="space-y-6 lg:sticky lg:top-6 h-fit">
-            <SectionCard icon={ShoppingBag} title={t("checkoutSuccess.totals.title")}>
+          <div className="h-fit space-y-6 lg:sticky lg:top-6">
+            <SectionCard
+              icon={ShoppingBag}
+              title={t("checkoutSuccess.totals.title")}
+            >
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">
                     {t("checkoutSuccess.totals.subtotal")}
                   </span>
-                  <span>{money(totals?.sub_total)}</span>
+                  <span className="font-medium">{money(totals?.sub_total)}</span>
                 </div>
 
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">
                     {t("checkoutSuccess.totals.discount")}
                   </span>
-                  <span>{money(totals?.discount_total)}</span>
+                  <span className="font-medium">
+                    {money(totals?.discount_total)}
+                  </span>
                 </div>
 
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">
                     {t("checkoutSuccess.totals.shipping")}
                   </span>
-                  <span>{money(totals?.shipping_total)}</span>
+                  <span className="font-medium">
+                    {money(totals?.shipping_total)}
+                  </span>
                 </div>
 
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">
                     {t("checkoutSuccess.totals.vat")}
                   </span>
-                  <span>{money(totals?.tax_total)}</span>
+                  <span className="font-medium">{money(totals?.tax_total)}</span>
                 </div>
 
-                <div className="flex justify-between border-t pt-3 text-base font-semibold">
+                <div className="flex justify-between border-t pt-3 text-base font-semibold text-foreground">
                   <span>{t("checkoutSuccess.totals.total")}</span>
                   <span>{money(totals?.total)}</span>
                 </div>
               </div>
             </SectionCard>
 
-            <Card className="rounded-3xl border shadow-sm">
-              <CardContent className="p-6 space-y-3">
+            <Card className="rounded-3xl border border-border bg-white shadow-sm">
+              <CardContent className="space-y-3 p-6">
                 <Link to="/">
-                  <Button className="w-full">{t("checkoutSuccess.actions.backToShop")}</Button>
+                  <Button className="w-full bg-green-600 text-white hover:bg-green-700">
+                    {t("checkoutSuccess.actions.backToShop")}
+                  </Button>
                 </Link>
 
                 <Link to="/orders">
