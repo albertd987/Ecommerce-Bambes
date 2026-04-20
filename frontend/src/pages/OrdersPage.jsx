@@ -85,7 +85,7 @@ export default function OrdersPage() {
     if (didRunRef.current) return
     didRunRef.current = true
     loadOrders()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [isLoggedIn])
 
   if (!isLoggedIn) {

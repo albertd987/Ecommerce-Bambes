@@ -287,11 +287,10 @@ export default function ProductDetailPage() {
                   <button
                     key={idx}
                     onClick={() => setSelectedImageIndex(idx)}
-                    className={`aspect-square rounded-md overflow-hidden bg-muted/50 border-2 transition-all ${
-                      selectedImageIndex === idx
+                    className={`aspect-square rounded-md overflow-hidden bg-muted/50 border-2 transition-all ${selectedImageIndex === idx
                         ? "border-foreground"
                         : "border-transparent hover:border-muted-foreground/40"
-                    }`}
+                      }`}
                     aria-label={t("productDetail.gallery.thumbnailAria", "Seleccionar imatge")}
                     type="button"
                   >
@@ -352,9 +351,8 @@ export default function ProductDetailPage() {
                     <button
                       key={idx}
                       onClick={() => setSelectedImageIndex(idx)}
-                      className={`w-16 h-16 shrink-0 rounded-md overflow-hidden bg-muted/50 border-2 transition-all ${
-                        selectedImageIndex === idx ? "border-foreground" : "border-transparent"
-                      }`}
+                      className={`w-16 h-16 shrink-0 rounded-md overflow-hidden bg-muted/50 border-2 transition-all ${selectedImageIndex === idx ? "border-foreground" : "border-transparent"
+                        }`}
                       aria-label={t("productDetail.gallery.thumbnailAria", "Seleccionar imatge")}
                       type="button"
                     >
@@ -398,26 +396,25 @@ export default function ProductDetailPage() {
                 </p>
                 <div className="flex gap-2 flex-wrap">
                   {variantsData.colors.map((color) => (
-  <button
-    key={color}
-    onClick={() => setSelectedColor(color)}
-    className={`px-4 py-2 rounded-full border text-sm transition-all ${
-      selectedColor === color
-        ? "border-foreground font-medium"
-        : "border-border hover:border-muted-foreground"
-    }`}
-    aria-label={t(
-      "productDetail.color.selectAria",
-      "Seleccionar color {{color}}",
-      {
-        color: translateColor(color, t, "productDetail"),
-      }
-    )}
-    type="button"
-  >
-    {translateColor(color, t, "productDetail")}
-  </button>
-))}
+                    <button
+                      key={color}
+                      onClick={() => setSelectedColor(color)}
+                      className={`px-4 py-2 rounded-full border text-sm transition-all ${selectedColor === color
+                          ? "border-foreground font-medium"
+                          : "border-border hover:border-muted-foreground"
+                        }`}
+                      aria-label={t(
+                        "productDetail.color.selectAria",
+                        "Seleccionar color {{color}}",
+                        {
+                          color: translateColor(color, t, "productDetail"),
+                        }
+                      )}
+                      type="button"
+                    >
+                      {translateColor(color, t, "productDetail")}
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
@@ -453,10 +450,9 @@ export default function ProductDetailPage() {
                         onClick={() => hasStock && setSelectedSize(size)}
                         disabled={!hasStock}
                         className={`h-12 rounded-md border text-sm transition-all
-                          ${
-                            isSelected
-                              ? "border-foreground border-2 font-medium"
-                              : hasStock
+                          ${isSelected
+                            ? "border-foreground border-2 font-medium"
+                            : hasStock
                               ? "border-border hover:border-foreground cursor-pointer"
                               : "border-border/50 text-muted-foreground/40 cursor-not-allowed line-through"
                           }`}
@@ -492,8 +488,8 @@ export default function ProductDetailPage() {
                 {addingToCart
                   ? t("productDetail.actions.adding", "Afegint...")
                   : isOutOfStock
-                  ? t("productDetail.actions.outOfStock", "Sense estoc")
-                  : t("productDetail.actions.addToCart", "Afegir a la cistella")}
+                    ? t("productDetail.actions.outOfStock", "Sense estoc")
+                    : t("productDetail.actions.addToCart", "Afegir a la cistella")}
               </button>
 
               <button
@@ -506,8 +502,8 @@ export default function ProductDetailPage() {
                 {togglingFavorite
                   ? t("productDetail.actions.updatingFavorite", "Actualitzant favorits...")
                   : favorite
-                  ? t("productDetail.actions.removeFromFavorites", "Eliminar de favorits")
-                  : t("productDetail.actions.addToFavorites", "Afegir a favorits")}
+                    ? t("productDetail.actions.removeFromFavorites", "Eliminar de favorits")
+                    : t("productDetail.actions.addToFavorites", "Afegir a favorits")}
               </button>
             </div>
 

@@ -82,7 +82,7 @@ class ProductController extends Controller
             $sizesListNorm  = collect($sizesList)->map(fn($s) => Str::lower($s))->values()->all();
             $colorsListNorm = collect($colorsList)->map(fn($c) => Str::lower($c))->values()->all();
 
-            // ✅ Carreguem tot i filtrem en memòria (de moment)
+            // Carreguem tot i filtrem en memòria (ja que Lunar no permet fer tots aquests filtres complexos en la query)
             $products = Product::with([
                 'variants.prices',
                 'variants.values', // size/color

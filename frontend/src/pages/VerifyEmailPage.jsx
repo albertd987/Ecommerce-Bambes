@@ -85,7 +85,7 @@ export default function VerifyEmailPage() {
     }
 
     if (verifyUrl && !isVerified) doVerify()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [verifyUrl, verifiedParam, isVerified])
 
   const resend = async () => {

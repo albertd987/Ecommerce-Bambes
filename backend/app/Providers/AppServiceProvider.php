@@ -41,7 +41,7 @@ class AppServiceProvider extends ServiceProvider
             fn () => Blade::render('@livewire(\'chatbot-widget\')')
         );
 
-        // ✅ Personalitza el link de verificació perquè apunti al FRONTEND
+        // Link de verificació perquè apunti al FRONTEND
         VerifyEmail::createUrlUsing(function ($notifiable) {
             $frontendUrl = env('FRONTEND_URL', 'http://localhost:5173');
 

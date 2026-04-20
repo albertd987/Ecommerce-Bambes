@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next"
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet"
 import L from "leaflet"
 
-// ✅ Fix icones Leaflet (Vite / bundlers)
+//  Fix icones Leaflet (Vite / bundlers)
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png"
 import markerIcon from "leaflet/dist/images/marker-icon.png"
 import markerShadow from "leaflet/dist/images/marker-shadow.png"
@@ -21,14 +21,14 @@ L.Icon.Default.mergeOptions({
 export default function AboutPage() {
     const { t } = useTranslation()
 
-    // 📍 Canvia aquestes coordenades a la vostra ubicació real
+    // Coordenades per centrar el mapa 
     const position = [41.58400849618671, 1.601228735146023] // Institut Milà i Fontanals (aprox)
 
-    // ✅ Imatge HERO (posa-la a: frontend/public/about/hero-shoe.png)
+    //  Imatge HERO  (cal posar-la a: frontend/public/about/hero-shoe.png)
     const heroImage = "/about/hero-shoe.png"
 
-    // ✅ Foto conjunta equip (posa-la a: frontend/public/team/team.jpeg)
-    // Si és PNG, canvia-ho a "/team/team.png"
+    //  Foto conjunta equip (cal posar-la a: frontend/public/team/team.jpeg)
+
     const teamPhoto = "/team/team.jpeg"
 
     const values = [
@@ -101,7 +101,7 @@ export default function AboutPage() {
                             </div>
                         </div>
 
-                        {/* ✅ Lateral amb imatge (hero image) */}
+                        {/*  Lateral amb imatge (hero image) */}
                         <div className="relative min-h-[260px] lg:min-h-full bg-muted overflow-hidden">
                             <img
                                 src={heroImage}
@@ -176,7 +176,7 @@ export default function AboutPage() {
                                     e.currentTarget.style.display = "none"
                                 }}
                             />
-                            {/* overlay suau */}
+                     
                             <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
                         </div>
 

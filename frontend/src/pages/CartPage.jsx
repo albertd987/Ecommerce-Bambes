@@ -161,8 +161,8 @@ export default function CartPage() {
                   typeof p.image === "string" && p.image.startsWith("http")
                     ? p.image
                     : typeof p.thumbnail === "string" && p.thumbnail.startsWith("http")
-                    ? p.thumbnail
-                    : "https://placehold.co/200x200?text=No+Image"
+                      ? p.thumbnail
+                      : "https://placehold.co/200x200?text=No+Image"
 
                 const resolvedColor =
                   p.color ||

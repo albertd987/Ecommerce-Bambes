@@ -35,9 +35,8 @@ function PasswordField({
         type="password"
         autoComplete={autoComplete}
         placeholder={placeholder}
-        className={`w-full rounded-xl border bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-foreground ${
-          error ? "border-destructive" : ""
-        }`}
+        className={`w-full rounded-xl border bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-foreground ${error ? "border-destructive" : ""
+          }`}
       />
 
       {capsLockOn ? (
@@ -224,10 +223,10 @@ export default function ChangePasswordPage() {
 
       setSuccessMsg(
         res?.message ||
-          t(
-            "changePassword.success",
-            "Contrasenya actualitzada correctament."
-          )
+        t(
+          "changePassword.success",
+          "Contrasenya actualitzada correctament."
+        )
       )
       setCurrentPassword("")
       setPassword("")
@@ -249,11 +248,11 @@ export default function ChangePasswordPage() {
       } else {
         setErrorMsg(
           data?.message ||
-            err.message ||
-            t(
-              "changePassword.errors.generic",
-              "Error canviant la contrasenya."
-            )
+          err.message ||
+          t(
+            "changePassword.errors.generic",
+            "Error canviant la contrasenya."
+          )
         )
       }
     } finally {
@@ -265,12 +264,12 @@ export default function ChangePasswordPage() {
     passwordStrength.label === "weak"
       ? t("changePassword.strength.weak", "Feble")
       : passwordStrength.label === "medium"
-      ? t("changePassword.strength.medium", "Mitjana")
-      : passwordStrength.label === "strong"
-      ? t("changePassword.strength.strong", "Forta")
-      : passwordStrength.label === "veryStrong"
-      ? t("changePassword.strength.veryStrong", "Molt forta")
-      : ""
+        ? t("changePassword.strength.medium", "Mitjana")
+        : passwordStrength.label === "strong"
+          ? t("changePassword.strength.strong", "Forta")
+          : passwordStrength.label === "veryStrong"
+            ? t("changePassword.strength.veryStrong", "Molt forta")
+            : ""
 
   return (
     <div className="min-h-screen bg-background">
@@ -392,11 +391,10 @@ export default function ChangePasswordPage() {
                         {[1, 2, 3, 4, 5].map((level) => (
                           <div
                             key={level}
-                            className={`h-2 flex-1 rounded-full ${
-                              passwordStrength.score >= level
+                            className={`h-2 flex-1 rounded-full ${passwordStrength.score >= level
                                 ? passwordStrength.colorClass
                                 : "bg-muted"
-                            }`}
+                              }`}
                           />
                         ))}
                       </div>

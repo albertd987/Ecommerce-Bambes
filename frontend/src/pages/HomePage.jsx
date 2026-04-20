@@ -6,7 +6,7 @@ import ProductCard from "@/components/ProductCard"
 import Header from "@/components/Header"
 import { ChevronDown, SlidersHorizontal, X } from "lucide-react"
 
-/** Pill de comptador (Nike-like) */
+/** Pill de comptador  */
 function ActivePill({ count }) {
   if (!count || count <= 0) return null
   return (
@@ -26,7 +26,7 @@ function SelectedSummary({ text }) {
   )
 }
 
-/** Secció plegable reusable (estil Nike) */
+/** Secció plegable reusable */
 function CollapsibleSection({
   title,
   count = 0,
@@ -103,7 +103,7 @@ function FilterChip({ label, onRemove }) {
   )
 }
 
-/** Paginació robusta amb números + ellipsis */
+/** Paginació  amb números + ellipsis */
 function Pagination({ page, lastPage, onPage, loading, t }) {
   if (!lastPage || lastPage <= 1) return null
 

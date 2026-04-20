@@ -77,9 +77,8 @@ const InputField = React.memo(function InputField({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className={`w-full rounded-xl border px-4 py-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary ${
-          error ? "border-destructive" : "border-input"
-        }`}
+        className={`w-full rounded-xl border px-4 py-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary ${error ? "border-destructive" : "border-input"
+          }`}
       />
 
       {error && <p className="text-destructive text-xs mt-1">{error}</p>}
@@ -139,11 +138,10 @@ function AddressSelectableCard({ address, selected, onClick, t }) {
     <button
       type="button"
       onClick={onClick}
-      className={`w-full text-left rounded-2xl border p-4 transition-all ${
-        selected
-          ? "border-foreground ring-2 ring-foreground/20 bg-muted/20"
-          : "border-border hover:border-foreground/40 hover:bg-muted/10"
-      }`}
+      className={`w-full text-left rounded-2xl border p-4 transition-all ${selected
+        ? "border-foreground ring-2 ring-foreground/20 bg-muted/20"
+        : "border-border hover:border-foreground/40 hover:bg-muted/10"
+        }`}
     >
       <div className="flex items-center gap-2 mb-2">
         <p className="font-medium">{address.label}</p>
@@ -173,11 +171,10 @@ function NewAddressCard({ selected, onClick, t }) {
     <button
       type="button"
       onClick={onClick}
-      className={`w-full h-full min-h-[160px] rounded-2xl border p-4 transition-all flex flex-col items-center justify-center text-center ${
-        selected
-          ? "border-foreground ring-2 ring-foreground/20 bg-muted/20"
-          : "border-dashed border-border hover:border-foreground/40 hover:bg-muted/10"
-      }`}
+      className={`w-full h-full min-h-[160px] rounded-2xl border p-4 transition-all flex flex-col items-center justify-center text-center ${selected
+        ? "border-foreground ring-2 ring-foreground/20 bg-muted/20"
+        : "border-dashed border-border hover:border-foreground/40 hover:bg-muted/10"
+        }`}
     >
       <Plus className="h-6 w-6 mb-2" />
       <p className="font-medium">{t("checkout.addressBook.newAddress", "Nova direcció")}</p>
@@ -637,7 +634,7 @@ export default function CheckoutPage() {
       console.error("Error saving checkout address:", e)
       toast.error(
         e?.response?.data?.message ||
-          t("checkout.addressBook.toasts.saveError", "No s'ha pogut guardar la direcció")
+        t("checkout.addressBook.toasts.saveError", "No s'ha pogut guardar la direcció")
       )
     }
   }

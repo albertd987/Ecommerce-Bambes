@@ -14,7 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // ✅ IMPORTANT: no redirigir a route('login') a l'API
+        //  IMPORTANT: no redirigir a route('login') a l'API
         $middleware->redirectGuestsTo(function (Request $request) {
             if ($request->is('api/*')) {
                 return null;

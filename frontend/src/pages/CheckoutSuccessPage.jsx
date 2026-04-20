@@ -216,7 +216,7 @@ export default function CheckoutSuccessPage() {
     }
 
     run()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [state, clearCart])
 
   const orderId = order?.id || state?.order?.id || state?.orderId || "—"

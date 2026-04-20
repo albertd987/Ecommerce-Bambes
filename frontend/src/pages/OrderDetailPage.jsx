@@ -117,7 +117,7 @@ export default function OrderDetailPage() {
     if (!isLoggedIn) return
     if (!id) return
     loadOrder()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [isLoggedIn, id])
 
   const lines = order?.lines || []
@@ -126,12 +126,12 @@ export default function OrderDetailPage() {
     order?.totals ||
     (order
       ? {
-          sub_total: order.sub_total,
-          discount_total: order.discount_total,
-          shipping_total: order.shipping_total,
-          tax_total: order.tax_total,
-          total: order.total,
-        }
+        sub_total: order.sub_total,
+        discount_total: order.discount_total,
+        shipping_total: order.shipping_total,
+        tax_total: order.tax_total,
+        total: order.total,
+      }
       : null)
 
   if (!isLoggedIn) {
@@ -261,35 +261,35 @@ export default function OrderDetailPage() {
                     </div>
                   </div>
 
- <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-  <InfoPill
-    label={t("orderDetail.fields.id", "ID")}
-    value={order?.id}
-  />
+                  <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <InfoPill
+                      label={t("orderDetail.fields.id", "ID")}
+                      value={order?.id}
+                    />
 
-  <InfoPill
-    label={t("orderDetail.fields.status", "Estat")}
-    value={order?.status || "—"}
-  />
+                    <InfoPill
+                      label={t("orderDetail.fields.status", "Estat")}
+                      value={order?.status || "—"}
+                    />
 
-  <div className="lg:col-span-2 rounded-2xl bg-muted/30 px-4 py-3 min-w-0">
-    <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-      {t("orderDetail.fields.reference", "Referència")}
-    </p>
-    <p className="mt-1 font-medium text-foreground break-all">
-      {order?.reference || "—"}
-    </p>
-  </div>
+                    <div className="lg:col-span-2 rounded-2xl bg-muted/30 px-4 py-3 min-w-0">
+                      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                        {t("orderDetail.fields.reference", "Referència")}
+                      </p>
+                      <p className="mt-1 font-medium text-foreground break-all">
+                        {order?.reference || "—"}
+                      </p>
+                    </div>
 
-  <div className="sm:col-span-2 lg:col-span-4 rounded-2xl bg-muted/30 px-4 py-3">
-    <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-      {t("orderDetail.fields.date", "Data")}
-    </p>
-    <p className="mt-1 font-medium text-foreground">
-      {order?.created_at ? new Date(order.created_at).toLocaleString() : "—"}
-    </p>
-  </div>
-</div>
+                    <div className="sm:col-span-2 lg:col-span-4 rounded-2xl bg-muted/30 px-4 py-3">
+                      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                        {t("orderDetail.fields.date", "Data")}
+                      </p>
+                      <p className="mt-1 font-medium text-foreground">
+                        {order?.created_at ? new Date(order.created_at).toLocaleString() : "—"}
+                      </p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
