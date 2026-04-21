@@ -44,11 +44,11 @@ URL: http://localhost:5173
 ##  Estat del projecte
 
 - [x] Setup inicial
-- [ ] API de productes
-- [ ] Frontend catàlog
-- [ ] Sistema d'autenticació
-- [ ] Carret de compra
-- [ ] Integració amb Stripe
+- [x] API de productes
+- [x] Frontend catàlog
+- [x] Sistema d'autenticació
+- [x] Carret de compra
+- [x] Integració amb Stripe
 - [ ] Deploy
 
 ---
