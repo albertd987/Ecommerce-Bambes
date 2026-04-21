@@ -38,7 +38,7 @@ export const getCurrentUser = async () => {
   return data
 }
 
-// ✅ checkout (IMPORTANT: rep payload)
+// checkout (IMPORTANT: rep payload)
 export const createPaymentIntent = async (payload) => {
   const { data } = await api.post("/checkout/intent", payload)
   return data
